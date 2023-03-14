@@ -3,6 +3,8 @@
   windows_subsystem = "windows"
 )]
 
+mod define;
+
 #[tauri::command]
 async fn stage_creator(handle: tauri::AppHandle)
 {
