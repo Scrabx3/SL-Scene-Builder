@@ -3,27 +3,22 @@
   windows_subsystem = "windows"
 )]
 
-// use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
-
-// #[tauri::command]
-// fn stage_creator()
-// {
-//   println!("Invoked stage_creator");
-//   tauri::Builder::default()
-//   .setup(|app| {
-//     let docs_window = tauri::WindowBuilder::new(
-//       app,
-//       "external", /* the unique window label */
-//       tauri::WindowUrl::External("https://tauri.app/".parse().unwrap())
-//     ).build()?;
-//     Ok(())
-//   });
-// }
+#[tauri::command]
+async fn stage_creator(handle: tauri::AppHandle)
+{
+  println!("Invoked stage_creator");
+  let _stage = tauri::WindowBuilder::new(
+    &handle,
+    "stage_window",
+    tauri::WindowUrl::App("./stage.html".into())
+  ).build().unwrap();
+}
 
 fn main()
 {
   tauri::Builder::default()
-    // .invoke_handler(tauri::generate_handler![stage_creator])
+    .invoke_handler(tauri::generate_handler![
+      stage_creator])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

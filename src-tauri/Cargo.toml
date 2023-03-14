@@ -1,11 +1,11 @@
 [package]
-name = "app"
+name = "scene_builder"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Tool to aid creating and maintaing SL animations"
+authors = ["Scrab Joséline"]
 license = ""
 repository = ""
-default-run = "app"
+default-run = "scene_builder"
 edition = "2021"
 rust-version = "1.59"
 
