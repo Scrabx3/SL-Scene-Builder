@@ -1,120 +1,88 @@
+// use aws_sdk_dynamodb::model::TableDescription;
 
-#[repr(u8)]
-enum Gender
+// --- Gender
+// Female = 0,
+// Male,
+// Futa,
+// CrtMale,
+// CrtFemale
+
+// --- PositionExtra
+// Victim = 0,
+// Vampire,
+// AmputeeAR,
+// AmputeeAL,
+// AmputeeLR,
+// AmputeeLL,
+// Dead
+
+// --- StageExtraType
+// FixedLength,
+// Orgasm
+
+use serde::Serialize;
+
+#[repr(C)]
+#[derive(Debug, Serialize)]
+pub struct Value
 {
-	Female = 0,
-	Male,
-	Futa,
-
-	CrtMale,
-	CrtFemale
+	tag: String,
+	v: i32
 }
 
-#[repr(u8)]
-enum RaceKey
-{
-	Human = 0,
-	AshHoppers,
-	Bears,
-	Boars,
-	BoarsAny,
-	BoarsMounted,
-	Canines,
-	Chaurus,
-	Chaurushunters,
-	Chaurusreapers,
-	Chickens,
-	Cows,
-	Deers,
-	Dogs,
-	DragonPriests,
-	Dragons,
-	Draugrs,
-	DwarvenBallistas,
-	DwarvenCenturions,
-	DwarvenSpheres,
-	DwarvenSpiders,
-	Falmers,
-	FlameAtronach,
-	Foxes,
-	FrostAtronach,
-	Gargoyles,
-	Giants,
-	Goats,
-	Hagravens,
-	Horkers,
-	Horses,
-	IceWraiths,
-	Lurkers,
-	Mammoths,
-	Mudcrabs,
-	Netches,
-	Rabbits,
-	Rieklings,
-	Sabrecats,
-	Seekers,
-	Skeevers,
-	SlaughterFishes,
-	StormAtronach,
-	Spiders,
-	LargeSpiders,
-	GiantSpiders,
-	Spriggans,
-	Trolls,
-	VampireLords,
-	Werewolves,
-	Wispmothers,
-	Wisps,
-	Wolves,
-
-	Total
-}
-
-#[repr(u8)]
-enum PositionExtra
-{
-	Victim = 0,
-	Vampire,
-	AmputeeAR,
-	AmputeeAL,
-	AmputeeLR,
-	AmputeeLL,
-	Dead
-}
-
+#[repr(C)]
+#[derive(Debug, Serialize)]
 pub struct Position
 {
-  genders: Vec<Gender>,
-  race: RaceKey,
+  genders: Vec<Value>,
+  race: String,
+	event: String,
 
-  extra: Vec<PositionExtra>
-}
-
-#[repr(u8)]
-enum StageExtraType
-{
-	FixedLength,
-	Orgasm
+  extra: Vec<Value>
 }
 
 #[repr(C)]
-union ExtraValue
-{
-	i: i8,
-	b: bool
-}
-
-#[repr(C)]
-pub struct StageExtraData
-{
-	tag: StageExtraType,
-	v: ExtraValue
-}
-
+#[derive(Debug, Serialize)]
 pub struct Stage
 {
+	id: String,
+	name: String,
+
 	positions: Vec<Position>,
-	events: Vec<String>,
-	// assert(events.length == positions.length)
-	extra: Vec<StageExtraData>
+	extra: Vec<Value>
+}
+
+impl Value {
+	pub fn new(tag: String, v: i32) -> Value {
+		Value{ tag, v }
+	}
+}
+
+impl Position {
+	pub fn default() -> Position {
+		Position {
+			genders: vec![
+				Value::new(String::from("Male"), 0),
+				Value::new(String::from("Female"), 0),
+				Value::new(String::from("Futa"), 0),
+				Value::new(String::from("Female Creature"), 0),
+				Value::new(String::from("Male Creature"), 0),
+			],
+			race: String::from("Human"),
+			event: String::from(""),
+			extra: vec![]
+		}
+	}
+}
+
+impl Stage {
+	pub fn default() -> Stage {
+		// TODO: ids should be default initialized into some unique id for the current project
+		Stage{ 
+			id: String::from("someid"), 
+			name: String::from("NO NAME"),
+			positions: vec![Position::default()], 
+			extra: vec![] 
+		}
+	}
 }
