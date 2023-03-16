@@ -68,8 +68,7 @@ let stage;
 let add_position_button;
 
 const appendPosition = (position, i) => {
-  const d = i;
-  position.i = d;
+  const d = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);  // hash value to identify positions
   let position_holder = document.getElementById("position_holder");
   let next = document.createElement("div");
   let html = `
@@ -97,30 +96,23 @@ const appendPosition = (position, i) => {
 
   next.innerHTML = html;
   next.id = d;
+  position.id = d;
 
   let node = position_holder.appendChild(next);
   node.getElementsByTagName('select')[0].value = position.race;
   node.getElementsByTagName('button')[0].addEventListener('click', (evt) => {
     let parent = evt.target.parentElement;
-    console.log(parent);
-    let d = parent.id;
     let newpos = [];
-    for (let i = 0; i < stage.positions.length; i++) {
+    for (let i = 0, ii = 1; i < stage.positions.length; i++) {
       const pos = stage.positions[i];
-      console.log(pos);
-      console.log(pos.i + " === " + d + " = " + (pos.id === d));
-      if (pos.i === d) {
-        log.console("continue");
+      if (pos.id === parseInt(parent.id))
         continue;
-      }
 
-      let header = document.getElementById(`header${pos.i}`);
-      console.log(header);
-      header.innerHTML = `Position ${i + 1}`;
+      let header = document.getElementById(`header${pos.id}`);
+      header.innerHTML = `Position ${ii++}`;
       newpos.push(pos);
     }
     stage.positions = newpos;
-    console.log(stage);
     parent.remove();
 
     if (add_position_button.disabled === true)
@@ -146,8 +138,6 @@ const removePosition = async () => {
 }
 
 const buildStage = () => {
-  console.log(stage);
-
   let header = document.getElementById("stage_header");
   header.placeholder = stage.name;
 
