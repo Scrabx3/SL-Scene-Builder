@@ -24,12 +24,19 @@ fn get_stage() -> define::Stage
   define::Stage::default()
 }
 
+#[tauri::command]
+fn make_position() -> define::Position
+{
+  define::Position::default()
+}
+
 fn main()
 {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
       stage_creator,
-      get_stage])
+      get_stage,
+      make_position])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

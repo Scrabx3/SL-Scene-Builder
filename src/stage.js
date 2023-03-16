@@ -59,48 +59,114 @@ const racekeys = [
 const genders = [
   "Male",
   "Female",
-  "Futa",
-  "Male Creature",
-  "Female Creature"
+  "Futa"
 ];
 
+// see define.rs for layout
 let stage;
 
-const buildStage = async () => {
-  stage = await invoke('get_stage');
+let add_position_button;
+
+const appendPosition = (position, i) => {
+  const d = i;
+  position.i = d;
+  let position_holder = document.getElementById("position_holder");
+  let next = document.createElement("div");
+  let html = `
+    <h3 id="header${d}">Position ${i + 1}</h3>
+    <label for="event${d}">Animation Event:</label>
+    <input type="text" id="event${d}">${position.event}</input>
+
+    <h4>Gender:</h4>
+    <label for="male${d}">Male</label>
+    <input type="checkbox" id="male${d}" ${position.genders.includes("Male") ? "checked" : ""}></input>
+    <label for="female${d}">Female</label>
+    <input type="checkbox" id="female${d}" ${position.genders.includes("Female") ? "checked" : ""}></input>
+    <label for="futa${d}">Hermaphrodite</label>
+    <input type="checkbox" id="futa${d}" ${position.genders.includes("Futa") ? "checked" : ""}></input>
+
+    <h4>Race and Extra:</h4>
+    <label for=racekey${d}>Race Key:</label>
+    <select id=racekey${d}>`
+  racekeys.forEach(key => {
+    html += `<option value="${key}">${key}</option>`
+  })
+
+  html += `</select><br>
+    <button id="remove${d}">Remove Position</button>`
+
+  next.innerHTML = html;
+  next.id = d;
+
+  let node = position_holder.appendChild(next);
+  node.getElementsByTagName('select')[0].value = position.race;
+  node.getElementsByTagName('button')[0].addEventListener('click', (evt) => {
+    let parent = evt.target.parentElement;
+    console.log(parent);
+    let d = parent.id;
+    let newpos = [];
+    for (let i = 0; i < stage.positions.length; i++) {
+      const pos = stage.positions[i];
+      console.log(pos);
+      console.log(pos.i + " === " + d + " = " + (pos.id === d));
+      if (pos.i === d) {
+        log.console("continue");
+        continue;
+      }
+
+      let header = document.getElementById(`header${pos.i}`);
+      console.log(header);
+      header.innerHTML = `Position ${i + 1}`;
+      newpos.push(pos);
+    }
+    stage.positions = newpos;
+    console.log(stage);
+    parent.remove();
+
+    if (add_position_button.disabled === true)
+      add_position_button.disabled = false;
+  });
+  return node;
+}
+
+const makePosition = async () => {
+  let p = await invoke("make_position");
+  stage.positions.push(p);
+  appendPosition(p, stage.positions.length - 1);
+
+  if (stage.positions.length == 5) {
+    add_position_button.disabled = true;
+  }
+}
+
+const removePosition = async () => {
+  let p = await invoke("make_position");
+  stage.positions.push(p);
+  appendPosition(p, stage.positions.length - 1);
+}
+
+const buildStage = () => {
   console.log(stage);
 
   let header = document.getElementById("stage_header");
-  header.innerHTML = stage.name;
+  header.placeholder = stage.name;
 
-  let position_holder = document.getElementById("position_holder");
-  position_holder.innerHTML = '';
   for (let i = 0; i < stage.positions.length; i++) {
-    // { event, extra, gender, race }
-    const obj = stage.positions[i];
-    let html = `
-      <div>
-        <h3>Position ${i + 1}</h3>
-        <label for="event${i}">Animation Event:</label>
-        <input type="text" id="event${i}" name="event${i}">${obj.event}</input>
-  
-        <h4>Gender:</h4>`
-        genders.forEach(g => {
-          html += `
-            <label for="${g}${i}">${g}</label>
-            <input type="checkbox" id="${g}${i}" name="${g}_name${i}" ${obj.genders.includes(g) ? "checked" : ""}></input>`
-        });
-
-        html += `<h4>Race and Extra:</h4>
-        <label for=racekey${i}>Race Key:</label>
-        <select id=racekey${i} name=racekey_name${i}>`
-        racekeys.forEach(key => {
-          html += `
-            <option value="${key}" ${obj.race === key ? "selected" : "" }>${key}</option>`
-        });
-    html += `</div>`
-    position_holder.innerHTML += html;
+    const pos = stage.positions[i];
+    appendPosition(pos, i);
   }
-};
+}
 
-window.addEventListener("DOMContentLoaded", buildStage);
+window.addEventListener("DOMContentLoaded", async () => {
+  stage = await invoke('get_stage');
+  buildStage();
+
+  add_position_button = document.getElementById("add_position");
+  add_position_button.addEventListener('click', () => {
+    makePosition()
+
+    if (stage.positions.length == 5) {
+      add_position_button.disabled = true;
+    }
+  });
+});

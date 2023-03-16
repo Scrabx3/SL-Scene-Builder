@@ -3,9 +3,7 @@
 // --- Gender
 // Female = 0,
 // Male,
-// Futa,
-// CrtMale,
-// CrtFemale
+// Futa
 
 // --- PositionExtra
 // Victim = 0,
@@ -61,10 +59,7 @@ impl Value {
 impl Position {
 	pub fn default() -> Position {
 		Position {
-			genders: vec![
-				String::from("Male"),
-				String::from("Female")
-			],
+			genders: vec![],
 			race: String::from("Human"),
 			event: String::from(""),
 			extra: vec![]
