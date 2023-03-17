@@ -56,18 +56,26 @@ const racekeys = [
   "Wolves"
 ];
 
-const genders = [
-  "Male",
-  "Female",
-  "Futa"
-];
-
 // see define.rs for layout
 let stage;
 
 let add_position_button;
 
 const appendPosition = (position, i) => {
+  const attribute_futa = () => {
+    if (position.race === "Human")
+      return position.genders.includes("Futa") ? "checked" : "";
+    
+    return "disabled";
+  };
+
+  const attribute_extra = (extra, dorace) => {
+    if (!dorace || position.race === "Human")
+      return position.extra.includes(extra) ? "checked" : "";
+
+    return "disabled";
+  };
+
   const d = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);  // hash value to identify positions
   let position_holder = document.getElementById("position_holder");
   let next = document.createElement("div");
@@ -82,24 +90,49 @@ const appendPosition = (position, i) => {
     <label for="female${d}">Female</label>
     <input type="checkbox" id="female${d}" ${position.genders.includes("Female") ? "checked" : ""}></input>
     <label for="futa${d}">Hermaphrodite</label>
-    <input type="checkbox" id="futa${d}" ${position.genders.includes("Futa") ? "checked" : ""}></input>
+    <input type="checkbox" id="futa${d}" ${attribute_futa()}></input>
 
     <h4>Race and Extra:</h4>
     <label for=racekey${d}>Race Key:</label>
     <select id=racekey${d}>`
-  racekeys.forEach(key => {
-    html += `<option value="${key}">${key}</option>`
-  })
-
-  html += `</select><br>
+  racekeys.forEach(key => { html += `<option value="${key}">${key}</option>` });
+  html += `
+    </select><br>
+    <label for="victim${d}">Victim</label>
+    <input type="checkbox" id="victim${d}" ${attribute_extra("Victim", false)}></input>
+    <label for="vamp${d}">Vampire</label>
+    <input type="checkbox" id="vamp${d}" ${attribute_extra("Vampire", true)}></input>
+    <br>
+    <label for="ampAR${d}">Amputee (arm, right)</label>
+    <input type="checkbox" id="ampAR${d}" ${attribute_extra("AmputeeAR", true)}></input>
+    <label for="ampAL${d}">Amputee (arm, left)</label>
+    <input type="checkbox" id="ampAL${d}" ${attribute_extra("AmputeeAL", true)}></input>
+    <label for="ampLR${d}">Amputee (leg, right)</label>
+    <input type="checkbox" id="ampLR${d}" ${attribute_extra("AmputeeLR", true)}></input>
+    <label for="ampLL${d}">Amputee (leg, left)</label>
+    <input type="checkbox" id="ampLL${d}" ${attribute_extra("AmputeeLL", true)}></input>
+    <br>
+    <label for="dead${d}">Dead</label>
+    <input type="checkbox" id="dead${d}" ${attribute_extra("Dead", false)}></input>
+    <br><br>
     <button id="remove${d}">Remove Position</button>`
 
   next.innerHTML = html;
   next.id = d;
   position.id = d;
 
-  let node = position_holder.appendChild(next);
-  node.getElementsByTagName('select')[0].value = position.race;
+  const node = position_holder.appendChild(next);
+  const rk = node.getElementsByTagName('select')[0]
+  rk.value = position.race;
+  rk.addEventListener('change', (evt) => {
+    let parent = evt.target.parentElement;
+    let boxes = parent.getElementsByTagName('input');
+    console.log(boxes);
+    let ids = [3, 5, 6, 7, 8, 9];
+    ids.forEach(element => {
+      boxes[element].disabled = evt.target.value !== "Human";
+    });
+  });
   node.getElementsByTagName('button')[0].addEventListener('click', (evt) => {
     let parent = evt.target.parentElement;
     let newpos = [];
@@ -121,20 +154,14 @@ const appendPosition = (position, i) => {
   return node;
 }
 
-const makePosition = async () => {
-  let p = await invoke("make_position");
-  stage.positions.push(p);
-  appendPosition(p, stage.positions.length - 1);
-
-  if (stage.positions.length == 5) {
+const makePosition = () => {
+  invoke("make_position").then(p => {
+    stage.positions.push(p);
+    appendPosition(p, stage.positions.length - 1);
+  });
+  if (stage.positions.length == 4) {
     add_position_button.disabled = true;
   }
-}
-
-const removePosition = async () => {
-  let p = await invoke("make_position");
-  stage.positions.push(p);
-  appendPosition(p, stage.positions.length - 1);
 }
 
 const buildStage = () => {
