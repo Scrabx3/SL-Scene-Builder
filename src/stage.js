@@ -61,6 +61,47 @@ let stage;
 
 let add_position_button;
 
+let default_tags;
+let custom_tags;
+let tag_list;
+
+const addTag = (tag) => {
+  const tags = tag_list.innerHTML;
+  if (tag === "NonSex") {
+    if (tags === '') {
+      tag_list.innerHTML = tag;
+      return;
+    }
+    window.confirm("Clear all existing tags and assign the 'NonSex' tag?").then(result => {
+      if (result) tag_list.innerHTML = tag;
+    })
+    return;
+  }
+  if (tags !== '') {
+    if (tags === 'NonSex') {
+      tag_list.innerHTML = '';
+      return;
+    } else if (tags.includes(tag)) {
+      return;
+    }
+    tag_list.innerHTML += ', ';
+  }
+  tag_list.innerHTML += tag;
+}
+
+const addTagDefault = (evt) => {
+  const v = evt.target.value;
+  addTag(v);
+}
+
+const addTagCustom = (evt) => {
+  if (evt.key !== 'Enter') {
+    return;
+  }
+  const v = evt.target.value;
+  addTag(v);
+}
+
 const appendPosition = (position, i) => {
   const attribute_futa = () => {
     if (position.race === "Human")
@@ -76,9 +117,10 @@ const appendPosition = (position, i) => {
     return "disabled";
   };
 
-  const d = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);  // hash value to identify positions
-  let position_holder = document.getElementById("position_holder");
+  const d = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
   let next = document.createElement("div");
+  next.id = position.id = d;
+
   let html = `
     <h3 id="header${d}">Position ${i + 1}</h3>
     <label for="event${d}">Animation Event:</label>
@@ -95,7 +137,7 @@ const appendPosition = (position, i) => {
     <h4>Race and Extra:</h4>
     <label for=racekey${d}>Race Key:</label>
     <select id=racekey${d}>`
-  racekeys.forEach(key => { html += `<option value="${key}">${key}</option>` });
+  racekeys.forEach(key => { html += `<option>${key}</option>` });
   html += `
     </select><br>
     <label for="victim${d}">Victim</label>
@@ -116,11 +158,9 @@ const appendPosition = (position, i) => {
     <input type="checkbox" id="dead${d}" ${attribute_extra("Dead", false)}></input>
     <br><br>
     <button id="remove${d}">Remove Position</button>`
-
   next.innerHTML = html;
-  next.id = d;
-  position.id = d;
 
+  let position_holder = document.getElementById("position_holder");
   const node = position_holder.appendChild(next);
   const rk = node.getElementsByTagName('select')[0]
   rk.value = position.race;
@@ -133,24 +173,7 @@ const appendPosition = (position, i) => {
       boxes[element].disabled = evt.target.value !== "Human";
     });
   });
-  node.getElementsByTagName('button')[0].addEventListener('click', (evt) => {
-    let parent = evt.target.parentElement;
-    let newpos = [];
-    for (let i = 0, ii = 1; i < stage.positions.length; i++) {
-      const pos = stage.positions[i];
-      if (pos.id === parseInt(parent.id))
-        continue;
-
-      let header = document.getElementById(`header${pos.id}`);
-      header.innerHTML = `Position ${ii++}`;
-      newpos.push(pos);
-    }
-    stage.positions = newpos;
-    parent.remove();
-
-    if (add_position_button.disabled === true)
-      add_position_button.disabled = false;
-  });
+  node.getElementsByTagName('button')[0].addEventListener('click', removePosition);
   return node;
 }
 
@@ -164,7 +187,27 @@ const makePosition = () => {
   }
 }
 
-const buildStage = () => {
+const removePosition = (evt) => {
+  let parent = evt.target.parentElement;
+  let newpos = [];
+  for (let i = 0, ii = 1; i < stage.positions.length; i++) {
+    const pos = stage.positions[i];
+    if (pos.id === parseInt(parent.id))
+      continue;
+
+    let header = document.getElementById(`header${pos.id}`);
+    header.innerHTML = `Position ${ii++}`;
+    newpos.push(pos);
+  }
+  stage.positions = newpos;
+  parent.remove();
+
+  if (add_position_button.disabled === true)
+    add_position_button.disabled = false;
+}
+
+const buildStage = async () => {
+  stage = await invoke('get_stage');
   let header = document.getElementById("stage_header");
   header.placeholder = stage.name;
 
@@ -174,16 +217,15 @@ const buildStage = () => {
   }
 }
 
-window.addEventListener("DOMContentLoaded", async () => {
-  stage = await invoke('get_stage');
+window.addEventListener("DOMContentLoaded", () => {
   buildStage();
 
-  add_position_button = document.getElementById("add_position");
-  add_position_button.addEventListener('click', () => {
-    makePosition()
+  add_position_button = document.getElementById('add_position');
+  add_position_button.addEventListener('click', makePosition);
 
-    if (stage.positions.length == 5) {
-      add_position_button.disabled = true;
-    }
-  });
+  tag_list = document.getElementById('stage_tags')
+  custom_tags = document.getElementById('custom_tags');
+  custom_tags.addEventListener('keydown', addTagCustom);
+  default_tags = document.getElementById('default_tags');
+  default_tags.addEventListener('change', addTagDefault)
 });
