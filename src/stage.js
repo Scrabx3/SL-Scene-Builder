@@ -61,32 +61,61 @@ let stage;
 
 let add_position_button;
 
-let default_tags;
-let custom_tags;
 let tag_list;
 
-const addTag = (tag) => {
-  const tags = tag_list.innerHTML;
-  if (tag === "NonSex") {
-    if (tags === '') {
-      tag_list.innerHTML = tag;
-      return;
+const hasTag = (tag) => {
+  const divs = tag_list.getElementsByTagName('div');
+  for (const key in divs) {
+    if (Object.hasOwnProperty.call(divs, key)) {
+      const element = divs[key];
+      if (element.innerHTML.localeCompare(tag, 'en', { sensitivity: 'base' }) === 0)
+        return true;
     }
-    window.confirm("Clear all existing tags and assign the 'NonSex' tag?").then(result => {
-      if (result) tag_list.innerHTML = tag;
-    })
+  }
+  return false;
+}
+
+const makeTag = (tag) => {
+  let next = document.createElement("div");
+  next.innerHTML = tag;
+  next.addEventListener('click', (evt) => {
+    evt.target.remove();
+  });
+  return next;
+}
+
+const clearTags = () => {
+  if (tag_list.innerHTML === '')
+    return;
+  
+  window.confirm("Clear all tags?").then(result => {
+    if (result) tag_list.innerHTML = '';
+  })
+}
+
+const addTag = (tag) => {
+  if (hasTag(tag)) {
     return;
   }
-  if (tags !== '') {
-    if (tags === 'NonSex') {
-      tag_list.innerHTML = '';
+
+  if (tag_list.innerHTML !== '') {
+    if (tag.localeCompare("NonSex", 'en', { sensitivity: 'base' }) === 0) {
+      window.confirm("Are you sure?\n\nAdding this tag will remove all other tags.").then(result => {
+        if (!result)
+          return;
+
+        const next = makeTag(tag);
+        tag_list.replaceChildren(next);
+      })
       return;
-    } else if (tags.includes(tag)) {
+    } else if (hasTag("NonSex")) {
+      const next = makeTag(tag);
+      tag_list.replaceChildren(next);
       return;
     }
-    tag_list.innerHTML += ', ';
   }
-  tag_list.innerHTML += tag;
+  const next = makeTag(tag);
+  tag_list.appendChild(next);
 }
 
 const addTagDefault = (evt) => {
@@ -98,8 +127,8 @@ const addTagCustom = (evt) => {
   if (evt.key !== 'Enter') {
     return;
   }
-  const v = evt.target.value;
-  addTag(v);
+  addTag(evt.target.value);
+  evt.target.value = '';
 }
 
 const appendPosition = (position, i) => {
@@ -144,6 +173,8 @@ const appendPosition = (position, i) => {
     <input type="checkbox" id="victim${d}" ${attribute_extra("Victim", false)}></input>
     <label for="vamp${d}">Vampire</label>
     <input type="checkbox" id="vamp${d}" ${attribute_extra("Vampire", true)}></input>
+    <label for="dead${d}">Dead</label>
+    <input type="checkbox" id="dead${d}" ${attribute_extra("Dead", false)}></input>
     <br>
     <label for="ampAR${d}">Amputee (arm, right)</label>
     <input type="checkbox" id="ampAR${d}" ${attribute_extra("AmputeeAR", true)}></input>
@@ -154,8 +185,8 @@ const appendPosition = (position, i) => {
     <label for="ampLL${d}">Amputee (leg, left)</label>
     <input type="checkbox" id="ampLL${d}" ${attribute_extra("AmputeeLL", true)}></input>
     <br>
-    <label for="dead${d}">Dead</label>
-    <input type="checkbox" id="dead${d}" ${attribute_extra("Dead", false)}></input>
+    <label for="optional${d}">Optional</label>
+    <input type="checkbox" id="optional${d}" ${attribute_extra("Optional", false)}></input>
     <br><br>
     <button id="remove${d}">Remove Position</button>`
   next.innerHTML = html;
@@ -170,7 +201,9 @@ const appendPosition = (position, i) => {
     console.log(boxes);
     let ids = [3, 5, 6, 7, 8, 9];
     ids.forEach(element => {
-      boxes[element].disabled = evt.target.value !== "Human";
+      const disable = evt.target.value !== "Human";
+      boxes[element].disabled = disable;
+      // boxes[element].checked = boxes[element].checked && !disable;
     });
   });
   node.getElementsByTagName('button')[0].addEventListener('click', removePosition);
@@ -224,8 +257,10 @@ window.addEventListener("DOMContentLoaded", () => {
   add_position_button.addEventListener('click', makePosition);
 
   tag_list = document.getElementById('stage_tags')
-  custom_tags = document.getElementById('custom_tags');
+  const custom_tags = document.getElementById('custom_tags');
   custom_tags.addEventListener('keydown', addTagCustom);
-  default_tags = document.getElementById('default_tags');
+  const default_tags = document.getElementById('default_tags');
   default_tags.addEventListener('change', addTagDefault)
+  const clear_tags = document.getElementById('clear_tags');
+  clear_tags.addEventListener('click', clearTags);
 });
