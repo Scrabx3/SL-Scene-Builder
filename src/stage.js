@@ -65,12 +65,9 @@ let tag_list;
 
 const hasTag = (tag) => {
   const divs = tag_list.getElementsByTagName('div');
-  for (const key in divs) {
-    if (Object.hasOwnProperty.call(divs, key)) {
-      const element = divs[key];
-      if (element.innerHTML.localeCompare(tag, 'en', { sensitivity: 'base' }) === 0)
-        return true;
-    }
+  for (const element of divs) {
+    if (element.innerHTML.localeCompare(tag, 'en', { sensitivity: 'base' }) === 0)
+      return true;
   }
   return false;
 }
@@ -98,23 +95,21 @@ const addTag = (tag) => {
     return;
   }
 
+  const next = makeTag(tag);
   if (tag_list.innerHTML !== '') {
     if (tag.localeCompare("NonSex", 'en', { sensitivity: 'base' }) === 0) {
       window.confirm("Are you sure?\n\nAdding this tag will remove all other tags.").then(result => {
         if (!result)
           return;
 
-        const next = makeTag(tag);
         tag_list.replaceChildren(next);
       })
       return;
     } else if (hasTag("NonSex")) {
-      const next = makeTag(tag);
       tag_list.replaceChildren(next);
       return;
     }
   }
-  const next = makeTag(tag);
   tag_list.appendChild(next);
 }
 
@@ -132,13 +127,6 @@ const addTagCustom = (evt) => {
 }
 
 const appendPosition = (position, i) => {
-  const attribute_futa = () => {
-    if (position.race === "Human")
-      return position.genders.includes("Futa") ? "checked" : "";
-    
-    return "disabled";
-  };
-
   const attribute_extra = (extra, dorace) => {
     if (!dorace || position.race === "Human")
       return position.extra.includes(extra) ? "checked" : "";
@@ -152,62 +140,70 @@ const appendPosition = (position, i) => {
 
   let html = `
     <h3 id="header${d}">Position ${i + 1}</h3>
-    <label for="event${d}">Animation Event:</label>
-    <input type="text" id="event${d}">${position.event}</input>
+    <label>Animation Event: <input type="text" name="anim">${position.event}</label>
 
     <h4>Gender:</h4>
-    <label for="male${d}">Male</label>
-    <input type="checkbox" id="male${d}" ${position.genders.includes("Male") ? "checked" : ""}></input>
-    <label for="female${d}">Female</label>
-    <input type="checkbox" id="female${d}" ${position.genders.includes("Female") ? "checked" : ""}></input>
-    <label for="futa${d}">Hermaphrodite</label>
-    <input type="checkbox" id="futa${d}" ${attribute_futa()}></input>
+    <label><input type="checkbox" class="gender">Male</label>
+    <label><input type="checkbox" class="gender">Female</label>
+    <label><input type="checkbox" class="gender race_dep">Hermaphrodite</label>
 
     <h4>Race and Extra:</h4>
-    <label for=racekey${d}>Race Key:</label>
-    <select id=racekey${d}>`
+    <label>Race Key: <select name="race_select">`
   racekeys.forEach(key => { html += `<option>${key}</option>` });
   html += `
-    </select><br>
-    <label for="victim${d}">Victim</label>
-    <input type="checkbox" id="victim${d}" ${attribute_extra("Victim", false)}></input>
-    <label for="vamp${d}">Vampire</label>
-    <input type="checkbox" id="vamp${d}" ${attribute_extra("Vampire", true)}></input>
-    <label for="dead${d}">Dead</label>
-    <input type="checkbox" id="dead${d}" ${attribute_extra("Dead", false)}></input>
+    </select></label><br><br>
+    <label><input type="checkbox" class="extra">Victim</label>
+    <label><input type="checkbox" class="extra race_dep">Vampire</label>
+    <label><input type="checkbox" class="extra">Dead</label>
     <br>
-    <label for="ampAR${d}">Amputee (arm, right)</label>
-    <input type="checkbox" id="ampAR${d}" ${attribute_extra("AmputeeAR", true)}></input>
-    <label for="ampAL${d}">Amputee (arm, left)</label>
-    <input type="checkbox" id="ampAL${d}" ${attribute_extra("AmputeeAL", true)}></input>
-    <label for="ampLR${d}">Amputee (leg, right)</label>
-    <input type="checkbox" id="ampLR${d}" ${attribute_extra("AmputeeLR", true)}></input>
-    <label for="ampLL${d}">Amputee (leg, left)</label>
-    <input type="checkbox" id="ampLL${d}" ${attribute_extra("AmputeeLL", true)}></input>
+    <label><input type="checkbox" class="extra race_dep" name="AmputeeAR"}>Amputee (arm, right)</label>
+    <label><input type="checkbox" class="extra race_dep" name="AmputeeAL"}>Amputee (arm, left)</label>
+    <label><input type="checkbox" class="extra race_dep" name="AmputeeLR"}>Amputee (leg, right)</label>
+    <label><input type="checkbox" class="extra race_dep" name="AmputeeLL"}>Amputee (leg, left)</label>
     <br>
-    <label for="optional${d}">Optional</label>
-    <input type="checkbox" id="optional${d}" ${attribute_extra("Optional", false)}></input>
+    <label><input type="checkbox" class="extra">Optional</label>
     <br><br>
-    <button id="remove${d}">Remove Position</button>`
+    <button name="remove_button">Remove Position</button>`
   next.innerHTML = html;
 
-  let position_holder = document.getElementById("position_holder");
-  const node = position_holder.appendChild(next);
-  const rk = node.getElementsByTagName('select')[0]
-  rk.value = position.race;
-  rk.addEventListener('change', (evt) => {
-    let parent = evt.target.parentElement;
-    let boxes = parent.getElementsByTagName('input');
-    console.log(boxes);
-    let ids = [3, 5, 6, 7, 8, 9];
-    ids.forEach(element => {
-      const disable = evt.target.value !== "Human";
-      boxes[element].disabled = disable;
-      // boxes[element].checked = boxes[element].checked && !disable;
-    });
+  const update_racedep = (race) => {
+    const racedep = next.getElementsByClassName('race_dep');
+    for (const obj of racedep) {
+      obj.disabled = race !== "Human";
+    }
+  }
+  update_racedep(position.race);
+
+  const genders = next.getElementsByClassName('gender');
+  for (const gender of genders) {
+    if (gender.disabled)
+      continue;
+
+    const name = gender.hasAttribute('name') ?
+      gender.getAttribute('name') : gender.textContent;
+    gender.checked = position.genders.includes(name);
+  }
+  const extras = next.getElementsByClassName('extra');
+  for (const extra of extras) {
+    if (extra.disabled)
+      continue;
+    
+    const name = extra.hasAttribute('name') ?
+      extra.getAttribute('name') : extra.textContent;
+    extra.checked = position.extra.includes(name);
+  }
+
+  const raceselect = next.querySelector('[name=race_select]');
+  raceselect.value = position.race;
+  raceselect.addEventListener('change', (evt) => {
+    const race = evt.target.value;
+    update_racedep(race);
   });
-  node.getElementsByTagName('button')[0].addEventListener('click', removePosition);
-  return node;
+  const removebutton = next.querySelector('[name=remove_button]');
+  removebutton.addEventListener('click', removePosition);
+
+  const position_holder = document.getElementById("position_holder");
+  return position_holder.appendChild(next);
 }
 
 const makePosition = () => {
@@ -248,6 +244,10 @@ const buildStage = async () => {
     const pos = stage.positions[i];
     appendPosition(pos, i);
   }
+}
+
+const saveStage = () => {
+
 }
 
 window.addEventListener("DOMContentLoaded", () => {
