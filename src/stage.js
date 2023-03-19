@@ -231,19 +231,37 @@ const removePosition = (evt) => {
 
 const buildStage = async () => {
   const stage = await invoke('get_stage');
+  // name
   let header = document.getElementById("stage_name");
   header.value = stage.name;
-
+  // positions
   for (let i = 0; i < stage.positions.length; i++) {
     const pos = stage.positions[i];
     appendPosition(pos);
   }
-
-
-  // TODO: tags and extra data
+  // offset
+  const offsets = document.querySelectorAll('.offset')
+  for (let i = 0; i < stage.offset.length; i++) {
+    offsets[i].value = stage.offset[i];
+  }
+  // extra
+  const extras = document.getElementsByClassName('stage_extra');
+  for (const extra of extras) {
+    const name = getName(extra);
+    const value = stage.extra.find(elm => { return elm.tag === name });
+    if (value) {
+      extra.value = value.v;
+    }
+  }
+  // tags
+  for (const tag of stage.tags) {
+    console.log(`reading tag ${tag}`);
+    addTag(tag);
+  }
 }
 
-const saveStage = () => {
+const saveStage = (evt) => {
+  evt.target.disabled = true;
   let stage = new Object();
   // name
   const header = document.getElementById('stage_name');
@@ -258,14 +276,14 @@ const saveStage = () => {
   for (let i = 0; i < positions.length; i++) {
     const p = positions[i];
     let next = new Object();
-    
+    // event
     const event = p.querySelector("[name=animation]");
     if (!event.value) {
       alert(`Missing animation event for position ${i + 1}`);
       return;
     }
     next.event = event.value;
-
+    // gender
     next.genders = new Array()
     const genders = p.querySelectorAll(".gender");
     for (const gender of genders) {
@@ -277,10 +295,10 @@ const saveStage = () => {
       alert(`Missing gender for position ${i + 1}`);
       return;
     }
-
+    // race
     const race = p.querySelector("[name=race_select]");
     next.race = race.value;
-
+    // extra
     next.extra = new Array();
     const extras = p.querySelectorAll(".pos_extra");
     for (const extra of extras) {
@@ -288,7 +306,6 @@ const saveStage = () => {
         next.extra.push(getName(extra));
       }
     }
-
     stage.positions.push(next);
   }
   if (stage.positions.length === 0) {
@@ -321,7 +338,7 @@ const saveStage = () => {
 
       console.log(stage);
       // TODO: save stage invoke
-      window.close();
+      // window.close();
     });
     return;
   }
