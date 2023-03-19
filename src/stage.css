@@ -1,0 +1,62 @@
+#base_data, #positions, #stage_extra  {
+    background-color: rgba(255, 255, 255, 0.048);
+    padding: 1em;
+    margin: 1em;
+}
+#position_holder {
+    margin: 2em;
+}
+#position_holder .position {
+    padding: .5em 2em 2em 2em;
+    border-bottom: 2px solid #445fef;
+    border-radius: 2em 2em 0 0;
+    background-color: rgba(255, 255, 255, 0.055);
+    margin-top: 2em;
+}
+h2[name="header"] {
+    text-align: center;
+    padding-bottom: 1em;
+    border-bottom: 2px solid;
+    border-image: linear-gradient(to right, #00008b00, #445fef, #00008b00 ) 1;
+}
+h4 {
+    text-align: left;
+    padding-bottom: 1em;
+    border-bottom: 2px solid;
+    border-image: linear-gradient(to right, #445fef, #00008b00) 1;
+}
+.position {
+    display: flex;
+    flex-flow: column;
+}
+div.row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    justify-content: space-evenly;
+}
+div.row h4 {
+    width: 100%;
+}
+fieldset {
+    border: none;
+    display:flex;
+    flex-direction: column;
+}
+fieldset label{
+    padding: .25em;
+}
+#stage_tags {
+    display: flex;
+    flex-direction: row;
+}
+
+#stage_tags div{
+    background-color: white;
+    color: black;
+    width: fit-content;
+    margin: 1em;
+    padding: .5em;
+    border-radius: 1em;
+}

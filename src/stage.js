@@ -133,31 +133,43 @@ const appendPosition = (position) => {
 
   const i = document.querySelectorAll('.position').length;
   let html = `
-    <h3 name="header">Position ${i + 1}</h3>
+    <h2 name="header">Position ${i + 1}</h2>
     <label>Animation Event: <input type="text" name="animation" placeholder="Animation Event"></label>
-
-    <h4>Gender:</h4>
-    <label><input type="checkbox" class="gender">Male</label>
-    <label><input type="checkbox" class="gender">Female</label>
-    <label><input type="checkbox" class="gender race_dep" name="Futa">Hermaphrodite</label>
-
-    <h4>Race and Extra:</h4>
-    <label>Race Key: <select name="race_select">`
-  racekeys.forEach(key => { html += `<option>${key}</option>` });
+    <div class="row">
+        <h4>Gender and Race Key:</h4>
+        <fieldset>
+          <label><input type="checkbox" class="gender">Male</label>
+          <label><input type="checkbox" class="gender">Female</label>
+          <label><input type="checkbox" class="gender race_dep" name="Futa">Hermaphrodite</label>
+        </fieldset>
+        <fieldset>
+          <label>Race Key:
+            <select name="race_select">`;
+  racekeys.forEach(key => { html += `<option>${key}</option>` });  
   html += `
-    </select></label><br><br>
-    <label><input type="checkbox" class="pos_extra">Victim</label>
-    <label><input type="checkbox" class="pos_extra race_dep">Vampire</label>
-    <label><input type="checkbox" class="pos_extra">Dead</label>
-    <br>
-    <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeAR"}>Amputee (arm, right)</label>
-    <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeAL"}>Amputee (arm, left)</label>
-    <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeLR"}>Amputee (leg, right)</label>
-    <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeLL"}>Amputee (leg, left)</label>
-    <br>
-    <label><input type="checkbox" class="pos_extra">Optional</label>
+            </select>
+          </label>
+        </fieldset>
+        
+        <h4>Extras:</h4><br><br>
+
+        <fieldset>
+          <label><input type="checkbox" class="pos_extra">Victim</label>
+          <label><input type="checkbox" class="pos_extra race_dep">Vampire</label>
+         <label><input type="checkbox" class="pos_extra">Dead</label>
+      </fieldset>
+      <fieldSet>
+        <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeAR"}>Amputee (arm, right)</label>
+        <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeAL"}>Amputee (arm, left)</label>
+       <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeLR"}>Amputee (leg, right)</label>
+        <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeLL"}>Amputee (leg, left)</label>
+      </fieldset>
+      <fieldset>
+        <label><input type="checkbox" class="pos_extra">Optional</label>
+      </fieldset>
+    </div>
     <br><br>
-    <button name="remove_button">Remove Position</button>`
+    <button name="remove_button">Remove Position</button>`;
   next.innerHTML = html;
 
   const update_racedep = (race) => {

@@ -1,0 +1,33 @@
+body {
+    background-color: #222431;
+    color: white;
+    padding: 1em;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    margin: 1em;
+}
+h1 {
+    border-bottom: 2px solid;
+    border-image: linear-gradient(to right, #445fef, #00008b00) 1;
+    font-weight: lighter;
+}
+button {
+    padding: .5em;
+    border-radius: 1.5em;
+    font-weight: bold;
+    color: white;
+    background-color: #445fef;
+    border: 1px solid #445eef7e;
+    width: 300px;
+}
+button:hover {
+    background-color: #445eef7e;
+
+}
+button {
+    box-shadow: none;
+    /* remove box shadow */
+}
+[type="checkbox"],
+[type="radio"] {
+    margin-right: .5em;
+}
