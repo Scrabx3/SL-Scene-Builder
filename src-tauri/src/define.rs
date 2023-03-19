@@ -20,13 +20,6 @@
 
 use serde::Serialize;
 
-#[repr(C)]
-#[derive(Debug, Serialize)]
-pub struct Value
-{
-	tag: String,
-	v: i32
-}
 
 #[repr(C)]
 #[derive(Debug, Serialize)]
@@ -36,7 +29,7 @@ pub struct Position
   race: String,
 	event: String,
 
-  extra: Vec<Value>
+  extra: Vec<String>
 }
 
 #[repr(C)]
@@ -47,13 +40,8 @@ pub struct Stage
 	name: String,
 
 	positions: Vec<Position>,
-	extra: Vec<Value>
-}
-
-impl Value {
-	pub fn new(tag: String, v: i32) -> Value {
-		Value{ tag, v }
-	}
+	extra: Vec<String>,
+	tags: Vec<String>
 }
 
 impl Position {
@@ -71,10 +59,11 @@ impl Stage {
 	pub fn default() -> Stage {
 		// TODO: ids should be default initialized into some unique id for the current project
 		Stage{ 
-			id: String::from("someid"), 
+			id: String::from("someid"),
 			name: String::from("STAGE NAME"),
 			positions: vec![Position::default(), Position::default()], 
-			extra: vec![] 
+			extra: vec![],
+			tags: vec![]
 		}
 	}
 }

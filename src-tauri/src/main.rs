@@ -8,7 +8,6 @@ mod define;
 #[tauri::command]
 async fn stage_creator(handle: tauri::AppHandle)
 {
-  println!("Invoked stage_creator");
   let _stage = tauri::WindowBuilder::new(
     &handle,
     "stage_window",
@@ -19,7 +18,6 @@ async fn stage_creator(handle: tauri::AppHandle)
 #[tauri::command]
 fn get_stage() -> define::Stage
 {
-  println!("Invoked get_stage");
   // TODO: this should return a new default initialized stage object OR a preloaded one for editing
   define::Stage::default()
 }

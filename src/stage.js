@@ -55,12 +55,7 @@ const racekeys = [
   "Wisps",
   "Wolves"
 ];
-
-// see define.rs for layout
-let stage;
-
 let add_position_button;
-
 let tag_list;
 
 const hasTag = (tag) => {
@@ -126,26 +121,25 @@ const addTagCustom = (evt) => {
   evt.target.value = '';
 }
 
-const appendPosition = (position, i) => {
-  const attribute_extra = (extra, dorace) => {
-    if (!dorace || position.race === "Human")
-      return position.extra.includes(extra) ? "checked" : "";
+const getName = (htmlinput) => {
+  const name = htmlinput.hasAttribute('name') ?
+    htmlinput.getAttribute('name') : htmlinput.parentElement.textContent;
+  return name;
+}
 
-    return "disabled";
-  };
-
-  const d = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+const appendPosition = (position) => {
   let next = document.createElement("div");
-  next.id = position.id = d;
+  next.classList.add('position')
 
+  const i = document.querySelectorAll('.position').length;
   let html = `
-    <h3 id="header${d}">Position ${i + 1}</h3>
-    <label>Animation Event: <input type="text" name="anim">${position.event}</label>
+    <h3 name="header">Position ${i + 1}</h3>
+    <label>Animation Event: <input type="text" name="animation" placeholder="Animation Event"></label>
 
     <h4>Gender:</h4>
     <label><input type="checkbox" class="gender">Male</label>
     <label><input type="checkbox" class="gender">Female</label>
-    <label><input type="checkbox" class="gender race_dep">Hermaphrodite</label>
+    <label><input type="checkbox" class="gender race_dep" name="Futa">Hermaphrodite</label>
 
     <h4>Race and Extra:</h4>
     <label>Race Key: <select name="race_select">`
@@ -172,29 +166,8 @@ const appendPosition = (position, i) => {
       obj.disabled = race !== "Human";
     }
   }
-  update_racedep(position.race);
-
-  const genders = next.getElementsByClassName('gender');
-  for (const gender of genders) {
-    if (gender.disabled)
-      continue;
-
-    const name = gender.hasAttribute('name') ?
-      gender.getAttribute('name') : gender.textContent;
-    gender.checked = position.genders.includes(name);
-  }
-  const extras = next.getElementsByClassName('extra');
-  for (const extra of extras) {
-    if (extra.disabled)
-      continue;
-    
-    const name = extra.hasAttribute('name') ?
-      extra.getAttribute('name') : extra.textContent;
-    extra.checked = position.extra.includes(name);
-  }
 
   const raceselect = next.querySelector('[name=race_select]');
-  raceselect.value = position.race;
   raceselect.addEventListener('change', (evt) => {
     const race = evt.target.value;
     update_racedep(race);
@@ -202,52 +175,145 @@ const appendPosition = (position, i) => {
   const removebutton = next.querySelector('[name=remove_button]');
   removebutton.addEventListener('click', removePosition);
 
+  // fill in data from position
+  if (position) {
+    // event
+    const animation = next.querySelector('[name=animation]');
+    animation.value = position.event;
+    // gender
+    const genders = next.getElementsByClassName('gender');
+    for (const gender of genders) {
+      if (gender.disabled)
+        continue;
+
+      const name = getName(gender);
+      gender.checked = position.genders.includes(name);
+    }
+    // race
+    raceselect.value = position.race;
+    update_racedep(position.race);
+    // extra
+    const extras = next.getElementsByClassName('extra');
+    for (const extra of extras) {
+      if (extra.disabled)
+        continue;
+
+      const name = getName(extra);
+      extra.checked = position.extra.includes(name);
+    }
+  }
   const position_holder = document.getElementById("position_holder");
-  return position_holder.appendChild(next);
+  return position_holder.appendChild(next);  
 }
 
 const makePosition = () => {
-  invoke("make_position").then(p => {
-    stage.positions.push(p);
-    appendPosition(p, stage.positions.length - 1);
-  });
-  if (stage.positions.length == 4) {
+  const next = appendPosition();
+  if (document.querySelectorAll('.position').length >= 5) {
     add_position_button.disabled = true;
   }
 }
 
 const removePosition = (evt) => {
-  let parent = evt.target.parentElement;
-  let newpos = [];
-  for (let i = 0, ii = 1; i < stage.positions.length; i++) {
-    const pos = stage.positions[i];
-    if (pos.id === parseInt(parent.id))
-      continue;
-
-    let header = document.getElementById(`header${pos.id}`);
-    header.innerHTML = `Position ${ii++}`;
-    newpos.push(pos);
-  }
-  stage.positions = newpos;
+  const parent = evt.target.parentElement;
   parent.remove();
 
-  if (add_position_button.disabled === true)
+  const positions = document.querySelectorAll('.position')
+  for (let i = 0; i < positions.length; i++) {
+    const element = positions[i];
+    const header = element.querySelector('[name=header]');
+    header.textContent = `Position ${i + 1}`;
+  }
+
+  if (add_position_button.disabled === true) {
     add_position_button.disabled = false;
+  }
 }
 
 const buildStage = async () => {
-  stage = await invoke('get_stage');
-  let header = document.getElementById("stage_header");
-  header.placeholder = stage.name;
+  const stage = await invoke('get_stage');
+  let header = document.getElementById("stage_name");
+  header.value = stage.name;
 
   for (let i = 0; i < stage.positions.length; i++) {
     const pos = stage.positions[i];
-    appendPosition(pos, i);
+    appendPosition(pos);
   }
+
+  // TODO: tags and extra data
 }
 
 const saveStage = () => {
+  let stage = new Object();
 
+  const header = document.getElementById('stage_name');
+  if (!header.value) {
+    alert('Stage is missing "name" attribute');
+    return;
+  }
+  stage.name = header.value;
+
+  const positions = document.querySelectorAll('.position')
+  stage.positions = new Array();
+  for (let i = 0; i < positions.length; i++) {
+    const p = positions[i];
+    let next = new Object();
+    
+    const event = p.querySelector("[name=animation]");
+    if (!event.value) {
+      alert(`Missing animation event for position ${i + 1}`);
+      return;
+    }
+    next.event = event.value;
+
+    next.genders = new Array()
+    const genders = p.querySelectorAll(".gender");
+    for (const gender of genders) {
+      if (gender.checked && !gender.disabled) {
+        next.genders.push(getName(gender));
+      }
+    }
+    if (next.genders.length === 0) {
+      alert(`Missing gender for position ${i + 1}`);
+      return;
+    }
+
+    const race = p.querySelector("[name=race_select]");
+    next.race = race.value;
+
+    next.extra = new Array();
+    const extras = p.querySelectorAll(".extra");
+    for (const extra of extras) {
+      if (extra.checked && !extra.disabled) {
+        next.extra.push(getName(extra));
+      }
+    }
+
+    stage.positions.push(next);
+  }
+  if (stage.positions.length === 0) {
+    alert("A stage requires at least 1 position");
+    return;
+  }
+
+  stage.tags = new Array();
+  const divs = tag_list.getElementsByTagName('div');
+  if (!divs.length) {
+    window.confirm("Sage has no tags defined. Are you sure you want to continue?").then(result => {
+      if (!result)
+        return;
+
+      console.log(stage);
+      // TODO: save stage invoke
+      window.close();
+    });
+    return;
+  }
+  for (const element of divs) {
+    stage.tags.push(element.innerHTML);
+  }
+  console.log(stage);
+  // TODO: save stage invoke
+  window.close();
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -263,4 +329,7 @@ window.addEventListener("DOMContentLoaded", () => {
   default_tags.addEventListener('change', addTagDefault)
   const clear_tags = document.getElementById('clear_tags');
   clear_tags.addEventListener('click', clearTags);
+
+  const save_stage = document.getElementById('save_stage')
+  save_stage.addEventListener('click', saveStage)
 });
