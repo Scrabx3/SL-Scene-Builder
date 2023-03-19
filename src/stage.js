@@ -146,16 +146,16 @@ const appendPosition = (position) => {
   racekeys.forEach(key => { html += `<option>${key}</option>` });
   html += `
     </select></label><br><br>
-    <label><input type="checkbox" class="extra">Victim</label>
-    <label><input type="checkbox" class="extra race_dep">Vampire</label>
-    <label><input type="checkbox" class="extra">Dead</label>
+    <label><input type="checkbox" class="pos_extra">Victim</label>
+    <label><input type="checkbox" class="pos_extra race_dep">Vampire</label>
+    <label><input type="checkbox" class="pos_extra">Dead</label>
     <br>
-    <label><input type="checkbox" class="extra race_dep" name="AmputeeAR"}>Amputee (arm, right)</label>
-    <label><input type="checkbox" class="extra race_dep" name="AmputeeAL"}>Amputee (arm, left)</label>
-    <label><input type="checkbox" class="extra race_dep" name="AmputeeLR"}>Amputee (leg, right)</label>
-    <label><input type="checkbox" class="extra race_dep" name="AmputeeLL"}>Amputee (leg, left)</label>
+    <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeAR"}>Amputee (arm, right)</label>
+    <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeAL"}>Amputee (arm, left)</label>
+    <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeLR"}>Amputee (leg, right)</label>
+    <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeLL"}>Amputee (leg, left)</label>
     <br>
-    <label><input type="checkbox" class="extra">Optional</label>
+    <label><input type="checkbox" class="pos_extra">Optional</label>
     <br><br>
     <button name="remove_button">Remove Position</button>`
   next.innerHTML = html;
@@ -193,7 +193,7 @@ const appendPosition = (position) => {
     raceselect.value = position.race;
     update_racedep(position.race);
     // extra
-    const extras = next.getElementsByClassName('extra');
+    const extras = next.getElementsByClassName('pos_extra');
     for (const extra of extras) {
       if (extra.disabled)
         continue;
@@ -239,19 +239,20 @@ const buildStage = async () => {
     appendPosition(pos);
   }
 
+
   // TODO: tags and extra data
 }
 
 const saveStage = () => {
   let stage = new Object();
-
+  // name
   const header = document.getElementById('stage_name');
   if (!header.value) {
     alert('Stage is missing "name" attribute');
     return;
   }
   stage.name = header.value;
-
+  // positions
   const positions = document.querySelectorAll('.position')
   stage.positions = new Array();
   for (let i = 0; i < positions.length; i++) {
@@ -281,7 +282,7 @@ const saveStage = () => {
     next.race = race.value;
 
     next.extra = new Array();
-    const extras = p.querySelectorAll(".extra");
+    const extras = p.querySelectorAll(".pos_extra");
     for (const extra of extras) {
       if (extra.checked && !extra.disabled) {
         next.extra.push(getName(extra));
@@ -294,7 +295,23 @@ const saveStage = () => {
     alert("A stage requires at least 1 position");
     return;
   }
-
+  // offset
+  const offsets = document.querySelectorAll('.offset')
+  stage.offset = new Array();
+  for (const iterator of offsets) {
+    const val = iterator.value;
+    const v = val ? parseFloat(val) : 0.0;
+    stage.offset.push(v);
+  }
+  // extra
+  const extras = document.getElementsByClassName('stage_extra');
+  stage.extra = new Array();
+  for (const extra of extras) {
+    const name = getName(extra);
+    const value = { tag: name, v: extra.value };
+    stage.extra.push(value);
+  }
+  // tags
   stage.tags = new Array();
   const divs = tag_list.getElementsByTagName('div');
   if (!divs.length) {
@@ -313,7 +330,7 @@ const saveStage = () => {
   }
   console.log(stage);
   // TODO: save stage invoke
-  window.close();
+  // window.close();
 }
 
 window.addEventListener("DOMContentLoaded", () => {

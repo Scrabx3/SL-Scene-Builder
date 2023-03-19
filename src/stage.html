@@ -69,18 +69,13 @@
     <button id="clear_tags">Clear Tags</button>
 
     <h3>Offset</h3>
-    <label for="offset_forward">X: </label>
-    <input id="offset_forward" type="number" step="0.1" placeholder="0.0"></input><br>
-    <label for="offset_side">Y: </label>
-    <input id="offset_side" type="number" step="0.1" placeholder="0.0"></input><br>
-    <label for="offset_up">Z: </label>
-    <input id="offset_up" type="number" step="0.1" placeholder="0.0"></input><br>
-    <label for="offset_angle">Angle: </label>
-    <input id="offset_angle" type="number" step="0.1" placeholder="0.0"></input><br>
+    <label>X: <input class="offset" type="number" step="0.1" placeholder="0.0"></label>
+    <label>Y: <input class="offset" type="number" step="0.1" placeholder="0.0"></label>
+    <label>Z: <input class="offset" type="number" step="0.1" placeholder="0.0"></label>
+    <label>Angle: <input class="offset" type="number" step="0.1" placeholder="0.0" min="0.0" max="360.0"></label>
 
     <h3>Extra</h3>
-    <label for="stage_dur">Fixed Duration: </label>
-    <input id="stage_dur" type="number" step="0.1" placeholder="0.0">
+    <label>Fixed Duration: <input class="stage_extra" name="FixedDur" type="number" step="0.1" placeholder="0.0" min="0.0"></label>
   </div>
 
   <br><br>
