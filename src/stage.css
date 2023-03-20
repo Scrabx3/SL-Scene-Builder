@@ -13,17 +13,30 @@
     background-color: rgba(255, 255, 255, 0.055);
     margin-top: 2em;
 }
-h2[name="header"] {
+h2 {
     text-align: center;
     padding-bottom: 1em;
     border-bottom: 2px solid;
     border-image: linear-gradient(to right, #00008b00, #445fef, #00008b00 ) 1;
 }
-h4 {
+h4, h3 {
     text-align: left;
     padding-bottom: 1em;
     border-bottom: 2px solid;
     border-image: linear-gradient(to right, #445fef, #00008b00) 1;
+}
+#position_holder button, #clear_tags {
+    margin: auto;
+    background-color: #95184e;
+    border: 1px solid #95184e;
+}
+#position_holder button:hover,
+#clear_tags:hover {
+    background-color: #95184e7e;
+    border: 1px solid #95184e7e;
+}
+#clear_tags{
+    margin: auto;
 }
 .position {
     display: flex;
@@ -50,6 +63,11 @@ fieldset label{
 #stage_tags {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    background-color: rgba(255, 255, 255, 0.048);
+    border-radius: 1em;
+    margin: 2em;
+    min-height: 66px;
 }
 
 #stage_tags div{
@@ -59,4 +77,15 @@ fieldset label{
     margin: 1em;
     padding: .5em;
     border-radius: 1em;
+    padding-right: 1.5em;
+}
+
+#stage_tags div::before{
+    content: "X";
+    margin-right: 1em;
+    padding: .25em;
+    border-radius: 4em;
+}
+#stage_tags div:hover{
+    background-color: #ffffff7e;
 }

@@ -16,12 +16,13 @@ button {
     font-weight: bold;
     color: white;
     background-color: #445fef;
-    border: 1px solid #445eef7e;
+    border: 1px solid #445eef;
     width: 300px;
+    cursor: pointer;
 }
 button:hover {
     background-color: #445eef7e;
-
+    border:1px solid #445eef7e;
 }
 button {
     box-shadow: none;
@@ -30,4 +31,10 @@ button {
 [type="checkbox"],
 [type="radio"] {
     margin-right: .5em;
+}
+input {
+    cursor: text;
+}
+label {
+    cursor: pointer;
 }
