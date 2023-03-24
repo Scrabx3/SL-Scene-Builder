@@ -19,10 +19,9 @@
     background-color: rgba(255, 255, 255, 0.055);
     margin-top: 2em;
     margin-right: 2em;
-    flex: 1 1 13%;
-    max-width: 444px; 
+    width: 680px;
 }
-#position_holder .position:last-child {
+#position_holder .position:last-child, #position_holder .position:last-child:nth-child(3) {
 margin-right: 0em;
 }
 h2 {
