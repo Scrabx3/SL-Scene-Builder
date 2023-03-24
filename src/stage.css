@@ -9,7 +9,7 @@
     align-content: flex-start;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
 }
 #position_holder .position {
@@ -19,7 +19,8 @@
     background-color: rgba(255, 255, 255, 0.055);
     margin-top: 2em;
     margin-right: 2em;
-    flex: 1 1 13%;    
+    flex: 1 1 13%;
+    max-width: 444px; 
 }
 #position_holder .position:last-child {
 margin-right: 0em;
@@ -97,9 +98,13 @@ fieldset label{
     padding: .25em;
     border-radius: 4em;
 }
+#stage_tags div:hover::before {
+    color:red;
+}
 #stage_tags div:hover{
     background-color: #ffffff7e;
 }
+
 #stage_extra .offset {
     display: flex;
     flex-wrap: wrap;
