@@ -22,7 +22,7 @@ button {
 }
 button:hover {
     background-color: #445eef7e;
-    border:1px solid #445eef7e;
+    border: 1px solid #445eef7e;
 }
 button {
     box-shadow: none;

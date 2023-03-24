@@ -5,6 +5,12 @@
 }
 #position_holder {
     margin: 2em;
+    display: flex;
+    align-content: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
 }
 #position_holder .position {
     padding: .5em 2em 2em 2em;
@@ -12,6 +18,11 @@
     border-radius: 2em 2em 0 0;
     background-color: rgba(255, 255, 255, 0.055);
     margin-top: 2em;
+    margin-right: 2em;
+    flex: 1 1 13%;    
+}
+#position_holder .position:last-child {
+margin-right: 0em;
 }
 h2 {
     text-align: center;
@@ -88,4 +99,15 @@ fieldset label{
 }
 #stage_tags div:hover{
     background-color: #ffffff7e;
+}
+#stage_extra .offset {
+    display: flex;
+    flex-wrap: wrap;
+}
+#stage_extra .offset h3 {
+    width: 100%;
+}
+#stage_extra .offset label {
+    display: flex;
+    padding: 1em 1em 0em 0em;
 }
