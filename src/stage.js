@@ -251,11 +251,6 @@ const buildStage = async () => {
     const pos = stage.positions[i];
     appendPosition(pos);
   }
-  // offset
-  const offsets = document.querySelectorAll('.offset')
-  for (let i = 0; i < stage.offset.length; i++) {
-    offsets[i].value = stage.offset[i];
-  }
   // extra
   const extras = document.getElementsByClassName('stage_extra');
   for (const extra of extras) {
@@ -273,93 +268,122 @@ const buildStage = async () => {
 }
 
 const saveStage = (evt) => {
-  evt.target.disabled = true;
-  let stage = new Object();
-  // name
-  const header = document.getElementById('stage_name');
-  if (!header.value) {
-    alert('Stage is missing "name" attribute');
-    return;
-  }
-  stage.name = header.value;
-  // positions
-  const positions = document.querySelectorAll('.position')
-  stage.positions = new Array();
-  for (let i = 0; i < positions.length; i++) {
-    const p = positions[i];
-    let next = new Object();
-    // event
-    const event = p.querySelector("[name=animation]");
-    if (!event.value) {
-      alert(`Missing animation event for position ${i + 1}`);
-      return;
+  const getStageName = () => {
+    const header = document.getElementById('stage_name');
+    if (!header.value) {
+      throw "Missing 'name' attribute";
     }
-    next.event = event.value;
-    // gender
-    next.genders = new Array()
-    const genders = p.querySelectorAll(".gender");
-    for (const gender of genders) {
-      if (gender.checked && !gender.disabled) {
-        next.genders.push(getName(gender));
-      }
+    return header.value;
+  }
+  const getPositions = () => {
+    const positions = document.querySelectorAll('.position')
+    if (positions.length == 0) {
+      throw "Missing 'positions' attribute";
     }
-    if (next.genders.length === 0) {
-      alert(`Missing gender for position ${i + 1}`);
-      return;
-    }
-    // race
-    const race = p.querySelector("[name=race_select]");
-    next.race = race.value;
-    // extra
-    next.extra = new Array();
-    const extras = p.querySelectorAll(".pos_extra");
-    for (const extra of extras) {
-      if (extra.checked && !extra.disabled) {
-        next.extra.push(getName(extra));
-      }
-    }
-    stage.positions.push(next);
-  }
-  if (stage.positions.length === 0) {
-    alert("A stage requires at least 1 position");
-    return;
-  }
-  // offset
-  const offsets = document.querySelectorAll('.offset')
-  stage.offset = new Array();
-  for (const iterator of offsets) {
-    const val = iterator.value;
-    const v = val ? parseFloat(val) : 0.0;
-    stage.offset.push(v);
-  }
-  // extra
-  const extras = document.getElementsByClassName('stage_extra');
-  stage.extra = new Array();
-  for (const extra of extras) {
-    const name = getName(extra);
-    const value = { tag: name, v: extra.value };
-    stage.extra.push(value);
-  }
-  // tags
-  stage.tags = new Array();
-  const divs = tag_list.getElementsByTagName('div');
-  if (!divs.length) {
-    window.confirm("Sage has no tags defined. Are you sure you want to continue?").then(result => {
-      if (!result)
-        return;
+    let ret = new Array();
+    for (let i = 0; i < positions.length; i++) {
+      const element = positions[i];
 
-      console.log(stage);
-      // TODO: save stage invoke
-      // window.close();
-    });
-    return;
+      const getEvent = () => {
+        const event = element.querySelector("[name=animation]");
+        if (!event.value) {
+          throw `Position ${i} has no event.`;
+        }
+        return event.value;
+      };
+      const getGenders = () => {
+        const genders = element.querySelectorAll(".gender");
+        if (genders.length == 0) {
+          throw `Position ${i} has no gender.`;
+        }
+        let ret = new Array();
+        for (const gender of genders) {
+          if (gender.checked && !gender.disabled) {
+            ret.push(getName(gender));
+          }
+        }
+        return ret;
+      };
+      const getRace = () => {
+        const race = element.querySelector("[name=race_select]");
+        return race.value;
+      };
+      const getExtras = () => {
+        const extras = element.querySelectorAll(".pos_extra");
+        let ret = new Array();
+        for (const extra of extras) {
+          if (extra.checked && !extra.disabled) {
+            ret.push(getName(extra));
+          }
+        }
+        return ret;
+      };
+      const getOffsets = () => {
+        // TODO: implement
+        let ret = {
+          x: 0.0,
+          y: 0.0,
+          z: 0.0,
+          angle: 0.0
+        }
+        return ret;
+      };
+
+      let position = {
+        genders: getGenders(),
+        race: getRace(),
+        event: getEvent(),
+
+        extra: getExtras(),
+        offset: getOffsets()
+      }
+      console.log(position);
+      ret.push(position);
+    }
+    return ret;
   }
-  for (const element of divs) {
-    stage.tags.push(element.innerHTML);
+  const getTags = () => {
+    const divs = tag_list.getElementsByTagName('div');
+    if (!divs.length) {
+      throw "Missing 'tags' attribute";
+    }
+    let ret = new Array();
+    for (const element of divs) {
+      ret.push(element.innerHTML);
+    }
+    return ret
   }
-  console.log(stage);
-  // TODO: save stage invoke
-  // window.close();
+  const getExtras = () => {
+    const extras = document.getElementsByClassName('stage_extra');
+    let ret = new Array();
+    for (const extra of extras) {
+      const value = {
+        tag: getName(extra),
+        v: extra.value ? parseFloat(extra.value) : parseFloat(extra.placeholder)
+      };
+      ret.push(value);
+    }
+    return ret;
+  }
+
+  evt.target.disabled = true;
+  try {
+    let stage = { 
+      id: 0,
+      name: getStageName(),
+
+      positions: [],  //getPositions(),
+      tags: getTags(),
+      extra: getExtras()
+    }
+    console.log(stage);
+    invoke("save_stage", { stage: stage, })
+      .then((message) => console.log(message))
+      .catch((error) => console.error(error));
+  } catch (error) {
+    evt.target.disabled = false;
+    alert(error);
+  }  
 }
 
 window.addEventListener("DOMContentLoaded", () => {

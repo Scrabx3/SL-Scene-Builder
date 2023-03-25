@@ -9,9 +9,9 @@ pub struct Stage
 	name: String,
 
 	positions: Vec<Position>,
-	offset: Vec<f32>,
-	extra: Vec<Value>,
-	tags: Vec<String>
+	tags: Vec<String>,
+
+	extra: Vec<Value>
 }
 
 impl Stage {
@@ -20,17 +20,14 @@ impl Stage {
 			id: 0,
 			name: String::from(""),
 			positions: vec![Position::default()],
-			offset: vec![0.0, 0.0, 0.0, 0.0],
-			extra: vec![],
-			tags: vec![]
+			tags: vec![],
+			extra: vec![]
 		}
 	}
 
-	pub fn make_id(mut self) -> Stage {
+	pub fn make_id(&mut self) -> () {
 		let rng = rand::thread_rng().gen_range(1..=u64::MAX);
 		self.id = rng;
-
-		self
 	}
 
 	pub fn get_id(&self) -> u64 {
@@ -39,9 +36,9 @@ impl Stage {
 }
 
 impl PartialEq for Stage {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
+  fn eq(&self, other: &Self) -> bool {
+    self.id == other.id
+  }
 }
 
 #[repr(C)]
@@ -52,7 +49,8 @@ pub struct Position
   race: String,
 	event: String,
 
-  extra: Vec<String>
+  extra: Vec<String>,
+	offset: Offset
 }
 
 impl Position {
@@ -61,9 +59,20 @@ impl Position {
 			genders: vec![String::from("Male")],
 			race: String::from("Human"),
 			event: String::from(""),
-			extra: vec![]
+			extra: vec![],
+			offset: Offset { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 }
 		}
 	}
+}
+
+#[repr(C)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Offset
+{
+	x: f32,
+	y: f32,
+	z: f32,
+	angle: f32
 }
 
 #[repr(C)]

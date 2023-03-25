@@ -88,11 +88,11 @@ fn get_stage(window: tauri::Window) -> define::Stage
 }
 
 #[tauri::command]
-fn save_stage(window: tauri::Window, mut stage: define::Stage)
+async fn save_stage(window: tauri::Window, mut stage: define::Stage)
 {
   let id = get_window_stage_id(&window);
   if id == 0 {
-    stage = stage.make_id();
+    stage.make_id();
   }
   data::DATA.lock().unwrap()
     .add_stage(stage)
@@ -107,7 +107,6 @@ fn get_window_stage_id(window: &tauri::Window) -> u64 {
   // "stage_window_<id>"
   let label = window.label();
   let str_id = label.substring(label.rfind('_').unwrap() + 1, label.len());
-  println!("str_id = {}", str_id);
   let result = str_id.parse::<u64>();
   match result {
     Ok(_) => {
