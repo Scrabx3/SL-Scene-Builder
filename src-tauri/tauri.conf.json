@@ -55,15 +55,6 @@
     },
     "updater": {
       "active": false
-    },
-    "windows": [
-      {
-        "fullscreen": false,
-        "height": 600,
-        "resizable": true,
-        "title": "Scene Builder",
-        "width": 800
-      }
-    ]
+    }
   }
 }
