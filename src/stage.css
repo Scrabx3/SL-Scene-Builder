@@ -1,10 +1,10 @@
 #base_data, #positions, #stage_extra  {
     background-color: rgba(255, 255, 255, 0.048);
-    padding: 1em;
-    margin: 1em;
+    padding: .5em;
+    margin: .5em;
 }
 #position_holder {
-    margin: 2em;
+    margin: 1em;
     display: flex;
     align-content: flex-start;
     flex-direction: row;
@@ -12,21 +12,24 @@
     justify-content: flex-start;
     align-items: center;
 }
-#position_holder .position {
-    padding: .5em 2em 2em 2em;
+.position {
+    padding: .25em 1em 1em 1em;
     border-bottom: 2px solid #445fef;
     border-radius: 2em 2em 0 0;
     background-color: rgba(255, 255, 255, 0.055);
-    margin-top: 2em;
-    margin-right: 2em;
-    width: 680px;
+    margin-top: 1em;
+    margin-right: 1em;
+    width: 315px;
+}
+.position:hover{
+    background-color: rgba(255, 255, 255, 0.1);
 }
 #position_holder .position:last-child, #position_holder .position:last-child:nth-child(3) {
 margin-right: 0em;
 }
 h2 {
     text-align: center;
-    padding-bottom: 1em;
+    padding-bottom: .5em;
     border-bottom: 2px solid;
     border-image: linear-gradient(to right, #00008b00, #445fef, #00008b00 ) 1;
 }
@@ -58,7 +61,7 @@ div.row {
     flex-direction: row;
     flex-wrap: wrap;
     flex-grow: 1;
-    justify-content: space-evenly;
+    justify-content: flex-start;
 }
 div.row h4 {
     width: 100%;
@@ -88,7 +91,7 @@ fieldset label{
     margin: 1em;
     padding: .5em;
     border-radius: 1em;
-    padding-right: 1.5em;
+    padding-right: .75em;
 }
 
 #stage_tags div::before{
@@ -113,5 +116,5 @@ fieldset label{
 }
 #stage_extra .offset label {
     display: flex;
-    padding: 1em 1em 0em 0em;
+    padding: .5em .5em 0em 0em;
 }

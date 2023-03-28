@@ -1,9 +1,9 @@
 body {
     background-color: #222431;
     color: white;
-    padding: 1em;
+    padding: .5em;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
-    margin: 1em;
+    margin: .5em;
 }
 h1 {
     border-bottom: 2px solid;
@@ -37,4 +37,10 @@ input {
 }
 label {
     cursor: pointer;
+}
+input:focus::-webkit-input-placeholder {
+    color: #d3d3d3;
+}
+h1,h2,h3,h4,h5{
+    font-size: 1.1em;
 }
