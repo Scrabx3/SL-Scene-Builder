@@ -1,5 +1,5 @@
 #base_data, #positions, #stage_extra  {
-    background-color: rgba(255, 255, 255, 0.048);
+    background: linear-gradient(3deg, rgba(255, 255, 255, 0.048) 30%, rgba(255, 255, 255, 0) 64%);
     padding: .5em;
     margin: .5em;
 }
@@ -117,4 +117,15 @@ fieldset label{
 #stage_extra .offset label {
     display: flex;
     padding: .5em .5em 0em 0em;
+}
+#stage_extra_holder:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+#stage_extra_holder {
+    padding: .25em 1em 1em 1em;
+    border-bottom: 2px solid #445fef;
+    border-radius: 2em 2em 0 0;
+    background-color: rgba(255, 255, 255, 0.055);
+
+    margin: 1em;
 }
