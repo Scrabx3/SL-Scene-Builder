@@ -129,3 +129,13 @@ fieldset label{
 
     margin: 1em;
 }
+body {
+    font-size: .9em;
+}
+
+fieldset {
+    border: none;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
