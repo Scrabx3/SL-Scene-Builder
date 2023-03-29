@@ -1,11 +1,19 @@
 use serde::{Serialize, Deserialize};
-use rand::{self, Rng};
+use std::collections::BTreeMap;
+
+#[repr(C)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Animation
+{
+	pub name: String,
+	pub graph: BTreeMap<u64, Vec<u64>>
+}
 
 #[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Stage
 {
-	id: u64,
+	pub id: u64,
 	name: String,
 
 	positions: Vec<Position>,
@@ -23,15 +31,6 @@ impl Stage {
 			tags: vec![],
 			extra: vec![]
 		}
-	}
-
-	pub fn make_id(&mut self) -> () {
-		let rng = rand::thread_rng().gen_range(1..=u64::MAX);
-		self.id = rng;
-	}
-
-	pub fn get_id(&self) -> u64 {
-		self.id
 	}
 }
 
