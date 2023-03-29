@@ -44,3 +44,28 @@ input:focus::-webkit-input-placeholder {
 h1,h2,h3,h4,h5{
     font-size: 1.1em;
 }
+
+.box {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-color: blue;
+}
+
+#box1 {
+    top: 100px;
+    left: 100px;
+}
+
+#box2 {
+    top: 200px;
+    left: 200px;
+}
+
+#graph {
+    border: 1px dashed rgb(200, 200, 200);
+    position: relative;
+    width: 95vw;
+    height: 80vh;
+    z-index: -1;
+}

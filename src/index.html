@@ -5,30 +5,34 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- <base href="../node_modules/"> -->
   <title>SexLab Scene Builder</title>
 </head>
 
 <style></style>
-<script src="./main.js"></script>
+<script type="module" src="./main.js" defer></script>
 <link rel="stylesheet" href="./defaultstyle.css">
 <link rel="stylesheet" href="./style.css">
 <h1>SexLab Scene Builder</h1>
 
 <body>
-  <div id="stages">
-    <!-- Header // TODO: Search bar, filter settings, etc -->
+  <div>
     <button id="make_stage">Add Stage</button>
-    <!-- Body -->
+    <div id="graph"></div>
+  </div>
+  <!-- <div id="box1" class="box"></div> -->
+  <!-- <div id="box2" class="box"></div> -->
+
+  <!-- <div id="graphs">
+    
     <div id="stage_holder"></div>
   </div>
 
   <div id="graph_interface">
-    <!-- TODO: need to figure out where to view/edit/save existing graphs -->
   </div>
 
   <div id="extra">
-    <!-- IDEA: This div for meta data display + fields? (like author name, total num of stages) -->
-  </div>
+  </div> -->
 </body>
 
 </html>

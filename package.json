@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@jsplumb/browser-ui": "^5.13.7",
+    "@tauri-apps/api": "^1.2.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/api": "^1.2.0",
+    "@tauri-apps/cli": "^1.2.3"
+  }
+}
