@@ -88,17 +88,22 @@ fn get_stage(window: tauri::Window) -> define::Stage
 }
 
 #[tauri::command]
-async fn save_stage(window: tauri::Window, mut stage: define::Stage)
+async fn save_stage(window: tauri::Window, app_handle: tauri::AppHandle, mut stage: define::Stage)
 {
-  let id = get_window_stage_id(&window);
-  if id == 0 {
-    stage.make_id();
-  }
-  data::DATA.lock().unwrap()
-    .add_stage(stage)
-    .expect("Failed to add stage");
+  stage.id = get_window_stage_id(&window);
+  let mut data = data::DATA.lock().unwrap();
+  let insert = data.insert_stage(stage);
 
-  window.close().expect("Failed to close window");
+  match app_handle.get_window("main_window") {
+    Some(window) => {
+      window.emit("save_stage", insert.clone()).unwrap();
+    },
+    None => {
+      panic!("Cannot find main window");
+    },
+  }
+
+  window.close().expect("Failed to close stage builder window");
 }
 
 /// UTILITY
