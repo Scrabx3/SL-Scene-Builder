@@ -2,7 +2,7 @@
   all(not(debug_assertions), target_os = "windows"),
   windows_subsystem = "windows"
 )]
-use tauri::{CustomMenuItem, Menu, MenuItem, Submenu, WindowBuilder, Manager};
+use tauri::{CustomMenuItem, Menu, MenuItem, Submenu, WindowBuilder, Manager, Runtime};
 use substring::Substring;
 
 mod define;
@@ -15,7 +15,8 @@ fn main()
     .invoke_handler(tauri::generate_handler![
       stage_creator,
       get_stage,
-      save_stage])
+      save_stage,
+      make_position])
     .setup(|app| {
       let window = WindowBuilder::new(
           app,
@@ -86,6 +87,17 @@ fn get_stage(window: tauri::Window) -> define::Stage
 
   define::Stage::default()
 }
+
+#[tauri::command]
+fn make_position<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>) -> define::Position {
+  define::Position::default()
+}
+
+// IDEA: allow copy initialize a new position on front end?
+// #[tauri::command]
+// async fn make_position_from<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, from: define::Position) -> Result<(), String> {
+//   Ok(())
+// }
 
 #[tauri::command]
 async fn save_stage(window: tauri::Window, app_handle: tauri::AppHandle, mut stage: define::Stage)

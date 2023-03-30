@@ -76,11 +76,41 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 function Stage(args) {
   const [stage, setStage] = useState(args.stage);
 
-  let i = 1;
-  function Position(args) {
+  
+  const addPosition = () => {
+    let add_pos = document.getElementById('add_position');
+    if (stage.positions.length >= 4) {
+      add_pos.disabled = true;
+    }
+
+    invoke('make_position').then((s) => {
+      setStage(stage => {
+        let ret = structuredClone(stage);
+        ret.positions.push(s);
+        return ret;
+      });
+    });
+  };
+
+  const removePosition = (evt) => {
+    const id_str = evt.target.parentElement.id;
+    const id = parseInt(id_str.substring(1));
+    setStage(stage => {
+      let ret = structuredClone(stage);
+      ret.positions.splice(id, 1);
+      return ret;
+    });
+
+    let add_pos = document.getElementById('add_position');
+    if (add_pos.disabled) {
+      add_pos.disabled = false;
+    }
+  };
+
+  function Position({position, i}) {
     return (
-      <div className="position">
-        <h2 name="header">Position {args.key}</h2>
+      <div id={`P${i}`} className="position">
+        <h2 name="header">Position {i + 1}</h2>
         <label>Animation: <input type="text" name="animation" placeholder="behavior.hkx"></input></label>
 
         <div className="row">
@@ -97,9 +127,9 @@ function Stage(args) {
             </label>
           </fieldset>
           <fieldset>
-            <label><input type="checkbox" className="gender"></input>Male</label>
-            <label><input type="checkbox" className="gender"></input>Female</label>
-            <label><input type="checkbox" className="gender race_dep" name="Futa"></input>Hermaphrodite</label>
+            <label><input type="checkbox" className="gender"/>Male</label>
+            <label><input type="checkbox" className="gender"/>Female</label>
+            <label><input type="checkbox" className="gender race_dep" name="Futa"/>Hermaphrodite</label>
           </fieldset>
 
           <h4>Extra</h4>
@@ -126,11 +156,12 @@ function Stage(args) {
             <label>Angle: <input className="offset" type="number" step="0.1" placeholder="0.0" min="0.0" max="360.0"></input></label>
           </fieldset>
         </div>
-        <button name="remove_button">Remove</button>
+        <button onClick={removePosition}>Remove</button>
       </div>
     )
   }
 
+  let i = 0;
   return (
     <div>
       <h1>Stage Builder</h1>
@@ -140,12 +171,17 @@ function Stage(args) {
       </div>
 
       <div id="positions">
-        {stage.positions.map(pos =>
-          <div key={i++}>
-            <Position args={pos} i={i}/>
-          </div>
+        {
+          stage.positions.map(pos => {
+            return (
+              <div key={i}>
+                <Position position={pos} i={i++}/>
+              </div>
+            )
+          }
+          
         )}
-        <button id="add_position">Add Position</button>
+        <button id="add_position" onClick={addPosition}>Add Position</button>
       </div>
 
       <div id="stage_extra">
