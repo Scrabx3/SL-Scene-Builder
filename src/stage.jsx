@@ -1,4 +1,11 @@
-const invoke = window.__TAURI__.invoke
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./defaultstyle.css";
+import "./App.css"
+import "./stage.css";
+
+import { invoke } from "@tauri-apps/api/tauri";
+import { useState } from "react";
 
 const racekeys = [
   "Human",
@@ -55,8 +62,152 @@ const racekeys = [
   "Wisps",
   "Wolves"
 ];
-let add_position_button;
-let tag_list;
+
+let stage = null;
+document.addEventListener('DOMContentLoaded', async (event) => {
+  stage = await invoke('get_stage');
+  ReactDOM.createRoot(document.getElementById("root_s")).render(
+    <React.StrictMode>
+      <Stage stage={stage}/>
+    </React.StrictMode>
+  );
+});
+
+function Stage(args) {
+  const [stage, setStage] = useState(args.stage);
+
+  let i = 1;
+  function Position(args) {
+    return (
+      <div className="position">
+        <h2 name="header">Position {args.key}</h2>
+        <label>Animation: <input type="text" name="animation" placeholder="behavior.hkx"></input></label>
+
+        <div className="row">
+          <h4>Actor</h4>
+          <fieldset>
+            <label>Race:
+              <select 
+                name="race_select"
+                defaultValue={"Human"}>
+                {racekeys.map(race => 
+                  <option key={race}>{race}</option>
+                )}
+              </select>
+            </label>
+          </fieldset>
+          <fieldset>
+            <label><input type="checkbox" className="gender"></input>Male</label>
+            <label><input type="checkbox" className="gender"></input>Female</label>
+            <label><input type="checkbox" className="gender race_dep" name="Futa"></input>Hermaphrodite</label>
+          </fieldset>
+
+          <h4>Extra</h4>
+          <fieldset>
+            <label><input type="checkbox" className="pos_extra"></input>Victim</label>
+            <label><input type="checkbox" className="pos_extra race_dep"></input>Vampire</label>
+            <label><input type="checkbox" className="pos_extra"></input>Dead</label>
+          </fieldset>
+          <fieldset>
+            <label><input type="checkbox" className="pos_extra race_dep" name="AmputeeAR"></input>Amputee (arm, right)</label>
+            <label><input type="checkbox" className="pos_extra race_dep" name="AmputeeAL"></input>Amputee (arm, left)</label>
+            <label><input type="checkbox" className="pos_extra race_dep" name="AmputeeLR"></input>Amputee (leg, right)</label>
+            <label><input type="checkbox" className="pos_extra race_dep" name="AmputeeLL"></input>Amputee (leg, left)</label>
+          </fieldset>
+          <fieldset>
+            <label><input type="checkbox" className="pos_extra"></input>Optional</label>
+          </fieldset>
+
+          <fieldset className="offset">
+            <h3>Offset</h3>
+            <label>X: <input className="offset" type="number" step="0.1" placeholder="0.0"></input></label>
+            <label>Y: <input className="offset" type="number" step="0.1" placeholder="0.0"></input></label>
+            <label>Z: <input className="offset" type="number" step="0.1" placeholder="0.0"></input></label>
+            <label>Angle: <input className="offset" type="number" step="0.1" placeholder="0.0" min="0.0" max="360.0"></input></label>
+          </fieldset>
+        </div>
+        <button name="remove_button">Remove</button>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <h1>Stage Builder</h1>
+
+      <div id="base_data">
+        <label>Stage: <input id="stage_name" type="text" placeholder="My Stage"></input></label>
+      </div>
+
+      <div id="positions">
+        {stage.positions.map(pos =>
+          <div key={i++}>
+            <Position args={pos} i={i}/>
+          </div>
+        )}
+        <button id="add_position">Add Position</button>
+      </div>
+
+      <div id="stage_extra">
+        <div id="stage_extra_holder">
+          <h2>Stage Data</h2>
+          <h3>Tags</h3>
+          <label htmlFor="default_tags">Add default tag </label>
+          <select id="default_tags">
+            <option disabled>--- Exclusive ---</option>
+            <option>DisallowBed</option>
+            <option>BedOnly</option>
+            <option>Furniture</option>
+            <option disabled>--- SFW ---</option>
+            <option>Strict SFW</option>
+            <option>Hugging</option>
+            <option>Kissing</option>
+            <option disabled>--- NSFW ---</option>
+            <option>69</option>
+            <option>Aggressive</option>
+            <option>Anal</option>
+            <option>Blowjob</option>
+            <option>Boobjob</option>
+            <option>Cowgirl</option>
+            <option>Doggy</option>
+            <option>Double Penetration</option>
+            <option>Feet</option>
+            <option>Femdom</option>
+            <option>Footjob</option>
+            <option>Forced</option>
+            <option>Gay</option>
+            <option>Handjob</option>
+            <option>Lesbian</option>
+            <option>Loving</option>
+            <option>Masturbation</option>
+            <option>Missionary</option>
+            <option>Oral</option>
+            <option>Penetration</option>
+            <option>Reverse Cowgirl</option>
+            <option>Spitroast</option>
+            <option>Threesome</option>
+            <option>Triple Penetration</option>
+            <option>Vaginal</option>
+          </select>
+          <label htmlFor="custom_tags">Add custom tag </label>
+          <input id="custom_tags" type="text" placeholder="tag"></input>
+      
+          <label htmlFor="stage_tags">Current tags: </label>
+          <div id="stage_tags"></div>
+          <button id="clear_tags">Clear Tags</button>
+      
+          <h3>Extra</h3>
+          <label>Fixed Duration: <input className="stage_extra" name="FixedDur" type="number" step="0.1" placeholder="0.0" min="0.0"></input></label>
+        </div>
+      </div>
+      <button id="save_stage">Save Stage</button>
+    </div>
+  )
+}
+
+export default Stage;
+
+/* LEGACY CODE
 
 const hasTag = (tag) => {
   const divs = tag_list.getElementsByTagName('div');
@@ -390,21 +541,6 @@ const saveStage = (evt) => {
     alert(error);
   }  
 }
+ 
+*/
 
-window.addEventListener("DOMContentLoaded", () => {
-  buildStage();
-
-  add_position_button = document.getElementById('add_position');
-  add_position_button.addEventListener('click', makePosition);
-
-  tag_list = document.getElementById('stage_tags')
-  const custom_tags = document.getElementById('custom_tags');
-  custom_tags.addEventListener('keydown', addTagCustom);
-  const default_tags = document.getElementById('default_tags');
-  default_tags.addEventListener('change', addTagDefault)
-  const clear_tags = document.getElementById('clear_tags');
-  clear_tags.addEventListener('click', clearTags);
-
-  const save_stage = document.getElementById('save_stage')
-  save_stage.addEventListener('click', saveStage)
-});

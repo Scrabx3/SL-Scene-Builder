@@ -1,30 +1,28 @@
 {
   "build": {
-    "beforeBuildCommand": "",
-    "beforeDevCommand": "",
-    "devPath": "../src",
-    "distDir": "../src",
-    "withGlobalTauri": true
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist",
+    "withGlobalTauri": false
   },
   "package": {
-    "productName": "SLSceneBuilder",
-    "version": "0.1.0"
+    "productName": "Scene-Builder",
+    "version": "0.0.0"
   },
   "tauri": {
     "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      },
       "dialog": {
-        "message": true,
-        "confirm": true
+        "all": true
       }
     },
     "bundle": {
       "active": true,
-      "category": "DeveloperTool",
-      "copyright": "",
-      "deb": {
-        "depends": []
-      },
-      "externalBin": [],
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
@@ -32,23 +30,8 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "sl.scenebuilder.dev",
-      "longDescription": "",
-      "macOS": {
-        "entitlements": null,
-        "exceptionDomain": "",
-        "frameworks": [],
-        "providerShortName": null,
-        "signingIdentity": null
-      },
-      "resources": [],
-      "shortDescription": "",
-      "targets": "all",
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": ""
-      }
+      "identifier": "com.tauri.dev",
+      "targets": "all"
     },
     "security": {
       "csp": null
