@@ -38,13 +38,15 @@ impl Scene {
       Ok(())
     }
     
-    pub fn insert_stage(&mut self, mut stage: define::Stage) -> &define::Stage {
+    pub fn insert_stage(&mut self, stage: define::Stage) -> Result<&define::Stage, &'static str> {
       if stage.id == 0 {
-        return self.add_new_stage(stage);
+        return Ok(self.add_new_stage(stage));
+      } else if !self.stages.contains_key(&stage.id) {
+        return Err("Given stage uses an invalid key");
       }
       let id = stage.id;
       self.stages.insert(id, stage);
-      self.stages.get(&id).unwrap()
+      Ok(self.stages.get(&id).unwrap())
     }
 
     fn add_new_stage(&mut self, mut stage: define::Stage) -> &define::Stage {

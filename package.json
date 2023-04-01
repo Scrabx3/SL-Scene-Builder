@@ -13,7 +13,8 @@
     "@jsplumb/browser-ui": "^5.13.7",
     "@tauri-apps/api": "^1.2.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "use-immer": "^0.8.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.2.2",

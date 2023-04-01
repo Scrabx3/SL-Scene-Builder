@@ -5,7 +5,8 @@ import "./App.css"
 import "./stage.css";
 
 import { invoke } from "@tauri-apps/api/tauri";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useImmer } from "use-immer";
 
 const racekeys = [
   "Human",
@@ -63,9 +64,47 @@ const racekeys = [
   "Wolves"
 ];
 
-let stage = null;
+const tags_exclusive = [
+  "DisallowBed",
+  "BedOnly",
+  "Furniture"
+]
+
+const tags_sfw = [
+  "Hugging",
+  "Kissing"
+]
+
+const tags_nsfw = [
+  "69",
+  "Aggressive",
+  "Anal",
+  "Blowjob",
+  "Boobjob",
+  "Cowgirl",
+  "Doggy",
+  "Double Penetration",
+  "Feet",
+  "Femdom",
+  "Footjob",
+  "Forced",
+  "Gay",
+  "Handjob",
+  "Lesbian",
+  "Loving",
+  "Masturbation",
+  "Missionary",
+  "Oral",
+  "Penetration",
+  "Reverse Cowgirl",
+  "Spitroast",
+  "Threesome",
+  "Triple Penetration",
+  "Vaginal"
+]
+
 document.addEventListener('DOMContentLoaded', async (event) => {
-  stage = await invoke('get_stage');
+  let stage = await invoke('get_stage');
   ReactDOM.createRoot(document.getElementById("root_s")).render(
     <React.StrictMode>
       <Stage stage={stage}/>
@@ -73,510 +112,299 @@ document.addEventListener('DOMContentLoaded', async (event) => {
   );
 });
 
-function Stage(args) {
-  const [stage, setStage] = useState(args.stage);
+// COMEBACK: update cycle here likely not ideal. Should prbly switch up update & render timings
+function PositionData({ position, doUpdate }) {
+  const [data, updateData] = useImmer(position);
+  useEffect(() => { doUpdate(data); })
 
-  
-  const addPosition = () => {
-    let add_pos = document.getElementById('add_position');
-    if (stage.positions.length >= 4) {
-      add_pos.disabled = true;
+  const updateList = (list, name) => {
+    let ret = [...list];
+    const w = ret.indexOf(name);
+    if (w === -1) {
+      ret.push(name);
+    } else {
+      ret.splice(w, 1);
     }
+    return ret;
+  }
 
-    invoke('make_position').then((s) => {
-      setStage(stage => {
-        let ret = structuredClone(stage);
-        ret.positions.push(s);
-        return ret;
-      });
-    });
-  };
-
-  const removePosition = (evt) => {
-    const id_str = evt.target.parentElement.id;
-    const id = parseInt(id_str.substring(1));
-    setStage(stage => {
-      let ret = structuredClone(stage);
-      ret.positions.splice(id, 1);
-      return ret;
-    });
-
-    let add_pos = document.getElementById('add_position');
-    if (add_pos.disabled) {
-      add_pos.disabled = false;
-    }
-  };
-
-  function Position({position, i}) {
+  function Sex({ label, name, disable }) {
+    if (!name) name = label;    
     return (
-      <div id={`P${i}`} className="position">
-        <h2 name="header">Position {i + 1}</h2>
-        <label>Animation: <input type="text" name="animation" placeholder="behavior.hkx"></input></label>
-
-        <div className="row">
-          <h4>Actor</h4>
-          <fieldset>
-            <label>Race:
-              <select 
-                name="race_select"
-                defaultValue={"Human"}>
-                {racekeys.map(race => 
-                  <option key={race}>{race}</option>
-                )}
-              </select>
-            </label>
-          </fieldset>
-          <fieldset>
-            <label><input type="checkbox" className="gender"/>Male</label>
-            <label><input type="checkbox" className="gender"/>Female</label>
-            <label><input type="checkbox" className="gender race_dep" name="Futa"/>Hermaphrodite</label>
-          </fieldset>
-
-          <h4>Extra</h4>
-          <fieldset>
-            <label><input type="checkbox" className="pos_extra"></input>Victim</label>
-            <label><input type="checkbox" className="pos_extra race_dep"></input>Vampire</label>
-            <label><input type="checkbox" className="pos_extra"></input>Dead</label>
-          </fieldset>
-          <fieldset>
-            <label><input type="checkbox" className="pos_extra race_dep" name="AmputeeAR"></input>Amputee (arm, right)</label>
-            <label><input type="checkbox" className="pos_extra race_dep" name="AmputeeAL"></input>Amputee (arm, left)</label>
-            <label><input type="checkbox" className="pos_extra race_dep" name="AmputeeLR"></input>Amputee (leg, right)</label>
-            <label><input type="checkbox" className="pos_extra race_dep" name="AmputeeLL"></input>Amputee (leg, left)</label>
-          </fieldset>
-          <fieldset>
-            <label><input type="checkbox" className="pos_extra"></input>Optional</label>
-          </fieldset>
-
-          <fieldset className="offset">
-            <h3>Offset</h3>
-            <label>X: <input className="offset" type="number" step="0.1" placeholder="0.0"></input></label>
-            <label>Y: <input className="offset" type="number" step="0.1" placeholder="0.0"></input></label>
-            <label>Z: <input className="offset" type="number" step="0.1" placeholder="0.0"></input></label>
-            <label>Angle: <input className="offset" type="number" step="0.1" placeholder="0.0" min="0.0" max="360.0"></input></label>
-          </fieldset>
-        </div>
-        <button onClick={removePosition}>Remove</button>
-      </div>
+      <label>
+        <input type="checkbox"
+          onChange={() => { updateData(d => { d.genders = updateList(data.genders, name) }); }}
+          checked={data.genders.indexOf(name) > -1}
+          disabled={disable} />{label}
+      </label>
     )
   }
 
-  let i = 0;
+  function Extra({ label, name, disable }) {
+    if (!name) name = label;    
+    return (
+      <label>
+        <input type="checkbox"
+          onChange={() => { updateData(d => { d.extra = updateList(data.extra, name) }); }}
+          checked={position.extra.indexOf(name) > -1} 
+          disabled={disable} />{label}
+      </label>
+    )
+  }
+
+  function Offset({ label, name, min, max }) {
+    return (
+      <label>{label}
+        <input type="number" step="0.1" min={min} max={max}
+          placeholder={"0.0"}
+          defaultValue={data.offset[name] ? data.offset[name] : undefined}
+          onBlur={(evt) => {
+            let value = evt.target.value
+            if (!value)
+              return;
+            let offset = parseFloat(value).toFixed(1);
+            if (min != undefined) offset = Math.max(min, offset);
+            if (max != undefined) offset = Math.min(offset, max);    
+            updateData(d => { d.offset[name] = offset }); 
+          }}
+          onFocus={(evt) => { evt.target.select(); }}
+        />
+      </label>
+    )
+  }
+
+  const isHuman = () => {
+    return position.race === "Human";
+  }
+
+  return (
+    <>
+      <label>Animation: <input type="text" name="animation"
+        placeholder="behavior.hkx"
+        onBlur={(evt) => {
+          let value = evt.target.value;
+          if (value) {
+            if (value === '.hkx') value = '';
+            else if (!value.endsWith('.hkx')) value += '.hkx'
+          }
+          updateData(d => { d.event = value })
+          evt.target.value = value;
+        }}
+        onFocus={(evt) => {
+          if (!evt.target.value.length <= 4)
+            return;
+          evt.target.setSelectionRange(0, evt.target.value.length - 4);
+        }}
+        defaultValue={data.event}
+      /></label>
+      <div className="row">
+        <h4>Actor</h4>
+        <fieldset>
+          <label>Race:
+            <select
+              onChange={(evt) => {
+                updateData(d => { d.race = evt.target.value });
+              }}
+              value={data.race}>
+              {racekeys.map(race =>
+                <option key={race}>{race}</option>
+              )}
+            </select>
+          </label>
+        </fieldset>
+        <fieldset>
+          <Sex label={"Male"} disable={false} />
+          <Sex label={"Female"} disable={false} />
+          <Sex label={"Hermaphrodite"} name={"Futa"} disable={!isHuman()} />
+        </fieldset>
+        <h4>Extra</h4>
+        <fieldset>
+          <Extra label={"Victim"} disable={false} />
+          <Extra label={"Vampire"} disable={!isHuman()} />
+          <Extra label={"Dead"} disable={false} />
+        </fieldset>
+        <fieldset>
+          <Extra label={"Amputee (arm, right)"} name={"AmputeeAR"} disable={!isHuman()} />
+          <Extra label={"Amputee (arm, left)"} name={"AmputeeAL"} disable={!isHuman()} />
+          <Extra label={"Amputee (leg, right)"} name={"AmputeeLR"} disable={!isHuman()} />
+          <Extra label={"Amputee (leg, left)"} name={"AmputeeLL"} disable={!isHuman()} />
+        </fieldset>
+        <fieldset>
+          <Extra label={"Optional"} disable={false} />
+        </fieldset>
+
+        <fieldset className="offset">
+          <h3>Offset</h3>
+          <Offset label={"X: "} name={"x"} />
+          <Offset label={"Y: "} name={"y"} />
+          <Offset label={"Z: "} name={"z"} />
+          <Offset label={"Angle: "} name={"angle"} min={0.0} max={360.0} />
+        </fieldset>
+      </div>
+    </>
+  )
+}
+
+function Stage({ stage }) {
+  const [name, setName] = useState(stage.name);
+  const [positions, updatePositions] = useImmer(stage.positions);
+  const [tags, setTags] = useState(stage.tags);
+  const [extra, updateExtra] = useImmer(stage.extra);
+
+  function ExtraNumber({ label, tag, args }) {
+    const instanceIdx = extra.findIndex(value => value.tag === tag);
+    let instance = instanceIdx === -1 ? { tag: tag, v: 0.0 } : { ...extra[instanceIdx] }
+    return (
+      <label>{label}
+        <input type="number" step={args.step} min={args.min} max={args.max} 
+          placeholder={args.placeholder}
+          defaultValue={instance.v ? instance.v : undefined}
+          onFocus={(evt) => { evt.target.select(); }}
+          onBlur={(evt) => {
+            instance.v = parseFloat(evt.target.value).toFixed(1);
+            updateExtra(extra => {
+              const idx = extra.findIndex(value => value.tag === tag);
+              idx === -1 ? extra.push(instance) : extra[idx] = instance
+            });
+          }}
+        />
+      </label>
+    )
+  }
+
+  function addPosition() {
+    invoke('make_position').then((s) => {
+      updatePositions(p => { p.push(s) });
+    });
+  };
+
+  function removePosition(evt) {
+    const parent = evt.target.parentElement;
+    const id = parseInt(parent.getAttribute('index'));
+    updatePositions(p => { p.splice(id, 1) });
+  };
+
+  function updatePositionData(data, i) {
+    updatePositions(p => { p[i] = data })
+  }
+
+  function addTags(str) {
+    const hasTag = (search) => {
+      const s = search.toLowerCase();
+      return tags.find(t => t.toLowerCase() === s);
+    }
+    let newtags = [...tags];
+    let list = str.split(',');
+    list.forEach(tag => {
+      tag.replace(/\s+/g, '');
+      if (!tag || hasTag(tag))
+        return;
+
+      if (tags_exclusive.includes(tag)) {
+        newtags = newtags.filter(t => !tags_exclusive.includes(t));
+      }
+      newtags.push(tag);
+    });
+    newtags.sort();
+    setTags(newtags);
+  }
+
+  async function saveAndReturn() {
+    if (!name) {
+      alert("A stage requires a name");
+      return;
+    }
+    if (!positions.length) {
+      alert("A stage requires at least one position");
+      return;
+    }
+    for (let i = 0; i < positions.length; i++) {
+      const p = positions[i];
+      if (!p.event) {
+        alert(`Position ${i} is missing a behavior file`);
+        return;
+      }
+    }
+    if (!tags.length) {
+      let result = await confirm("It is highly recommended that a stage has at least one tag.\nAre you sure you want to continue?");
+      if (!result) {
+        return;
+      }
+    }
+
+    const ret = {
+      id: stage.id,
+      name: name,
+      positions: positions,
+      tags: tags,
+      extra: extra.filter(e => e.v != 0)
+    }
+    // console.log(ret);
+    invoke('save_stage', { stage: ret });
+  }
+
   return (
     <div>
-      <h1>Stage Builder</h1>
-
-      <div id="base_data">
-        <label>Stage: <input id="stage_name" type="text" placeholder="My Stage"></input></label>
-      </div>
+      <input type="text" placeholder="My Stage"
+        onFocus={(evt) => { evt.target.select(); }}
+        onChange={(evt) => { setName(evt.target.value) }}
+        defaultValue={name ? name : undefined}
+      />
 
       <div id="positions">
-        {
-          stage.positions.map(pos => {
-            return (
-              <div key={i}>
-                <Position position={pos} i={i++}/>
-              </div>
-            )
-          }
-          
+        <h3>Positions</h3>
+        {positions.map((pos, i) =>
+          <div key={i} index={i} className="position">
+            <PositionData position={pos} doUpdate={(data) => updatePositionData(data, i)} />
+            <button onClick={removePosition}>Remove</button>
+          </div>
         )}
-        <button id="add_position" onClick={addPosition}>Add Position</button>
+        <button id="add_position" onClick={addPosition} disabled={positions.length >= 4}>Add Position</button>
       </div>
 
-      <div id="stage_extra">
-        <div id="stage_extra_holder">
-          <h2>Stage Data</h2>
-          <h3>Tags</h3>
-          <label htmlFor="default_tags">Add default tag </label>
-          <select id="default_tags">
+      <div id="tags">
+        <h3>Tags</h3>
+        <label>Default Tags: 
+          <select id="default_tags"
+            onChange={(evt) => {
+              addTags(evt.target.value);
+            }}>
             <option disabled>--- Exclusive ---</option>
-            <option>DisallowBed</option>
-            <option>BedOnly</option>
-            <option>Furniture</option>
+            {tags_exclusive.map(tag => <option key={tag}>{tag}</option>)}
             <option disabled>--- SFW ---</option>
-            <option>Strict SFW</option>
-            <option>Hugging</option>
-            <option>Kissing</option>
+            {tags_sfw.map(tag => <option key={tag}>{tag}</option>)}
             <option disabled>--- NSFW ---</option>
-            <option>69</option>
-            <option>Aggressive</option>
-            <option>Anal</option>
-            <option>Blowjob</option>
-            <option>Boobjob</option>
-            <option>Cowgirl</option>
-            <option>Doggy</option>
-            <option>Double Penetration</option>
-            <option>Feet</option>
-            <option>Femdom</option>
-            <option>Footjob</option>
-            <option>Forced</option>
-            <option>Gay</option>
-            <option>Handjob</option>
-            <option>Lesbian</option>
-            <option>Loving</option>
-            <option>Masturbation</option>
-            <option>Missionary</option>
-            <option>Oral</option>
-            <option>Penetration</option>
-            <option>Reverse Cowgirl</option>
-            <option>Spitroast</option>
-            <option>Threesome</option>
-            <option>Triple Penetration</option>
-            <option>Vaginal</option>
+            {tags_nsfw.map(tag => <option key={tag}>{tag}</option>)}
           </select>
-          <label htmlFor="custom_tags">Add custom tag </label>
-          <input id="custom_tags" type="text" placeholder="tag"></input>
-      
-          <label htmlFor="stage_tags">Current tags: </label>
-          <div id="stage_tags"></div>
-          <button id="clear_tags">Clear Tags</button>
-      
-          <h3>Extra</h3>
-          <label>Fixed Duration: <input className="stage_extra" name="FixedDur" type="number" step="0.1" placeholder="0.0" min="0.0"></input></label>
-        </div>
+        </label>
+        <label>Add custom tag:
+          <input type="text" placeholder="Tag A, Tag B" onKeyDown={(evt) => { 
+            if (evt.key === 'Enter') {
+              addTags(evt.target.value);
+              evt.target.value = '';
+            }
+          }} />
+        </label>
+        <label>Current tags:
+          <div id="stage_tags">
+            {tags.map((t, i) =>
+              <div key={t}
+                onClick={() => { let list = [...tags]; list.splice(i, 1); setTags(list); }}>{t}
+              </div>
+            )}
+          </div>
+        </label>
+        <button id="clear_tags" onClick={() => { if (tags.length) window.confirm("Clearing all tags, all you sure?").then(r => { if (r) setTags([]) }) }}>Clear Tags</button>
       </div>
-      <button id="save_stage">Save Stage</button>
+
+      <div id="extra">
+        <h3>Extra</h3>
+        <ExtraNumber label={'Fixed Duration: '} tag={'FixedDur'} args={{min: 0.0, step: 0.1, placeholder: "0.0"}}/>
+      </div>
+
+      <button id="save_stage" onClick={saveAndReturn}>Save Stage</button>
     </div>
   )
 }
 
 export default Stage;
-
-/* LEGACY CODE
-
-const hasTag = (tag) => {
-  const divs = tag_list.getElementsByTagName('div');
-  for (const element of divs) {
-    if (element.innerHTML.localeCompare(tag, 'en', { sensitivity: 'base' }) === 0)
-      return true;
-  }
-  return false;
-}
-
-const makeTag = (tag) => {
-  let next = document.createElement("div");
-  next.innerHTML = tag;
-  next.addEventListener('click', (evt) => {
-    evt.target.remove();
-  });
-  return next;
-}
-
-const clearTags = () => {
-  if (tag_list.innerHTML === '')
-    return;
-  
-  window.confirm("Clear all tags?").then(result => {
-    if (result) tag_list.innerHTML = '';
-  })
-}
-
-const addTag = (tag) => {
-  if (hasTag(tag)) {
-    return;
-  }
-
-  const next = makeTag(tag);
-  if (tag_list.innerHTML !== '') {
-    if (tag.localeCompare("NonSex", 'en', { sensitivity: 'base' }) === 0) {
-      window.confirm("Are you sure?\n\nAdding this tag will remove all other tags.").then(result => {
-        if (!result)
-          return;
-
-        tag_list.replaceChildren(next);
-      })
-      return;
-    } else if (hasTag("NonSex")) {
-      tag_list.replaceChildren(next);
-      return;
-    }
-  }
-  tag_list.appendChild(next);
-}
-
-const addTagDefault = (evt) => {
-  const v = evt.target.value;
-  addTag(v);
-}
-
-const addTagCustom = (evt) => {
-  if (evt.key !== 'Enter') {
-    return;
-  }
-  addTag(evt.target.value);
-  evt.target.value = '';
-}
-
-const getName = (htmlinput) => {
-  const name = htmlinput.hasAttribute('name') ?
-    htmlinput.getAttribute('name') : htmlinput.parentElement.textContent;
-  return name;
-}
-
-const appendPosition = (position) => {
-  let next = document.createElement("div");
-  next.classList.add('position')
-
-  const i = document.querySelectorAll('.position').length;
-  let html = `
-    <h2 name="header">Position ${i + 1}</h2>
-    <label>Animation: <input type="text" name="animation" placeholder="behavior.hkx"></label>
-    <div class="row">
-      <h4>Actor</h4>
-      <fieldset>
-        <label>Race:
-          <select name="race_select">`;
-  racekeys.forEach(key => { html += `<option>${key}</option>` });
-  html += `
-          </select>
-        </label>
-      </fieldset>
-      <fieldset>
-        <label><input type="checkbox" class="gender">Male</label>
-        <label><input type="checkbox" class="gender">Female</label>
-        <label><input type="checkbox" class="gender race_dep" name="Futa">Hermaphrodite</label>
-      </fieldset>
-      <h4>Extra</h4><br><br>
-      <fieldset>
-        <label><input type="checkbox" class="pos_extra">Victim</label>
-        <label><input type="checkbox" class="pos_extra race_dep">Vampire</label>
-        <label><input type="checkbox" class="pos_extra">Dead</label>
-      </fieldset>
-      <fieldSet>
-        <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeAR"}>Amputee (arm, right)</label>
-        <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeAL"}>Amputee (arm, left)</label>
-       <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeLR"}>Amputee (leg, right)</label>
-        <label><input type="checkbox" class="pos_extra race_dep" name="AmputeeLL"}>Amputee (leg, left)</label>
-      </fieldset>
-      <fieldset>
-        <label><input type="checkbox" class="pos_extra">Optional</label>
-      </fieldset>
-      <fieldset class="offset">
-        <h3>Offset</h3>
-        <label>X: <input class="offset" type="number" step="0.1" placeholder="0.0"></label>
-        <label>Y: <input class="offset" type="number" step="0.1" placeholder="0.0"></label>
-        <label>Z: <input class="offset" type="number" step="0.1" placeholder="0.0"></label>
-        <label>Angle: <input class="offset" type="number" step="0.1" placeholder="0.0" min="0.0" max="360.0"></label>
-      </fieldset>
-    </div>
-    <br>
-    <button name="remove_button">Remove</button>`;
-  next.innerHTML = html;
-
-  const update_racedep = (race) => {
-    const racedep = next.getElementsByClassName('race_dep');
-    for (const obj of racedep) {
-      obj.disabled = race !== "Human";
-    }
-  }
-
-  const raceselect = next.querySelector('[name=race_select]');
-  raceselect.addEventListener('change', (evt) => {
-    const race = evt.target.value;
-    update_racedep(race);
-  });
-  const removebutton = next.querySelector('[name=remove_button]');
-  removebutton.addEventListener('click', removePosition);
-
-  // fill in data from position
-  if (position) {
-    // event
-    const animation = next.querySelector('[name=animation]');
-    animation.value = position.event;
-    // gender
-    const genders = next.getElementsByClassName('gender');
-    for (const gender of genders) {
-      if (gender.disabled)
-        continue;
-
-      const name = getName(gender);
-      gender.checked = position.genders.includes(name);
-    }
-    // race
-    raceselect.value = position.race;
-    update_racedep(position.race);
-    // extra
-    const extras = next.getElementsByClassName('pos_extra');
-    for (const extra of extras) {
-      if (extra.disabled)
-        continue;
-
-      const name = getName(extra);
-      extra.checked = position.extra.includes(name);
-    }
-  }
-  const position_holder = document.getElementById("position_holder");
-  return position_holder.appendChild(next);  
-}
-
-const makePosition = () => {
-  const next = appendPosition();
-  if (document.querySelectorAll('.position').length >= 5) {
-    add_position_button.disabled = true;
-  }
-}
-
-const removePosition = (evt) => {
-  const parent = evt.target.parentElement;
-  parent.remove();
-
-  const positions = document.querySelectorAll('.position')
-  for (let i = 0; i < positions.length; i++) {
-    const element = positions[i];
-    const header = element.querySelector('[name=header]');
-    header.textContent = `Position ${i + 1}`;
-  }
-
-  if (add_position_button.disabled === true) {
-    add_position_button.disabled = false;
-  }
-}
-
-const buildStage = async () => {
-  const stage = await invoke('get_stage');
-  // name
-  let header = document.getElementById("stage_name");
-  header.value = stage.name;
-  // positions
-  for (let i = 0; i < stage.positions.length; i++) {
-    const pos = stage.positions[i];
-    appendPosition(pos);
-  }
-  // extra
-  const extras = document.getElementsByClassName('stage_extra');
-  for (const extra of extras) {
-    const name = getName(extra);
-    const value = stage.extra.find(elm => { return elm.tag === name });
-    if (value) {
-      extra.value = value.v;
-    }
-  }
-  // tags
-  for (const tag of stage.tags) {
-    console.log(`reading tag ${tag}`);
-    addTag(tag);
-  }
-}
-
-const saveStage = (evt) => {
-  const getStageName = () => {
-    const header = document.getElementById('stage_name');
-    if (!header.value) {
-      throw "Missing 'name' attribute";
-    }
-    return header.value;
-  }
-  const getPositions = () => {
-    const positions = document.querySelectorAll('.position')
-    if (positions.length == 0) {
-      throw "Missing 'positions' attribute";
-    }
-    let ret = new Array();
-    for (let i = 0; i < positions.length; i++) {
-      const element = positions[i];
-
-      const getEvent = () => {
-        const event = element.querySelector("[name=animation]");
-        if (!event.value) {
-          throw `Position ${i} has no event.`;
-        }
-        return event.value;
-      };
-      const getGenders = () => {
-        const genders = element.querySelectorAll(".gender");
-        if (genders.length == 0) {
-          throw `Position ${i} has no gender.`;
-        }
-        let ret = new Array();
-        for (const gender of genders) {
-          if (gender.checked && !gender.disabled) {
-            ret.push(getName(gender));
-          }
-        }
-        return ret;
-      };
-      const getRace = () => {
-        const race = element.querySelector("[name=race_select]");
-        return race.value;
-      };
-      const getExtras = () => {
-        const extras = element.querySelectorAll(".pos_extra");
-        let ret = new Array();
-        for (const extra of extras) {
-          if (extra.checked && !extra.disabled) {
-            ret.push(getName(extra));
-          }
-        }
-        return ret;
-      };
-      const getOffsets = () => {
-        // TODO: implement
-        let ret = {
-          x: 0.0,
-          y: 0.0,
-          z: 0.0,
-          angle: 0.0
-        }
-        return ret;
-      };
-
-      let position = {
-        genders: getGenders(),
-        race: getRace(),
-        event: getEvent(),
-
-        extra: getExtras(),
-        offset: getOffsets()
-      }
-      console.log(position);
-      ret.push(position);
-    }
-    return ret;
-  }
-  const getTags = () => {
-    const divs = tag_list.getElementsByTagName('div');
-    if (!divs.length) {
-      throw "Missing 'tags' attribute";
-    }
-    let ret = new Array();
-    for (const element of divs) {
-      ret.push(element.innerHTML);
-    }
-    return ret
-  }
-  const getExtras = () => {
-    const extras = document.getElementsByClassName('stage_extra');
-    let ret = new Array();
-    for (const extra of extras) {
-      const value = {
-        tag: getName(extra),
-        v: extra.value ? parseFloat(extra.value) : parseFloat(extra.placeholder)
-      };
-      ret.push(value);
-    }
-    return ret;
-  }
-
-  evt.target.disabled = true;
-  try {
-    let stage = { 
-      id: 0,
-      name: getStageName(),
-
-      positions: [],  //getPositions(),
-      tags: getTags(),
-      extra: getExtras()
-    }
-    console.log(stage);
-    invoke("save_stage", { stage: stage, })
-      .then((message) => console.log(message))
-      .catch((error) => console.error(error));
-  } catch (error) {
-    evt.target.disabled = false;
-    alert(error);
-  }  
-}
- 
-*/
-

@@ -24,7 +24,7 @@ pub struct Stage
 
 impl Stage {
 	pub fn default() -> Stage {
-		Stage{ 
+		Stage{
 			id: 0,
 			name: String::from(""),
 			positions: vec![Position::default()],

@@ -25,15 +25,15 @@ fn main()
         )
         .title("SexLab Scene Builder")
         .menu(tauri::Menu::new()
-          .add_submenu(tauri::Submenu::new("File", tauri::Menu::new()            
+          .add_submenu(tauri::Submenu::new("File", tauri::Menu::new()
               .add_item(tauri::CustomMenuItem::new("new_prjct", "New Project").accelerator("cmdOrControl+N"))
           ))
         )
         .build()
         .expect("Failed to create main window");
       window.on_window_event(|event| match event {
-        tauri::WindowEvent::CloseRequested { 
-          api, .. 
+        tauri::WindowEvent::CloseRequested {
+          api, ..
         } => {
           println!("on_window_event CloseRequest");
           std::process::exit(0);
@@ -100,15 +100,15 @@ fn make_position<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R
 // }
 
 #[tauri::command]
-async fn save_stage(window: tauri::Window, app_handle: tauri::AppHandle, mut stage: define::Stage)
-{
-  stage.id = get_window_stage_id(&window);
-  let mut data = data::DATA.lock().unwrap();
-  let insert = data.insert_stage(stage);
+async fn save_stage(window: tauri::Window, app_handle: tauri::AppHandle, stage: define::Stage) -> () {
+  let copy = data::DATA.lock().unwrap()
+    .insert_stage(stage)
+    .expect("Failed to save stage. ID may be corrupted?")
+    .clone();
 
   match app_handle.get_window("main_window") {
     Some(window) => {
-      window.emit("save_stage", insert.clone()).unwrap();
+      window.emit("save_stage", copy).unwrap();
     },
     None => {
       panic!("Cannot find main window");
