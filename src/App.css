@@ -14,16 +14,17 @@ h1 {
 }
 
 button {
-  padding: .5em;
-  border-radius: 1.5em;
-  font-weight: bold;
-  color: white;
-  background-color: #445fef;
-  border: 1px solid #445eef;
-  width: 300px;
-  cursor: pointer;
+    padding: .5em;
+    border-radius: 1em;
+    font-weight: bold;
+    color: white;
+    background-color: #445fef;
+    border: 1px solid #445eef;
+    width: 80%;
+    cursor: pointer;
+    margin: 1em;
+    align-self: center;
 }
-
 button:hover {
   background-color: #445eef7e;
   border: 1px solid #445eef7e;
@@ -56,5 +57,14 @@ h2,
 h3,
 h4,
 h5 {
-  font-size: 1.1em;
+  font-family: 'Lucida Console', 'Courier New', Courier, monospace;
+}
+h1{
+  font-size: 1.5em;
+}
+h2 {
+  font-size: 1.4em;
+}
+h3.h4,h5 {
+  font-size: 1.2em;
 }

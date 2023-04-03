@@ -1,90 +1,158 @@
-#base_data, #positions, #stage_extra  {
-    background: linear-gradient(3deg, rgba(255, 255, 255, 0.048) 30%, rgba(255, 255, 255, 0) 64%);
-    padding: .5em;
-    margin: .5em;
+/**
+ * Generic globals
+ * everything is in a main div so if we want items to be full width its easiest start from 0
+ */
+body {
+    padding: 0;
+    margin: 0;
 }
-#position_holder {
-    margin: 1em;
+
+#positions, #stage_holder, #tags, #extra {
+    padding: 1em;
+}
+fieldset {
+    border: none;
+}
+fieldset input{
+    margin-left: .5em;
+}
+/* #root_s > div{
     display: flex;
-    align-content: flex-start;
+    flex-flow: column;
+    justify-content: center;
+    align-items: stretch;
+} */
+/**
+ * Main content Grid Setup
+ */
+/* #root_s>div {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto auto;
+}
+#stage_holder, #positions  {
+    grid-column: 1 / -1;
+}
+#extras {
+     grid-column: 1 / span 1;
+ } */
+/**
+ * Top Stage Creater Start
+ */
+#stage_holder{
+    width: 100%;
+    margin: 0;
+    padding: 1em;
+    border-bottom: 2px solid #445fef;
+}
+#stage_holder span {
+    padding-right: 1em;
+}
+/**
+ * Positions area Start
+ */
+#positions {
+    padding: 1em;
+    border-bottom: 2px solid #445fef;
+}
+.position {
+    border: 2px solid #445fef;
+    margin-bottom: 1em;
+    padding: 1em;
+    border-radius: 1em;
+}
+.position:nth-child(1) {
+    background-color: rgba(255, 255, 255, 0.055);
+}
+.position:nth-child(2) {
+    background-color: rgba(255, 0, 0, 0.055);
+}
+.position:nth-child(3) {
+    background-color: rgba(0, 255, 0, 0.055);
+}
+.position:nth-child(4) {
+    background-color: rgba(255, 255, 0, 0.055);
+}
+.position .row {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 1em;
+}
+.position .row h2 {
+    margin-right: 1em;
+    width: 130px;
+}
+.position .row h3 {
+    margin-right: 1em;
+    width: 135px;
+}
+.position .row h3:hover {
+    text-shadow: 0 0 10px #445eef4d;
+    transform: scale(1.1);
+    transition: all 0.3s ease;
+}
+.position .row .base, .position .row .extra {
+    width: 100%;
+    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: flex-start;
     align-items: center;
+    background-color: rgba(255, 255, 255, 0.048);
+    border-radius: 1em;
+    padding: .5em 1em .5em 1em;
 }
-.position {
-    padding: .25em 1em 1em 1em;
-    border-bottom: 2px solid #445fef;
-    border-radius: 2em 2em 0 0;
-    background-color: rgba(255, 255, 255, 0.055);
-    margin-top: 1em;
-    margin-right: 1em;
-    width: 315px;
+.position .row .extra {
+    flex-direction: column;
+    align-items: flex-start;
 }
-.position:hover{
-    background-color: rgba(255, 255, 255, 0.1);
-}
-#position_holder .position:last-child, #position_holder .position:last-child:nth-child(3) {
-margin-right: 0em;
-}
-h2 {
-    text-align: center;
-    padding-bottom: .5em;
-    border-bottom: 2px solid;
-    border-image: linear-gradient(to right, #00008b00, #445fef, #00008b00 ) 1;
-}
-h4, h3 {
-    text-align: left;
-    padding-bottom: 1em;
-    border-bottom: 2px solid;
-    border-image: linear-gradient(to right, #445fef, #00008b00) 1;
-}
-#position_holder button, #clear_tags {
-    margin: auto;
-    background-color: #95184e;
-    border: 1px solid #95184e;
-}
-#position_holder button:hover,
-#clear_tags:hover {
-    background-color: #95184e7e;
-    border: 1px solid #95184e7e;
-}
-#clear_tags{
-    margin: auto;
-}
-.position {
-    display: flex;
-    flex-flow: column;
-}
-div.row {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    flex-grow: 1;
-    justify-content: flex-start;
-}
-div.row h4 {
+.position .row .extra div {
     width: 100%;
 }
-fieldset {
-    border: none;
-    display:flex;
-    flex-direction: column;
+.position .row .extra div fieldset{
+    background-color: rgba(255, 255, 255, 0.1);
+    margin-bottom: .5em;
+    margin-top: .5em;
+    border-radius: .5em;
+    padding-right: 2em;
 }
-fieldset label{
-    padding: .25em;
+.extra fieldset:last-child {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    grid-gap: 10px;
+    align-items: center;
+}
+
+.extra fieldset:last-child label {
+    display: contents;
+}
+
+.extra fieldset:last-child label input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.extra fieldset:last-child h3 {
+    grid-column: 1 / -1;
+}
+/**
+ * Tags Area Start
+ */
+#tags {
+    border-bottom: 2px solid #445fef;
 }
 #stage_tags {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: center;
     background-color: rgba(255, 255, 255, 0.048);
     border-radius: 1em;
     margin: 2em;
     min-height: 66px;
 }
 
-#stage_tags div{
+#stage_tags div {
     background-color: white;
     color: black;
     width: fit-content;
@@ -94,48 +162,17 @@ fieldset label{
     padding-right: .75em;
 }
 
-#stage_tags div::before{
+#stage_tags div::before {
     content: "X";
     margin-right: 1em;
     padding: .25em;
     border-radius: 4em;
 }
+
 #stage_tags div:hover::before {
-    color:red;
+    color: red;
 }
-#stage_tags div:hover{
+
+#stage_tags div:hover {
     background-color: #ffffff7e;
-}
-
-#stage_extra .offset {
-    display: flex;
-    flex-wrap: wrap;
-}
-#stage_extra .offset h3 {
-    width: 100%;
-}
-#stage_extra .offset label {
-    display: flex;
-    padding: .5em .5em 0em 0em;
-}
-#stage_extra_holder:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-#stage_extra_holder {
-    padding: .25em 1em 1em 1em;
-    border-bottom: 2px solid #445fef;
-    border-radius: 2em 2em 0 0;
-    background-color: rgba(255, 255, 255, 0.055);
-
-    margin: 1em;
-}
-body {
-    font-size: .9em;
-}
-
-fieldset {
-    border: none;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
 }
