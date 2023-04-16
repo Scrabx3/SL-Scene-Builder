@@ -72,16 +72,21 @@ const tags_exclusive = [
 
 const tags_sfw = [
   "Hugging",
-  "Kissing"
+  "Kissing",
+  "Kneeling",
+  "Standing",
+  "Lying"
 ]
 
 const tags_nsfw = [
   "69",
   "Aggressive",
   "Anal",
+  "Asphyxiation",
   "Blowjob",
   "Boobjob",
   "Cowgirl",
+  "Deepthroat",
   "Doggy",
   "Double Penetration",
   "Feet",
