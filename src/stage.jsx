@@ -72,16 +72,21 @@ const tags_exclusive = [
 
 const tags_sfw = [
   "Hugging",
-  "Kissing"
+  "Kissing",
+  "Kneeling",
+  "Standing",
+  "Lying"
 ]
 
 const tags_nsfw = [
   "69",
   "Aggressive",
   "Anal",
+  "Asphyxiation",
   "Blowjob",
   "Boobjob",
   "Cowgirl",
+  "Deepthroat",
   "Doggy",
   "Double Penetration",
   "Feet",
@@ -177,72 +182,115 @@ function PositionData({ position, doUpdate }) {
     return position.race === "Human";
   }
 
+  // Toggle show and hide areas
+  const [isHidden, setIsHidden] = useState(true);
+  const toggleVisibility = () => {
+    setIsHidden(!isHidden);
+  };
+
   return (
     <>
-      <label>Animation: <input type="text" name="animation"
-        placeholder="behavior.hkx"
-        onBlur={(evt) => {
-          let value = evt.target.value;
-          if (value) {
-            if (value === '.hkx') value = '';
-            else if (!value.endsWith('.hkx')) value += '.hkx'
-          }
-          updateData(d => { d.event = value })
-          evt.target.value = value;
-        }}
-        onFocus={(evt) => {
-          if (!evt.target.value.length <= 4)
-            return;
-          evt.target.setSelectionRange(0, evt.target.value.length - 4);
-        }}
-        defaultValue={data.event}
-      /></label>
       <div className="row">
-        <h4>Actor</h4>
-        <fieldset>
-          <label>Race:
-            <select
-              onChange={(evt) => {
-                updateData(d => { d.race = evt.target.value });
-              }}
-              value={data.race}>
-              {racekeys.map(race =>
-                <option key={race}>{race}</option>
-              )}
-            </select>
-          </label>
-        </fieldset>
-        <fieldset>
-          <Sex label={"Male"} disable={false} />
-          <Sex label={"Female"} disable={false} />
-          <Sex label={"Hermaphrodite"} name={"Futa"} disable={!isHuman()} />
-        </fieldset>
-        <h4>Extra</h4>
-        <fieldset>
-          <Extra label={"Victim"} disable={false} />
-          <Extra label={"Vampire"} disable={!isHuman()} />
-          <Extra label={"Dead"} disable={false} />
-        </fieldset>
-        <fieldset>
-          <Extra label={"Amputee (arm, right)"} name={"AmputeeAR"} disable={!isHuman()} />
-          <Extra label={"Amputee (arm, left)"} name={"AmputeeAL"} disable={!isHuman()} />
-          <Extra label={"Amputee (leg, right)"} name={"AmputeeLR"} disable={!isHuman()} />
-          <Extra label={"Amputee (leg, left)"} name={"AmputeeLL"} disable={!isHuman()} />
-        </fieldset>
-        <fieldset>
-          <Extra label={"Optional"} disable={false} />
-        </fieldset>
+        <h2>Base</h2>
+        <div className="base">
+          <fieldset>
+            <label>
+              Animation:{' '}
+              <input
+                type="text"
+                name="animation"
+                placeholder="behavior.hkx"
+                onBlur={(evt) => {
+                  let value = evt.target.value;
+                  if (value) {
+                    if (value === '.hkx') value = '';
+                    else if (!value.endsWith('.hkx')) value += '.hkx';
+                  }
+                  updateData((d) => {
+                    d.event = value;
+                  });
+                  evt.target.value = value;
+                }}
+                onFocus={(evt) => {
+                  if (!evt.target.value.length <= 4) return;
+                  evt.target.setSelectionRange(0, evt.target.value.length - 4);
+                }}
+                defaultValue={data.event}
+              />
+            </label>
+          </fieldset>
+          <fieldset>
+            <label>
+              Race:
+              <select
+                onChange={(evt) => {
+                  updateData((d) => {
+                    d.race = evt.target.value;
+                  });
+                }}
+                value={data.race}
+              >
+                {racekeys.map((race) => (
+                  <option key={race}>{race}</option>
+                ))}
+              </select>
+            </label>
+          </fieldset>
+          <fieldset>
+            <Sex label={'Male'} disable={false} />
+            <Sex label={'Female'} disable={false} />
+            <Sex label={'Hermaphrodite'} name={'Futa'} disable={!isHuman()} />
+          </fieldset>
+        </div>
+      </div>
 
-        <fieldset className="offset">
-          <h3>Offset</h3>
-          <Offset label={"X: "} name={"x"} />
-          <Offset label={"Y: "} name={"y"} />
-          <Offset label={"Z: "} name={"z"} />
-          <Offset label={"Angle: "} name={"angle"} min={0.0} max={360.0} />
-        </fieldset>
+      <div className="row">
+        {/* added the onClick to toggle vis is hidden to swap the text */}
+        <h3 onClick={toggleVisibility}>{isHidden ? '+ Extra' : '- Extra'}</h3>
+        <div className="extra">
+          <div hidden={isHidden}>
+            <fieldset>
+              <Extra label={'Victim'} disable={false} />
+              <Extra label={'Vampire'} disable={!isHuman()} />
+              <Extra label={'Dead'} disable={false} />
+            </fieldset>
+            <fieldset>
+              <Extra
+                label={'Amputee (arm, right)'}
+                name={'AmputeeAR'}
+                disable={!isHuman()}
+              />
+              <Extra
+                label={'Amputee (arm, left)'}
+                name={'AmputeeAL'}
+                disable={!isHuman()}
+              />
+              <Extra
+                label={'Amputee (leg, right)'}
+                name={'AmputeeLR'}
+                disable={!isHuman()}
+              />
+              <Extra
+                label={'Amputee (leg, left)'}
+                name={'AmputeeLL'}
+                disable={!isHuman()}
+              />
+            </fieldset>
+            <fieldset>
+              <Extra label={'Optional'} disable={false} />
+            </fieldset>
+            <fieldset>
+              <h3>Offset</h3>
+              <Offset label={'X: '} name={'x'} />
+              <Offset label={'Y: '} name={'y'} />
+              <Offset label={'Z: '} name={'z'} />
+              <Offset label={'Angle: '} name={'angle'} min={0.0} max={360.0} />
+            </fieldset>
+          </div>
+        </div>
       </div>
     </>
-  )
+  );
 }
 
 function Stage({ stage }) {
@@ -345,66 +393,123 @@ function Stage({ stage }) {
 
   return (
     <div>
-      <input type="text" placeholder="My Stage"
-        onFocus={(evt) => { evt.target.select(); }}
-        onChange={(evt) => { setName(evt.target.value) }}
-        defaultValue={name ? name : undefined}
-      />
+      <div id="stage_holder">
+        <span>
+          Stage
+        </span>
+        <input
+          type="text"
+          placeholder="Stage Name"
+          onFocus={(evt) => {
+            evt.target.select();
+          }}
+          onChange={(evt) => {
+            setName(evt.target.value);
+          }}
+          defaultValue={name ? name : undefined}
+        />
+      </div>
 
       <div id="positions">
-        <h3>Positions</h3>
-        {positions.map((pos, i) =>
+        {positions.map((pos, i) => (
           <div key={i} index={i} className="position">
-            <PositionData position={pos} doUpdate={(data) => updatePositionData(data, i)} />
+            <PositionData
+              position={pos}
+              doUpdate={(data) => updatePositionData(data, i)}
+            />
             <button onClick={removePosition}>Remove</button>
           </div>
-        )}
-        <button id="add_position" onClick={addPosition} disabled={positions.length >= 4}>Add Position</button>
+        ))}
+        <button
+          id="add_position"
+          onClick={addPosition}
+          disabled={positions.length >= 4}
+        >
+          Add Position
+        </button>
       </div>
 
       <div id="tags">
         <h3>Tags</h3>
-        <label>Default Tags: 
-          <select id="default_tags"
+        <label>
+          Default Tags:
+          <select
+            id="default_tags"
             onChange={(evt) => {
               addTags(evt.target.value);
-            }}>
+            }}
+          >
             <option disabled>--- Exclusive ---</option>
-            {tags_exclusive.map(tag => <option key={tag}>{tag}</option>)}
+            {tags_exclusive.map((tag) => (
+              <option key={tag}>{tag}</option>
+            ))}
             <option disabled>--- SFW ---</option>
-            {tags_sfw.map(tag => <option key={tag}>{tag}</option>)}
+            {tags_sfw.map((tag) => (
+              <option key={tag}>{tag}</option>
+            ))}
             <option disabled>--- NSFW ---</option>
-            {tags_nsfw.map(tag => <option key={tag}>{tag}</option>)}
+            {tags_nsfw.map((tag) => (
+              <option key={tag}>{tag}</option>
+            ))}
           </select>
         </label>
-        <label>Add custom tag:
-          <input type="text" placeholder="Tag A, Tag B" onKeyDown={(evt) => { 
-            if (evt.key === 'Enter') {
-              addTags(evt.target.value);
-              evt.target.value = '';
-            }
-          }} />
+        <label>
+          Add custom tag:
+          <input
+            type="text"
+            placeholder="Tag A, Tag B"
+            onKeyDown={(evt) => {
+              if (evt.key === 'Enter') {
+                addTags(evt.target.value);
+                evt.target.value = '';
+              }
+            }}
+          />
         </label>
-        <label>Current tags:
+        <label>
+          Current tags:
           <div id="stage_tags">
-            {tags.map((t, i) =>
-              <div key={t}
-                onClick={() => { let list = [...tags]; list.splice(i, 1); setTags(list); }}>{t}
+            {tags.map((t, i) => (
+              <div
+                key={t}
+                onClick={() => {
+                  let list = [...tags];
+                  list.splice(i, 1);
+                  setTags(list);
+                }}
+              >
+                {t}
               </div>
-            )}
+            ))}
           </div>
         </label>
-        <button id="clear_tags" onClick={() => { if (tags.length) window.confirm("Clearing all tags, all you sure?").then(r => { if (r) setTags([]) }) }}>Clear Tags</button>
+        <button
+          id="clear_tags"
+          onClick={() => {
+            if (tags.length)
+              window.confirm('Clearing all tags, all you sure?').then((r) => {
+                if (r) setTags([]);
+              });
+          }}
+        >
+          Clear Tags
+        </button>
       </div>
 
       <div id="extra">
         <h3>Extra</h3>
-        <ExtraNumber label={'Fixed Duration: '} tag={'FixedDur'} args={{min: 0.0, step: 0.1, placeholder: "0.0"}}/>
+        <ExtraNumber
+          label={'Fixed Duration: '}
+          tag={'FixedDur'}
+          args={{ min: 0.0, step: 0.1, placeholder: '0.0' }}
+        />
       </div>
 
-      <button id="save_stage" onClick={saveAndReturn}>Save Stage</button>
+      <button id="save_stage" onClick={saveAndReturn}>
+        Save Stage
+      </button>
     </div>
-  )
+  );
 }
 
 export default Stage;
