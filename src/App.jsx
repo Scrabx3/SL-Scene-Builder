@@ -1,7 +1,7 @@
 import { useState } from "react";
+import * as jsPlumb from '@jsplumb/browser-ui';
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from '@tauri-apps/api/event';
-import { jsPlumb } from "@jsplumb/browser-ui"
 
 import "./App.css";
 
