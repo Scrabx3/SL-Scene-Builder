@@ -103,7 +103,7 @@ fn make_position<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R
 async fn save_stage(window: tauri::Window, app_handle: tauri::AppHandle, stage: define::Stage) -> () {
   let copy = data::DATA.lock().unwrap()
     .insert_stage(stage)
-    .expect("Failed to save stage. ID may be corrupted?")
+    .expect("Failed to save stage. ID corrupted?")
     .clone();
 
   match app_handle.get_window("main_window") {
