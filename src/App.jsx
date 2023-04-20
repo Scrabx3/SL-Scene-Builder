@@ -37,17 +37,6 @@ Graph.registerNode(
     },
     ports: {
       groups: {
-        in: {
-          position: 'left',
-          attrs: {
-            circle: {
-              magnet: false,
-              stroke: '#8f8f8f',
-              r: 5,
-            },
-            visible: false,
-          },
-        },
         out: {
           position: 'right',
           attrs: {
@@ -91,6 +80,11 @@ function App() {
               },
             },
             connector: "rounded",
+            attrs: {
+              line: {
+                stroke: "#fff"
+              }
+            }
           });
         }
       },
@@ -108,9 +102,6 @@ function App() {
       label: stage.name.length > 8 ? stage.name.substr(0, 7) + "..." : stage.name,
       ports: {
         items: [
-          {
-            group: 'in',
-          },
           {
             group: 'out',
           },
