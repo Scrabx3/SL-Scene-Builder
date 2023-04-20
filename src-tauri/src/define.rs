@@ -14,7 +14,7 @@ pub struct Animation
 pub struct Stage
 {
 	pub id: u64,
-	name: String,
+	pub name: String,
 
 	positions: Vec<Position>,
 	tags: Vec<String>,

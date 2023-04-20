@@ -40,7 +40,7 @@ impl Scene {
     
     pub fn insert_stage(&mut self, stage: define::Stage) -> Result<&define::Stage, &'static str> {
       if stage.id == 0 {
-        return Ok(self.add_new_stage(stage));
+        return self.add_new_stage(stage);
       } else if !self.stages.contains_key(&stage.id) {
         return Err("Given stage uses an invalid key");
       }
@@ -49,9 +49,9 @@ impl Scene {
       Ok(self.stages.get(&id).unwrap())
     }
 
-    fn add_new_stage(&mut self, mut stage: define::Stage) -> &define::Stage {
+    fn add_new_stage(&mut self, mut stage: define::Stage) -> Result<&define::Stage, &'static str> {
       if self.stages.len() == (u64::MAX - 1) as usize {
-        panic!("Maximum number of stages reached");
+        return Err("Maximum number of stages reached");
       }
       let mut rng = rand::thread_rng();
       let mut id: u64;
@@ -62,8 +62,11 @@ impl Scene {
         self.stages.contains_key(&id)
       } {}
       stage.id = id;
+      if stage.name.is_empty() {
+          stage.name = id.to_string();
+      }
       self.stages.insert(id, stage);
-      self.stages.get(&id).unwrap()
+      Ok(self.stages.get(&id).unwrap())
     }
 
     pub fn remove_stage(&mut self, stage: &define::Stage) -> Result<define::Stage, ()> {
