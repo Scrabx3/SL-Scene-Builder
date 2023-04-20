@@ -358,10 +358,6 @@ function Stage({ stage }) {
   }
 
   async function saveAndReturn() {
-    if (!name) {
-      alert("A stage requires a name");
-      return;
-    }
     if (!positions.length) {
       alert("A stage requires at least one position");
       return;
@@ -369,15 +365,15 @@ function Stage({ stage }) {
     for (let i = 0; i < positions.length; i++) {
       const p = positions[i];
       if (!p.event) {
-        alert(`Position ${i} is missing a behavior file`);
-        return;
+        // alert(`Position ${i} is missing a behavior file`);
+        // return;
       }
     }
     if (!tags.length) {
-      let result = await confirm("It is highly recommended that a stage has at least one tag.\nAre you sure you want to continue?");
-      if (!result) {
-        return;
-      }
+      // let result = await confirm("It is highly recommended that a stage has at least one tag.\nAre you sure you want to continue?");
+      // if (!result) {
+      //   return;
+      // }
     }
 
     const ret = {
