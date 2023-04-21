@@ -110,6 +110,7 @@ const tags_nsfw = [
 
 document.addEventListener('DOMContentLoaded', async (event) => {
   let stage = await invoke('get_stage');
+  console.log("Loading stage", stage);
   ReactDOM.createRoot(document.getElementById("root_s")).render(
     <React.StrictMode>
       <Stage stage={stage}/>

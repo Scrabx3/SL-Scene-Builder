@@ -70,13 +70,16 @@ async fn stage_creator(handle: tauri::AppHandle, id: Option<Uuid>)
       Err(_) => { w.close().expect("Unable to close window"); },
     }
   }
-
+  let name = data::DATA.lock().unwrap()
+    .get_stage(&id)
+    .and_then(|stage| {Some(stage.name.clone())})
+    .unwrap_or(String::from("UNTITLED"));
   tauri::WindowBuilder::new(
       &handle,
       label,
       tauri::WindowUrl::App("./stage.html".into())
     )
-    .title(format!("Stage Editor [{}]", id))
+    .title(format!("Stage Editor [{}]", name))
     .build()
     .unwrap();
 }
@@ -91,7 +94,7 @@ fn get_stage<R: Runtime>(_app: tauri::AppHandle<R>, window: tauri::Window<R>) ->
   let label = window.label();
   Uuid::parse_str(label.substring(STAGE_EDITOR_LABEL.len(), label.len()))
     .and_then(|id| {
-      if id.is_nil() {
+      if !id.is_nil() {
         let data = data::DATA.lock().unwrap();
         let somestage = data.get_stage(&id);
         match somestage {
@@ -103,7 +106,6 @@ fn get_stage<R: Runtime>(_app: tauri::AppHandle<R>, window: tauri::Window<R>) ->
     })
     .unwrap_or_else(|e| {print!("{}", e); define::Stage::default()})
 }
-
 
 // IDEA: allow copy initialize a new position on front end?
 // #[tauri::command]
