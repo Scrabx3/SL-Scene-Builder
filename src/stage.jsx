@@ -5,7 +5,7 @@ import "./App.css"
 import "./stage.css";
 
 import { invoke } from "@tauri-apps/api/tauri";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useImmer } from "use-immer";
 
 const racekeys = [
@@ -117,187 +117,157 @@ document.addEventListener('DOMContentLoaded', async (event) => {
   );
 });
 
-// COMEBACK: update cycle here likely not ideal. Should prbly switch up update & render timings
-function PositionData({ position, doUpdate }) {
-  const [data, updateData] = useImmer(position);
-  useEffect(() => { doUpdate(data); })
-
-  const updateList = (list, name) => {
-    let ret = [...list];
-    const w = ret.indexOf(name);
-    if (w === -1) {
-      ret.push(name);
-    } else {
-      ret.splice(w, 1);
-    }
-    return ret;
-  }
-
-  function Sex({ label, name, disable }) {
-    if (!name) name = label;    
-    return (
-      <label>
-        <input type="checkbox"
-          onChange={() => { updateData(d => { d.genders = updateList(data.genders, name) }); }}
-          checked={data.genders.indexOf(name) > -1}
-          disabled={disable} />{label}
-      </label>
-    )
-  }
-
-  function Extra({ label, name, disable }) {
-    if (!name) name = label;    
-    return (
-      <label>
-        <input type="checkbox"
-          onChange={() => { updateData(d => { d.extra = updateList(data.extra, name) }); }}
-          checked={position.extra.indexOf(name) > -1} 
-          disabled={disable} />{label}
-      </label>
-    )
-  }
-
-  function Offset({ label, name, min, max }) {
-    return (
-      <label>{label}
-        <input type="number" step="0.1" min={min} max={max}
-          placeholder={"0.0"}
-          defaultValue={data.offset[name] ? data.offset[name] : undefined}
-          onBlur={(evt) => {
-            let value = evt.target.value
-            if (!value)
-              return;
-            let offset = parseFloat(value).toFixed(1);
-            if (min != undefined) offset = Math.max(min, offset);
-            if (max != undefined) offset = Math.min(offset, max);    
-            updateData(d => { d.offset[name] = offset }); 
-          }}
-          onFocus={(evt) => { evt.target.select(); }}
-        />
-      </label>
-    )
-  }
-
-  const isHuman = () => {
-    return position.race === "Human";
-  }
-
-  // Toggle show and hide areas
-  const [isHidden, setIsHidden] = useState(true);
-  const toggleVisibility = () => {
-    setIsHidden(!isHidden);
-  };
-
-  return (
-    <>
-      <div className="row">
-        <h2>Base</h2>
-        <div className="base">
-          <fieldset>
-            <label>
-              Animation:{' '}
-              <input
-                type="text"
-                name="animation"
-                placeholder="behavior.hkx"
-                onBlur={(evt) => {
-                  let value = evt.target.value;
-                  if (value) {
-                    if (value === '.hkx') value = '';
-                    else if (!value.endsWith('.hkx')) value += '.hkx';
-                  }
-                  updateData((d) => {
-                    d.event = value;
-                  });
-                  evt.target.value = value;
-                }}
-                onFocus={(evt) => {
-                  if (!evt.target.value.length <= 4) return;
-                  evt.target.setSelectionRange(0, evt.target.value.length - 4);
-                }}
-                defaultValue={data.event}
-              />
-            </label>
-          </fieldset>
-          <fieldset>
-            <label>
-              Race:
-              <select
-                onChange={(evt) => {
-                  updateData((d) => {
-                    d.race = evt.target.value;
-                  });
-                }}
-                value={data.race}
-              >
-                {racekeys.map((race) => (
-                  <option key={race}>{race}</option>
-                ))}
-              </select>
-            </label>
-          </fieldset>
-          <fieldset>
-            <Sex label={'Male'} disable={false} />
-            <Sex label={'Female'} disable={false} />
-            <Sex label={'Hermaphrodite'} name={'Futa'} disable={!isHuman()} />
-          </fieldset>
-        </div>
-      </div>
-
-      <div className="row">
-        {/* added the onClick to toggle vis is hidden to swap the text */}
-        <h3 onClick={toggleVisibility}>{isHidden ? '+ Extra' : '- Extra'}</h3>
-        <div className="extra">
-          <div hidden={isHidden}>
-            <fieldset>
-              <Extra label={'Victim'} disable={false} />
-              <Extra label={'Vampire'} disable={!isHuman()} />
-              <Extra label={'Dead'} disable={false} />
-            </fieldset>
-            <fieldset>
-              <Extra
-                label={'Amputee (arm, right)'}
-                name={'AmputeeAR'}
-                disable={!isHuman()}
-              />
-              <Extra
-                label={'Amputee (arm, left)'}
-                name={'AmputeeAL'}
-                disable={!isHuman()}
-              />
-              <Extra
-                label={'Amputee (leg, right)'}
-                name={'AmputeeLR'}
-                disable={!isHuman()}
-              />
-              <Extra
-                label={'Amputee (leg, left)'}
-                name={'AmputeeLL'}
-                disable={!isHuman()}
-              />
-            </fieldset>
-            <fieldset>
-              <Extra label={'Optional'} disable={false} />
-            </fieldset>
-            <fieldset>
-              <h3>Offset</h3>
-              <Offset label={'X: '} name={'x'} />
-              <Offset label={'Y: '} name={'y'} />
-              <Offset label={'Z: '} name={'z'} />
-              <Offset label={'Angle: '} name={'angle'} min={0.0} max={360.0} />
-            </fieldset>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
+// { id, name, positions, tags, extra }
 function Stage({ stage }) {
   const [name, setName] = useState(stage.name);
   const [positions, updatePositions] = useImmer(stage.positions);
   const [tags, setTags] = useState(stage.tags);
   const [extra, updateExtra] = useImmer(stage.extra);
+
+  function PositionData({ i }) {
+    const [isHidden, setIsHidden] = useState(true);
+    const data = positions[i];
+
+    const toggleVisibility = () => {
+      setIsHidden(!isHidden);
+    };
+
+    const updateList = (list, name) => {
+      let ret = [...list];
+      const w = ret.indexOf(name);
+      if (w === -1) {
+        ret.push(name);
+      } else {
+        ret.splice(w, 1);
+      }
+      return ret;
+    }
+
+    const isHuman = () => {
+      return positions[i].race === "Human";
+    }
+
+    function Sex({ label, name, disable }) {
+      if (!name) name = label;
+      return (
+        <label>
+          <input type="checkbox"
+            onChange={() => { updatePositions(prev => { prev[i].genders = updateList(data.genders, name) }); }}
+            checked={data.genders.indexOf(name) > -1}
+            disabled={disable} />{label}
+        </label>
+      )
+    }
+    function Extra({ label, name, disable }) {
+      if (!name) name = label;
+      return (
+        <label>
+          <input type="checkbox"
+            onChange={() => { updatePositions(prev => { prev[i].extra = updateList(data.extra, name) }); }}
+            checked={positions[i].extra.indexOf(name) > -1}
+            disabled={disable} />{label}
+        </label>
+      )
+    }
+    function Offset({ label, name, min, max }) {
+      return (
+        <label>{label}
+          <input type="number" step="0.1" min={min} max={max}
+            placeholder={"0.0"}
+            defaultValue={data.offset[name] ? data.offset[name] : undefined}
+            onBlur={(evt) => {
+              let value = evt.target.value
+              if (!value)
+                return;
+              let offset = parseFloat(value).toFixed(1);
+              if (min != undefined) offset = Math.max(min, offset);
+              if (max != undefined) offset = Math.min(offset, max);
+              updatePositions(prev => { prev[i].offset[name] = offset });
+            }}
+            onFocus={(evt) => { evt.target.select(); }}
+          />
+        </label>
+      )
+    }
+
+    return (
+      <>
+        <div className="row">
+          <h2>Base</h2>
+          <div className="base">
+            <fieldset>
+              <label>
+                Animation:{' '}
+                <input
+                  type="text"
+                  name="animation"
+                  placeholder="behavior.hkx"
+                  onBlur={(evt) => {
+                    let value = evt.target.value;
+                    if (value) {
+                      if (value === '.hkx') value = '';
+                      else if (!value.endsWith('.hkx')) value += '.hkx';
+                    }
+                    updatePositions(prev => { prev[i].event = value; });
+                    evt.target.value = value;
+                  }}
+                  onFocus={(evt) => {
+                    if (!evt.target.value.length <= 4) return;
+                    evt.target.setSelectionRange(0, evt.target.value.length - 4);
+                  }}
+                  defaultValue={data.event}
+                />
+              </label>
+            </fieldset>
+            <fieldset>
+              <label>
+                Race:
+                <select
+                  onChange={(evt) => {
+                    updatePositions(prev => { prev[i].race = evt.target.value; });
+                  }}
+                  value={data.race}
+                >
+                  {racekeys.map((race) => (
+                    <option key={race}>{race}</option>
+                  ))}
+                </select>
+              </label>
+            </fieldset>
+            <fieldset>
+              <Sex label={'Male'} disable={false} />
+              <Sex label={'Female'} disable={false} />
+              <Sex label={'Hermaphrodite'} name={'Futa'} disable={!isHuman()} />
+            </fieldset>
+          </div>
+        </div>
+
+        <div className="row">
+          {/* added the onClick to toggle vis is hidden to swap the text */}
+          <h3 onClick={toggleVisibility}>{isHidden ? '+ Extra' : '- Extra'}</h3>
+          <div className="extra">
+            <div hidden={isHidden}>
+              <fieldset>
+                <Extra label={'Victim'} disable={false} />
+                <Extra label={'Vampire'} disable={!isHuman()} />
+                <Extra label={'Dead'} disable={false} />
+              </fieldset>
+              <fieldset>
+                <Extra label={'Optional'} disable={false} />
+              </fieldset>
+              <fieldset>
+                <h3>Offset</h3>
+                <Offset label={'X: '} name={'x'} />
+                <Offset label={'Y: '} name={'y'} />
+                <Offset label={'Z: '} name={'z'} />
+                <Offset label={'Angle: '} name={'angle'} min={0.0} max={360.0} />
+              </fieldset>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   function ExtraNumber({ label, tag, args }) {
     const instanceIdx = extra.findIndex(value => value.tag === tag);
@@ -331,10 +301,6 @@ function Stage({ stage }) {
     const id = parseInt(parent.getAttribute('index'));
     updatePositions(p => { p.splice(id, 1) });
   };
-
-  function updatePositionData(data, i) {
-    updatePositions(p => { p[i] = data })
-  }
 
   function addTags(str) {
     const hasTag = (search) => {
@@ -383,7 +349,6 @@ function Stage({ stage }) {
       tags: tags,
       extra: extra.filter(e => e.v != 0)
     }
-    // console.log(ret);
     invoke('save_stage', { stage: ret });
   }
 
@@ -409,10 +374,7 @@ function Stage({ stage }) {
       <div id="positions">
         {positions.map((pos, i) => (
           <div key={i} index={i} className="position">
-            <PositionData
-              position={pos}
-              doUpdate={(data) => updatePositionData(data, i)}
-            />
+            <PositionData i={i} />
             <button onClick={removePosition}>Remove</button>
           </div>
         ))}
