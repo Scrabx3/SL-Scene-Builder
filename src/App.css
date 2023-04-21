@@ -84,3 +84,9 @@ h3.h4,h5 {
   border: yellow;
   border-style: solid;
 }
+
+#node_context_menu {
+  position: absolute;
+  width: 200px;
+  z-index: 10000;
+}

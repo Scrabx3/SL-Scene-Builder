@@ -2,13 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from '@tauri-apps/api/event';
 import { Graph, Shape } from '@antv/x6'
-// import { register } from '@antv/x6-react-shape'
+import { Menu } from 'antd'
 
 import "./App.css";
-
-const stage_node_data = {
-
-};
 
 Graph.registerNode(
   'stage_node',
@@ -31,21 +27,26 @@ Graph.registerNode(
         stroke: '#8f8f8f',
         strokeWidth: 1,
         fill: '#fff',
-        rx: 6,
-        ry: 6,
+        rx: 3,
+        ry: 3,
       }
     },
     ports: {
       groups: {
-        out: {
+        default: {
           position: 'right',
-          attrs: {
-            circle: {
-              magnet: true,
-              stroke: '#8f8f8f',
-              r: 5,
-            },
+          markup: {
+            tagName: 'circle',
+            selector: 's_circle',
           },
+          attrs: {
+            s_circle: {
+              r: 10,
+              fill: '#000fff',
+              stroke: '#000',
+              magnet: true,
+            }
+          }
         },
       },
     }, 
@@ -53,12 +54,78 @@ Graph.registerNode(
   true
 );
 
+function StageNodeContextMenu({ x, y, node, view, hide }) {
+  const menuRef = useRef(null);
+  const items = [
+    {
+      label: "Edit stage",
+      key: "edit"
+    },
+    {
+      type: "divider"
+    },
+    {
+      label: "Mark as root",
+      key: "makeroot"
+    },
+    {
+      label: "Remove connections",
+      key: "removeconnections"
+    },
+    {
+      type: "divider"
+    },
+    {
+      label: "Remove stage",
+      key: "remove",
+      danger: true
+    }
+  ];
+
+  document.addEventListener('click', (e) => {
+    if (!menuRef.current || menuRef.current.menu.list.contains(e.target)) {
+      return;
+    }
+    window.setTimeout(hide, 200);
+  });
+
+  const onSelected = ({ item, key, keyPath, selectedKeys, domEvent }) => {
+    switch (key) {
+      case 'edit':
+        invoke('stage_creator', { id: node.id })
+        break;
+      default:
+        break;
+    }
+    console.log("node", node)
+    console.log("view", view)
+    window.setTimeout(hide, 200);
+  }
+
+  return (
+    <Menu
+      ref={menuRef}
+      onSelect={onSelected}
+      id="node_context_menu"
+      style={{
+        top: `${y}px`,
+        left: `${x}px`,
+      }}
+      theme="light"
+      mode="vertical"
+      items={items}
+    />
+  );
+}
+
 function App() {
   const graph_ref = useRef(null);
   const [graph, setGraph] = useState(null);
+  const [nodeContext, setNodeContext] = useState({ show: false, x: 0, y: 0, node: null, view: null });
 
   useEffect(() => {
-    if (graph) return;
+    if (graph) {console.log("initialized"); return; }
+    console.log("initializing graph");
     let g = new Graph({
       container: graph_ref.current,
       panning: true,
@@ -69,14 +136,15 @@ function App() {
         allowPort: false,
         allowNode: true,
         allowLoop: true,
-        allowMulti: true,
+        allowMulti: false,
         createEdge: ({ sourceCell, sourceView, sourceMagnet }) => {
+          // IDEA: different style depending on the kind of node to connect?
           return new Shape.Edge({
             router: {
               name: "metro",
               args: {
                 startDirections: ["right"],
-                endDirections: ["left"],
+                endDirections: ["left", "top", "bottom"],
               },
             },
             connector: "rounded",
@@ -87,7 +155,22 @@ function App() {
             }
           });
         }
-      },
+      }
+    });
+    g.on("edge:contextmenu", ({ e, x, y, edge, view }) => {
+      e.stopPropagation();
+      edge.remove();
+    });
+    g.on("node:contextmenu", ({ e, x, y, node, view }) => {
+      e.stopPropagation();
+      setNodeContext({
+        show: true,
+        x: e.pageX,
+        y: e.pageY,
+        node: node,
+        view: view,
+        hide: () => { setNodeContext({ show: false }) }
+      });
     });
     setGraph(g);
   }, [graph]);
@@ -101,19 +184,30 @@ function App() {
       y: 40,
       label: stage.name.length > 8 ? stage.name.substr(0, 7) + "..." : stage.name,
       ports: {
-        items: [
-          {
-            group: 'out',
-          },
-        ],
-      }, 
+        items: [{ group: 'default' },],
+      },
+    });
+    n.on("change:position" , (args) => {
+      graph.getEdges().forEach(edge => {
+        const edgeView = graph.findViewByCell(edge)
+        edgeView.update()
+      });
     });
   });
 
   return (
     <div className="container">
+      {nodeContext.show && <StageNodeContextMenu
+        x={nodeContext.x}
+        y={nodeContext.y}
+        node={nodeContext.node}
+        view={nodeContext.view}
+        hide={nodeContext.hide}
+      />}
+
       <button id="make_stage" onClick={() => { invoke('stage_creator', { id: 0 }); }}>Add Stage</button>
-      <div ref={graph_ref} id="graph"></div>
+      <div ref={graph_ref} id="graph">
+      </div>
       <button id="save_graph" onClick={() => { console.log("TODO: implement"); }}>Save Scene</button>
     </div>
   );
