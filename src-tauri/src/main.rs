@@ -2,8 +2,9 @@
   all(not(debug_assertions), target_os = "windows"),
   windows_subsystem = "windows"
 )]
-use tauri::{CustomMenuItem, Menu, MenuItem, Submenu, WindowBuilder, Manager, Runtime};
 use substring::Substring;
+use tauri::{CustomMenuItem, Menu, MenuItem, Submenu, WindowBuilder, Manager, Runtime};
+use uuid::Uuid;
 
 mod define;
 mod data;
@@ -42,22 +43,30 @@ fn main()
       });
       Ok(())
     })
+    .on_page_load(|window, _| {
+      if window.label().starts_with("stage_builder") {
+
+      }
+    })
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
 
 /// COMMANDS
 
+const STAGE_EDITOR_LABEL: &str = "stage_editor";
+
 #[tauri::command]
-async fn stage_creator(handle: tauri::AppHandle, id: i64)
+async fn stage_creator(handle: tauri::AppHandle, id: Option<Uuid>)
 {
-  let label = format!("{}{}", "stage_window_", id);
+  let id = id.unwrap_or(Uuid::nil());
+  let label = format!("{}{}", STAGE_EDITOR_LABEL, id);
   let window = handle.get_window(&label);
   if window.is_some() {
     let w = window.unwrap();
     w.unminimize().expect("Unable to maximize window");
     match w.set_focus() {
-      Ok(_) => { return }
+      Ok(_) => { return; }
       Err(_) => { w.close().expect("Unable to close window"); },
     }
   }
@@ -73,25 +82,28 @@ async fn stage_creator(handle: tauri::AppHandle, id: i64)
 }
 
 #[tauri::command]
-fn get_stage(window: tauri::Window) -> define::Stage
-{
-  let id = get_window_stage_id(&window);
-  if id != 0 {
-    let d = data::DATA.lock().unwrap();
-    let r = d.get_stage(id);
-
-    if r.is_some() {
-      return r.unwrap().clone()
-    }
-  }
-
-  define::Stage::default()
-}
-
-#[tauri::command]
 fn make_position<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>) -> define::Position {
   define::Position::default()
 }
+
+#[tauri::command]
+fn get_stage<R: Runtime>(_app: tauri::AppHandle<R>, window: tauri::Window<R>) -> define::Stage {
+  let label = window.label();
+  Uuid::parse_str(label.substring(STAGE_EDITOR_LABEL.len(), label.len()))
+    .and_then(|id| {
+      if id.is_nil() {
+        let data = data::DATA.lock().unwrap();
+        let somestage = data.get_stage(&id);
+        match somestage {
+          Some(it) => {return Ok(it.clone());},
+          None => {println!("Invalid Stage ID: {}", id)},
+        }
+      }
+      Ok(define::Stage::default())
+    })
+    .unwrap_or_else(|e| {print!("{}", e); define::Stage::default()})
+}
+
 
 // IDEA: allow copy initialize a new position on front end?
 // #[tauri::command]
@@ -116,22 +128,4 @@ async fn save_stage(window: tauri::Window, app_handle: tauri::AppHandle, stage: 
   }
 
   window.close().expect("Failed to close stage builder window");
-}
-
-/// UTILITY
-
-fn get_window_stage_id(window: &tauri::Window) -> u64 {
-  // "stage_window_<id>"
-  let label = window.label();
-  let str_id = label.substring(label.rfind('_').unwrap() + 1, label.len());
-  let result = str_id.parse::<u64>();
-  match result {
-    Ok(_) => {
-      return result.unwrap()
-    }
-    Err(_) => {
-      println!("{:?}", result);
-      return 0
-    }
-  }
 }

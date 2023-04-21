@@ -1,4 +1,5 @@
 use serde::{Serialize, Deserialize};
+use uuid::Uuid;
 use std::collections::BTreeMap;
 
 #[repr(C)]
@@ -13,7 +14,7 @@ pub struct Animation
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Stage
 {
-	pub id: u64,
+	pub id: Uuid,
 	pub name: String,
 
 	positions: Vec<Position>,
@@ -25,7 +26,7 @@ pub struct Stage
 impl Stage {
 	pub fn default() -> Stage {
 		Stage{
-			id: 0,
+			id: Uuid::nil(),
 			name: String::from(""),
 			positions: vec![Position::default()],
 			tags: vec![],

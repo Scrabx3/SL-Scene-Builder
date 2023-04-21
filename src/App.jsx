@@ -92,6 +92,7 @@ function StageNodeContextMenu({ x, y, node, view, hide }) {
   const onSelected = ({ item, key, keyPath, selectedKeys, domEvent }) => {
     switch (key) {
       case 'edit':
+        console.log(node);
         invoke('stage_creator', { id: node.id })
         break;
       default:
@@ -205,7 +206,7 @@ function App() {
         hide={nodeContext.hide}
       />}
 
-      <button id="make_stage" onClick={() => { invoke('stage_creator', { id: 0 }); }}>Add Stage</button>
+      <button id="make_stage" onClick={() => { invoke('stage_creator', {}); }}>Add Stage</button> 
       <div ref={graph_ref} id="graph">
       </div>
       <button id="save_graph" onClick={() => { console.log("TODO: implement"); }}>Save Scene</button>
