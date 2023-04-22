@@ -35,6 +35,16 @@ impl Stage {
 			extra: vec![]
 		}
 	}
+
+	pub fn from(origin: &Stage) -> Stage {
+		Stage{
+			id: Uuid::nil(),
+			name: format!("{} - {}", origin.name, "COPY"),
+			positions: origin.positions.clone(),
+			tags: origin.tags.clone(),
+			extra: vec![]
+		}
+	}
 }
 
 impl PartialEq for Stage {

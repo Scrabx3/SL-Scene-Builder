@@ -2,6 +2,8 @@
   all(not(debug_assertions), target_os = "windows"),
   windows_subsystem = "windows"
 )]
+use std::fmt::format;
+
 use substring::Substring;
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu, WindowBuilder, Manager, Runtime};
 use uuid::Uuid;
@@ -15,6 +17,7 @@ fn main()
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
       stage_creator,
+      stage_creator_from,
       get_stage,
       save_stage,
       make_position])
@@ -56,26 +59,25 @@ fn main()
 
 const STAGE_EDITOR_LABEL: &str = "stage_editor";
 
+/* State related */
+
 #[tauri::command]
-async fn stage_creator(handle: tauri::AppHandle, id: Option<Uuid>)
+async fn stage_creator<R: Runtime>(app: tauri::AppHandle<R>, id: Option<Uuid>)
 {
   let id = id.unwrap_or(Uuid::nil());
   let label = format!("{}{}", STAGE_EDITOR_LABEL, id);
-  let window = handle.get_window(&label);
-  if window.is_some() {
-    let w = window.unwrap();
-    w.unminimize().expect("Unable to maximize window");
-    match w.set_focus() {
-      Ok(_) => { return; }
-      Err(_) => { w.close().expect("Unable to close window"); },
+  if let Some(window) = app.get_window(&label) {
+    if window.unminimize().is_ok() && window.set_focus().is_ok() {
+      return;
     }
+    window.close().expect(format!("Stage editor window {} does not react", label).as_str());
   }
   let name = data::DATA.lock().unwrap()
     .get_stage(&id)
-    .and_then(|stage| {Some(stage.name.clone())})
+    .and_then(|stage| { Some(stage.name.clone()) })
     .unwrap_or(String::from("UNTITLED"));
   tauri::WindowBuilder::new(
-      &handle,
+      &app,
       label,
       tauri::WindowUrl::App("./stage.html".into())
     )
@@ -85,9 +87,26 @@ async fn stage_creator(handle: tauri::AppHandle, id: Option<Uuid>)
 }
 
 #[tauri::command]
-fn make_position<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>) -> define::Position {
-  define::Position::default()
-}
+async fn stage_creator_from<R: Runtime>(app: tauri::AppHandle<R>, _window: tauri::Window<R>, id: Uuid) -> Result<(), String> {
+  let mut data = data::DATA.lock().unwrap();
+  let original = data.get_stage(&id);
+  match original {
+    None => { return Err("Invalid id".into()); }
+    Some(stage) => {
+      let tmp = define::Stage::from(stage);
+      let res = data.insert_stage(tmp);
+      tauri::WindowBuilder::new(
+            &app,
+            format!("{}{}", STAGE_EDITOR_LABEL, res.id),
+            tauri::WindowUrl::App("./stage.html".into())
+          )
+          .title(format!("Stage Editor [{}]", res.name))
+          .build()
+          .unwrap();
+    }
+  }
+  Ok(())
+} 
 
 #[tauri::command]
 fn get_stage<R: Runtime>(_app: tauri::AppHandle<R>, window: tauri::Window<R>) -> define::Stage {
@@ -107,6 +126,21 @@ fn get_stage<R: Runtime>(_app: tauri::AppHandle<R>, window: tauri::Window<R>) ->
     .unwrap_or_else(|e| {print!("{}", e); define::Stage::default()})
 }
 
+#[tauri::command]
+async fn save_stage<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, stage: define::Stage) -> () {
+  let mut data = data::DATA.lock().unwrap();
+  let stage_ref = data.insert_stage(stage);
+
+  app.get_window("main_window")
+    .expect("Unable to get main window")
+    .emit("save_stage", stage_ref)
+    .expect("Failed to send callback event to main window");
+
+  window.close().expect("Failed to close stage builder window");
+}
+
+/* Position related */
+
 // IDEA: allow copy initialize a new position on front end?
 // #[tauri::command]
 // async fn make_position_from<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, from: define::Position) -> Result<(), String> {
@@ -114,20 +148,6 @@ fn get_stage<R: Runtime>(_app: tauri::AppHandle<R>, window: tauri::Window<R>) ->
 // }
 
 #[tauri::command]
-async fn save_stage(window: tauri::Window, app_handle: tauri::AppHandle, stage: define::Stage) -> () {
-  let copy = data::DATA.lock().unwrap()
-    .insert_stage(stage)
-    .expect("Failed to save stage. ID corrupted?")
-    .clone();
-
-  match app_handle.get_window("main_window") {
-    Some(window) => {
-      window.emit("save_stage", copy).unwrap();
-    },
-    None => {
-      panic!("Cannot find main window");
-    },
-  }
-
-  window.close().expect("Failed to close stage builder window");
+fn make_position<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>) -> define::Position {
+  define::Position::default()
 }
