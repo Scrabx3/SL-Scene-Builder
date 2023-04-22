@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { listen } from '@tauri-apps/api/event';
+import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { Menu } from 'antd'
 
+import useStartAnim from "./util/StartAnimation";
 import "./App.css";
 
 Graph.registerNode(
@@ -50,94 +51,34 @@ Graph.registerNode(
         },
       },
     }, 
+    effect: ['color'],
   },
   true
 );
 
-function StageNodeContextMenu({ x, y, node, view, hide }) {
-  const menuRef = useRef(null);
-  const items = [
-    {
-      label: "Edit stage",
-      key: "edit"
-    },
-    {
-      type: "divider"
-    },
-    {
-      label: "Mark as root",
-      key: "makeroot"
-    },
-    {
-      label: "Remove connections",
-      key: "removeconnections"
-    },
-    {
-      type: "divider"
-    },
-    {
-      label: "Remove stage",
-      key: "remove",
-      danger: true
-    }
-  ];
-
-  document.addEventListener('click', (e) => {
-    if (!menuRef.current || menuRef.current.menu.list.contains(e.target)) {
-      return;
-    }
-    window.setTimeout(hide, 200);
-  });
-
-  const onSelected = ({ item, key, keyPath, selectedKeys, domEvent }) => {
-    switch (key) {
-      case 'edit':
-        console.log(node);
-        invoke('stage_creator', { id: node.id })
-        break;
-      default:
-        break;
-    }
-    console.log("node", node)
-    console.log("view", view)
-    window.setTimeout(hide, 200);
-  }
-
-  return (
-    <Menu
-      ref={menuRef}
-      onSelect={onSelected}
-      id="node_context_menu"
-      style={{
-        top: `${y}px`,
-        left: `${x}px`,
-      }}
-      theme="light"
-      mode="vertical"
-      items={items}
-    />
-  );
-}
-
 function App() {
-  const graph_ref = useRef(null);
+  const graphholder_ref = useRef(null);
   const [graph, setGraph] = useState(null);
   const [nodeContext, setNodeContext] = useState({ show: false, x: 0, y: 0, node: null, view: null });
 
+  const [sceneName, setSceneName] = useState("");
+  const [animations, setAnimations] = useState([]);
+  const [stages, setStages] = useState([]);
+  const [startAnim, setStartAnim] = useStartAnim(null);
+
   useEffect(() => {
-    if (graph) {console.log("initialized"); return; }
-    console.log("initializing graph");
+    if (graph) return;
     let g = new Graph({
-      container: graph_ref.current,
+      container: graphholder_ref.current,
       panning: true,
       mousewheel: true,
       connecting: {
         allowBlank: false,
+        allowMulti: false,
+        allowLoop: false,
         allowEdge: false,
         allowPort: false,
         allowNode: true,
-        allowLoop: true,
-        allowMulti: false,
         createEdge: ({ sourceCell, sourceView, sourceMagnet }) => {
           // IDEA: different style depending on the kind of node to connect?
           return new Shape.Edge({
@@ -194,7 +135,86 @@ function App() {
         edgeView.update()
       });
     });
+    // if (!startAnim) updateStartAnim(n.id);
   });
+
+  function StageNodeContextMenu({ x, y, node, view, hide }) {
+    const menuRef = useRef(null);
+    const items = [
+      {
+        label: "Edit stage",
+        key: "edit"
+      },
+      {
+        type: "divider"
+      },
+      {
+        label: "Mark as root",
+        key: "makeroot"
+      },
+      {
+        label: "Remove connections",
+        key: "removeconnections"
+      },
+      {
+        type: "divider"
+      },
+      {
+        label: "Remove stage",
+        key: "remove",
+        danger: true
+      }
+    ];
+
+    document.addEventListener('click', (e) => {
+      if (!menuRef.current || menuRef.current.menu.list.contains(e.target)) {
+        return;
+      }
+      window.setTimeout(hide, 200);
+    });
+
+    const onSelected = ({ item, key, keyPath, selectedKeys, domEvent }) => {
+      console.log(view);
+      switch (key) {
+        case 'edit':
+          invoke('stage_creator', { id: node.id })
+          break;
+        case 'makeroot':
+          setStartAnim(node);
+          break;
+        case 'removeconnections':
+          {
+            const edges = graph.getConnectedEdges(node);
+            edges.forEach(edge => {
+              edge.remove();
+            });
+          }
+          break;
+        case 'remove':
+          node.remove();
+          // IDEA: invoke some functions to kill the stage entirely (in backend) if its not referenced anywhere else
+          break;
+        default:
+          break;
+      }
+      window.setTimeout(hide, 50);
+    }
+
+    return (
+      <Menu
+        ref={menuRef}
+        onSelect={onSelected}
+        id="node_context_menu"
+        style={{
+          top: `${y}px`,
+          left: `${x}px`,
+        }}
+        theme="light"
+        mode="vertical"
+        items={items}
+      />
+    );
+  }
 
   return (
     <div className="container">
@@ -207,7 +227,7 @@ function App() {
       />}
 
       <button id="make_stage" onClick={() => { invoke('stage_creator', {}); }}>Add Stage</button> 
-      <div ref={graph_ref} id="graph">
+      <div ref={graphholder_ref} id="graph">
       </div>
       <button id="save_graph" onClick={() => { console.log("TODO: implement"); }}>Save Scene</button>
     </div>

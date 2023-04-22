@@ -6,8 +6,10 @@ use std::collections::BTreeMap;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Animation
 {
-	pub name: String,
-	pub graph: BTreeMap<u64, Vec<u64>>
+	name: String,
+	
+	start_animation: Uuid,
+	graph: BTreeMap<Uuid, Vec<Uuid>>
 }
 
 #[repr(C)]
