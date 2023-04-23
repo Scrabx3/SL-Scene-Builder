@@ -2,59 +2,57 @@ import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
+import { register } from "@antv/x6-react-shape";
 import { Menu } from 'antd'
 
-import useStartAnim from "./util/StartAnimation";
+import { useStartAnim, COLORS } from "./graph/StartAnimation";
 import "./App.css";
 
-Graph.registerNode(
-  'stage_node',
-  {
-    inherit: 'rect',
-    width: 160,
-    height: 90,
-    markup: [
-      {
-        tagName: "rect",
-        selector: "body"
-      },
-      {
-        tagName: "text",
-        selector: "label"
-      }
-    ],
-    attrs: {
-      body: {
-        stroke: '#8f8f8f',
-        strokeWidth: 1,
-        fill: '#fff',
-        rx: 3,
-        ry: 3,
-      }
-    },
-    ports: {
-      groups: {
-        default: {
-          position: 'right',
-          markup: {
-            tagName: 'circle',
-            selector: 's_circle',
-          },
+function StageNode({ node }) {
+  const label = node.prop('name');
+  const color = node.prop('color');
+  console.log(color);
+  return (
+    <div
+      style={{
+        color: '#000',
+        width: '100%',
+        height: '100%',
+        textAlign: 'center',
+        lineHeight: '50px',
+        borderRadius: 4,
+        background: color ? color : COLORS.default
+      }}
+    >
+      {label}
+    </div>
+  )
+}
+
+register({
+  shape: "stage_node",
+  width: 160,
+  height: 90,
+  ports: {
+    groups: {
+      default: {
+        position: 'right',
+        markup: {
+          tagName: 'circle',
+          selector: 's_circle',
           attrs: {
-            s_circle: {
-              r: 10,
-              fill: '#000fff',
-              stroke: '#000',
-              magnet: true,
-            }
+            r: 10,
+            fill: '#000fff',
+            stroke: '#000',
+            magnet: true,
           }
-        },
-      },
-    }, 
-    effect: ['color'],
+        }
+      }
+    }
   },
-  true
-);
+  effect: ['name', 'color'],
+  component: StageNode,
+});
 
 function App() {
   const graphholder_ref = useRef(null);
@@ -119,23 +117,32 @@ function App() {
 
   const unlisten = listen('save_stage', (event) => {
     const stage = event.payload;
-    const n = graph.addNode({
-      shape: 'stage_node',
-      id: stage.id,
-      x: 40,
-      y: 40,
-      label: stage.name.length > 8 ? stage.name.substr(0, 7) + "..." : stage.name,
-      ports: {
-        items: [{ group: 'default' },],
-      },
-    });
-    n.on("change:position" , (args) => {
-      graph.getEdges().forEach(edge => {
-        const edgeView = graph.findViewByCell(edge)
-        edgeView.update()
+    let nodes = graph.getNodes();
+    let res = nodes.find(node => node.id === stage.id);
+    if (res) {  // edited
+      const node = res;
+      const txt = stage.name.length > 8 ? stage.name.substr(0, 7) + "..." : stage.name;
+      node.prop('name', txt);
+    } else {
+      const node = graph.addNode({
+        shape: 'stage_node',
+        id: stage.id,
+        x: 40,
+        y: 40,
+        ports: {
+          items: [{ group: 'default' },],
+        },
       });
-    });
-    // if (!startAnim) updateStartAnim(n.id);
+      node.on("change:position", (args) => {
+        graph.getEdges().forEach(edge => {
+          const edgeView = graph.findViewByCell(edge)
+          edgeView.update()
+        });
+      });
+      if (nodes.length === 0) {
+        setStartAnim(node);
+      }
+    }
   });
 
   function StageNodeContextMenu({ x, y, node, view, hide }) {
@@ -170,7 +177,7 @@ function App() {
       if (!menuRef.current || menuRef.current.menu.list.contains(e.target)) {
         return;
       }
-      window.setTimeout(hide, 200);
+      hide();
     });
 
     const onSelected = ({ item, key, keyPath, selectedKeys, domEvent }) => {
@@ -197,7 +204,7 @@ function App() {
         default:
           break;
       }
-      window.setTimeout(hide, 50);
+      hide();
     }
 
     return (

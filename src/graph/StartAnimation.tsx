@@ -1,10 +1,10 @@
 // Editing this page requires manual reload:
 // https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
 
-import { Cell } from "@antv/x6";
+import { Node } from "@antv/x6";
 import { useState } from "react";
 
-const COLORS = {
+export const COLORS = {
   default: "#FFFFFF", // default node color
   start: "#ff9d00",   // start animation
   orgasm: "#d45fa5",  // orgasm stages
@@ -14,15 +14,15 @@ const COLORS = {
 /**
  * @returns A stateful value to manage the starting node of a given animation
  */
-function useStartAnim(initialState: Cell | (() => Cell)): [Cell, (state: Cell | ((prevState: Cell) => Cell)) => void]
+export function useStartAnim(initialState: Node | (() => Node)): [Node, (state: Node | ((prevState: Node) => Node)) => void]
 {
   const [state, setState] = useState(initialState)
   const isFunction = (value: any): value is Function => typeof value === 'function'
-  const setNodeColor = (cell: Cell, color: any) => {
-    cell.attr({ body: { fill: color, }, });
+  const setNodeColor = (cell: Node, color: String) => {
+    cell.prop('color', color)
   }
 
-  const updateState = (arg: Cell | ((prevState: Cell) => Cell)) => {
+  const updateState = (arg: Node | ((prevState: Node) => Node)) => {
     const cell = isFunction(arg) ? arg(state) : arg;
     if (state) {
       state.data = { isStartNode: false };
@@ -43,5 +43,3 @@ function useStartAnim(initialState: Cell | (() => Cell)): [Cell, (state: Cell | 
 
   return [state, updateState];
 }
-
-export default useStartAnim;
