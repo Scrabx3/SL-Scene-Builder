@@ -69,7 +69,10 @@ function App() {
     let g = new Graph({
       container: graphholder_ref.current,
       panning: true,
-      mousewheel: true,
+      mousewheel: {
+        enabled: true,
+        modifiers: ['ctrl', 'meta'],
+      },
       connecting: {
         allowBlank: false,
         allowMulti: false,
@@ -240,8 +243,10 @@ function App() {
         hide={nodeContext.hide}
       />}
 
+      {/* TODO: vertical menu to add stages & animations as well as display existing ones */}
       <button id="make_stage" onClick={() => { invoke('stage_creator', {}); }}>Add Stage</button>
 
+      {/* IDEA: horizontal menu to choose between multiple active graphs */}
       <div id="graph_container">
         <div ref={graphholder_ref} id="graph"/>
       </div>
