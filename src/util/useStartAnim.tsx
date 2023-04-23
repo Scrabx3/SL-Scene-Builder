@@ -4,17 +4,17 @@
 import { Node } from "@antv/x6";
 import { useState } from "react";
 
-export const COLORS = {
-  default: "#FFFFFF", // default node color
-  start: "#ff9d00",   // start animation
-  orgasm: "#d45fa5",  // orgasm stages
-  fixed: "#52a855",   // fixed length stages
-};
+export interface NodeColorCodes {
+  default: String
+  start: String
+  orgasm: String
+  fixed: String
+}
 
 /**
  * @returns A stateful value to manage the starting node of a given animation
  */
-export function useStartAnim(initialState: Node | (() => Node)): [Node, (state: Node | ((prevState: Node) => Node)) => void]
+export function useStartAnim(initialState: Node | (() => Node), colors: NodeColorCodes): [Node, (state: Node | ((prevState: Node) => Node)) => void]
 {
   const [state, setState] = useState(initialState)
   const isFunction = (value: any): value is Function => typeof value === 'function'
@@ -28,16 +28,16 @@ export function useStartAnim(initialState: Node | (() => Node)): [Node, (state: 
       state.data = { isStartNode: false };
       var color: String;
       if (state.data.isOrgasm) {
-        color = COLORS.orgasm;
+        color = colors.orgasm;
       } else if (state.data.isFixed) {
-        color = COLORS.fixed;
+        color = colors.fixed;
       } else {
-        color = COLORS.default;
+        color = colors.default;
       }
       setNodeColor(state, color);
     }
     cell.data = { isStartNode: true };
-    setNodeColor(cell, COLORS.start);
+    setNodeColor(cell, colors.start);
     setState(cell);
   }
 

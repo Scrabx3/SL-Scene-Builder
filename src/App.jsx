@@ -5,8 +5,15 @@ import { Graph, Shape } from '@antv/x6'
 import { register } from "@antv/x6-react-shape";
 import { Menu } from 'antd'
 
-import { useStartAnim, COLORS } from "./graph/StartAnimation";
+import { useStartAnim } from "./util/useStartAnim";
 import "./App.css";
+
+export const COLORS = {
+  default: "#FFFFFF", // default node color
+  start: "#ff9d00",   // start animation
+  orgasm: "#d45fa5",  // orgasm stages
+  fixed: "#52a855",   // fixed length stages
+};
 
 function StageNode({ node }) {
   const label = node.prop('name');
@@ -62,7 +69,7 @@ function App() {
   const [sceneName, setSceneName] = useState("");
   const [animations, setAnimations] = useState([]);
   const [stages, setStages] = useState([]);
-  const [startAnim, setStartAnim] = useStartAnim(null);
+  const [startAnim, setStartAnim] = useStartAnim(null, COLORS);
 
   useEffect(() => {
     if (graph) return;

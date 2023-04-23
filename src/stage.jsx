@@ -1,14 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { invoke } from "@tauri-apps/api/tauri";
-import { useState } from "react";
+import { DeleteOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons';
+import { Input, Button, Tag, Space, Tooltip, Dropdown, Popconfirm } from 'antd';
+import { useState, useRef, useEffect } from "react";
 import { useImmer } from "use-immer";
 
-
+import { useStringListHandler } from "./util/useStringHandler";
 import "./defaultstyle.css";
 import "./App.css"
 import "./stage.css";
-
 
 const racekeys = [
   "Human",
@@ -110,18 +111,244 @@ const tags_nsfw = [
   "Vaginal"
 ]
 
+const getTagMenu = () => {
+  const addArray = (array) => {
+    let ret = [];
+    array.forEach(tag => {
+      ret.push({ label: tag, key: tag });
+    });
+    return ret;
+  };
+  let ret = [];
+  ret.push({
+    label: "Exclusive Tags:",
+    key: "exclusive",
+    children: addArray(tags_exclusive)
+  });
+  ret.push({ type: 'divider' });
+  ret.push({
+    label: "SFW Tags:",
+    key: "sfw",
+    children: addArray(tags_sfw)
+  });
+  ret.push({ type: 'divider' });
+  ret.push({
+    label: "NSFW Tags:",
+    key: "nsfw",
+    children: addArray(tags_nsfw)
+  });
+
+  // ret = ret.concat(addArray(tags_exclusive))
+  // ret.push({ type: 'divider' });
+  // ret = ret.concat(addArray(tags_sfw))
+  // ret.push({ type: 'divider' });
+  // ret = ret.concat(addArray(tags_nsfw))
+  return ret;
+}
+
 document.addEventListener('DOMContentLoaded', async (event) => {
   let stage = await invoke('get_stage');
   console.log("Loading stage", stage);
   ReactDOM.createRoot(document.getElementById("root_s")).render(
     <React.StrictMode>
-      <Stage stage={stage}/>
+      <Editor
+        _id={stage.id}
+        _name={stage.name}
+        _positions={stage.positions}
+        _tags={stage.tags}
+        _extra={stage.extra}
+        _constraints={null} // TODO: constraints to ensure a new stage submits to scene parameters its made for
+      />
+      {/* <br />
+      <br />
+      <blockquote>---</blockquote>
+      <br />
+      <br />
+      <Stage
+        stage={stage}
+      /> */}
     </React.StrictMode>
   );
 });
 
-// { id, name, positions, tags, extra }
-function Stage({ stage }) {
+function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
+  const [name, setName] = useState(_name);
+  const [positions, updatePositions] = useImmer(_positions);
+  const [tags, updateTags] = useStringListHandler(_tags, tags_exclusive);
+
+  const items = getTagMenu();
+  console.log(items);
+
+  function TagField() {
+    const tagInputRef = useRef(null);
+    // Edit an existing tags
+    const [editIndex, setEditIndex] = useState(-1);
+    const [editValue, setEditValue] = useState('');
+
+    useEffect(() => {
+      tagInputRef.current?.focus();
+    }, [editValue]);
+
+    // Create a new tag
+    const [inputVisible, setInputVisible] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+
+    useEffect(() => {
+      if (inputVisible) {
+        tagInputRef.current?.focus();
+      }
+    }, [inputVisible]);
+
+    // Impl
+    const getColor = (colorTag) => {
+      if (tags_exclusive.indexOf(colorTag) > -1) {
+        return 'purple';
+      }
+      if (tags_sfw.indexOf(colorTag) > -1) {
+        return 'cyan';
+      }
+      if (tags_nsfw.indexOf(colorTag) > -1) {
+        return 'volcano';
+      }
+      return '';
+    }
+
+    const handleDelete = (removedTag) => {
+      console.log("Removing tag", removedTag);
+      const newTags = tags.filter((tag) => tag !== removedTag);
+      console.log(newTags);
+      updateTags(newTags);
+    }
+
+    const handleAdd = (newTag) => {
+      updateTags(newTag);
+      setInputVisible(false);
+      setInputValue('');
+    }
+
+    return (
+      <div id="stage_tags">
+        <Space size={[0, 8]} wrap>
+          {/* Display existing tags */}
+          {tags.map((tag, i) => {
+            if (i === editIndex) {
+              const handleEditConfirm = (e) => {
+                let newtags = [...tags];
+                if (editValue === "") {
+                  newtags.splice(editIndex, 1);
+                } else {
+                  newtags[editIndex] = editValue;
+                }
+                updateTags(newtags);
+                setEditValue('');
+                setEditIndex(-1);
+              }
+              return (
+                <Input className="tagInputField" ref={tagInputRef} key={tag} size="small"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onBlur={handleEditConfirm}
+                  onPressEnter={handleEditConfirm}
+                />
+              );
+            }
+            const isLongTag = tag.length > 20;
+            const c = getColor(tag);
+            const tagElem = (
+              <Tag className="tagField" key={tag} closable onClose={() => handleDelete(tag)} color={c}>
+                <span onDoubleClick={(e) => {
+                  if (c) return;
+                  e.preventDefault();
+                  setEditValue(tag);
+                  setEditIndex(i);
+                }}>
+                  {isLongTag ? `${tag.slice(0, 20)}...` : tag}
+                </span>
+              </Tag>
+            );
+            return isLongTag ? (<Tooltip title={tag} key={tag}>{tagElem}</Tooltip>) : (tagElem)
+          })}
+          {/* Add tag field */}
+          {inputVisible ? (
+            <Input className="tagInputField" ref={tagInputRef} type="text" size="small"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onBlur={(e) => handleAdd(inputValue)}
+              onPressEnter={(e) => handleAdd(inputValue)}
+            />
+          ) : (
+            <Tag className="tagNewField" onClick={() => setInputVisible(true)}>
+              <PlusOutlined /> Add Tag
+            </Tag>
+          )}
+        </Space>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div id="stageheader">
+        <h1>Stage</h1>
+        <Input className="stagenamefield" size="large" maxLength={50} showCount
+          value={name} onChange={(e) => setName(e.target.value)}
+          defaultValue={_name} placeholder={"Stage Name"}
+          onFocus={(e) => e.target.select()}
+        />
+      </div>
+      
+      <div id="positions">
+        <h2>Positions</h2>
+        {positions.map((p, i) => (
+          <div key={i} index={i} className="position">
+            {/* TODO: <PositionData i={i} /> */}
+            <Button type="dashed" icon={<DeleteOutlined />}
+              onClick={() => { updatePositions(p => { p.splice(i, 1) }) }}
+              disabled={positions.length === 1}
+            >
+              Remove
+            </Button>
+          </div>
+        ))}
+        <Button
+          onClick={() => { invoke('make_position').then((s) => { updatePositions(p => { p.push(s) }) }) }}
+          disabled={positions.length > 4}
+        >
+          Add Position
+        </Button>
+      </div>
+
+      <div id="tags">
+        <h2>Tags</h2>
+        <Dropdown menu={{ items }} trigger={['click']}>
+          <a onClick={(e) => e.preventDefault()}>
+            <Space>
+              Add default tag
+              <DownOutlined />
+            </Space>
+          </a>
+        </Dropdown>
+        <TagField />
+        <Popconfirm
+          title="Clear tags"
+          description="Are you sure you want to delete ALL tags?"
+          placement="bottomLeft"
+          disabled={tags.length === 0}
+          onConfirm={() => { updateTags([]) }}
+        >
+          <Button type="dashed" icon={<DeleteOutlined />}>Clear tags</Button>
+        </Popconfirm>
+      </div>
+
+      <div id="extra">
+        <h2>Extra</h2>
+
+      </div>
+    </>
+  )
+}
+
+function Stage({stage}) {
   const [name, setName] = useState(stage.name);
   const [positions, updatePositions] = useImmer(stage.positions);
   const [tags, setTags] = useState(stage.tags);
@@ -345,18 +572,18 @@ function Stage({ stage }) {
       // }
     }
 
-    const extra = extra.filter(e => e.v != 0).map(e => parseFloat(e.v) );
-    console.log(extra);
+    // const extra = extra.filter(e => e.v != 0).map(e => parseFloat(e.v) );
+    // console.log(extra);
 
     const ret = {
       id: stage.id,
       name: name,
       positions: positions,
       tags: tags,
-      extra
+      extra: extra.filter(e => e.v != 0)
     };
     console.log(ret);
-    // invoke('save_stage', { stage: ret });
+    invoke('save_stage', { stage: ret });
   }
 
   return (

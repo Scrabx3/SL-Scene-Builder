@@ -3,11 +3,11 @@
  * everything is in a main div so if we want items to be full width its easiest start from 0
  */
 body {
-    padding: 0;
-    margin: 0;
+    padding: 7;
+    margin: 1;
 }
 
-#positions, #stage_holder, #tags, #extra {
+#positions, #stageheader, #tags, #extra {
     padding: 1em;
 }
 fieldset {
@@ -16,6 +16,11 @@ fieldset {
 fieldset input{
     margin-left: .5em;
 }
+
+.stagedivider {
+    font-style: italic;
+}
+
 /* #root_s > div{
     display: flex;
     flex-flow: column;
@@ -39,13 +44,20 @@ fieldset input{
 /**
  * Top Stage Creater Start
  */
-#stage_holder{
-    width: 100%;
+
+/* Has to be class, using an id only affects the actual text field, without the border */
+.stagenamefield {
+    width: 700px;
+    margin: 10px;
+}
+
+#stageheader{
+    /* width: 100%; */
     margin: 0;
     padding: 1em;
     border-bottom: 2px solid #445fef;
 }
-#stage_holder span {
+#stageheader span {
     padding-right: 1em;
 }
 /**
@@ -138,9 +150,24 @@ fieldset input{
 /**
  * Tags Area Start
  */
+.tagField {
+    user-select: none;
+}
+
+.tagInputField {
+    width: 78px;
+    vertical-align: top;
+}
+
+.tagNewField {
+    border: dashed;
+}
+
+
 #tags {
     border-bottom: 2px solid #445fef;
 }
+
 #stage_tags {
     display: flex;
     flex-direction: row;
@@ -152,7 +179,7 @@ fieldset input{
     min-height: 66px;
 }
 
-#stage_tags div {
+/* #stage_tags div {
     background-color: white;
     color: black;
     width: fit-content;
@@ -175,4 +202,31 @@ fieldset input{
 
 #stage_tags div:hover {
     background-color: #ffffff7e;
+} */
+
+#extra {
+    border-bottom: 5px solid #fff;
+}
+
+.ant-dropdown-menu {
+    max-height: 250px;
+    overflow: auto;
+}
+
+.ant-dropdown-menu-item {
+    max-height: 25px;
+    overflow: hidden;
+}
+.ant-dropdown-menu-item span {
+    max-height: 23px;
+}
+
+.ant-dropdown-menu-submenu-title {
+    max-height: 50px;
+}
+.ant-dropdown-menu-title-content {
+    max-height: 50px;
+}
+.ant-dropdown-menu-submenu-expand-icon {
+    max-height: 50px;
 }
