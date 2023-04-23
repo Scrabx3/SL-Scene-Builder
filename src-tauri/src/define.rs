@@ -29,7 +29,7 @@ impl Stage {
 	pub fn default() -> Stage {
 		Stage{
 			id: Uuid::nil(),
-			name: String::from(""),
+			name: "".into(),
 			positions: vec![Position::default()],
 			tags: vec![],
 			extra: vec![]
@@ -37,10 +37,14 @@ impl Stage {
 	}
 
 	pub fn from(origin: &Stage) -> Stage {
+		let mut positions = vec![];
+		for p in &origin.positions {
+				positions.push(Position::from(p));
+		}
 		Stage{
 			id: Uuid::nil(),
 			name: format!("{} - {}", origin.name, "COPY"),
-			positions: origin.positions.clone(),
+			positions,
 			tags: origin.tags.clone(),
 			extra: vec![]
 		}
@@ -73,6 +77,16 @@ impl Position {
 			event: String::from(""),
 			extra: vec![],
 			offset: Offset { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 }
+		}
+	}
+
+	pub fn from(origin: &Position) -> Position {
+		Position {
+			genders: origin.genders.clone(),
+			race: origin.race.clone(),
+			event: String::from(""),
+			extra: origin.extra.clone(),
+			offset: origin.offset.clone()
 		}
 	}
 }

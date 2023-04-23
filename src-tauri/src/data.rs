@@ -33,7 +33,7 @@ impl Scene {
     if stage.id.is_nil() {
       stage.id = Uuid::new_v4();
       if stage.name.is_empty() {
-        stage.name = stage.id.to_string();
+        stage.name = "UNTITLED".into();
       }
       println!("Inserted new stage with id: {}", stage.id.to_string());
     }

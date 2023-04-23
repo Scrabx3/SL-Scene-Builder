@@ -1,12 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { invoke } from "@tauri-apps/api/tauri";
+import { useState } from "react";
+import { useImmer } from "use-immer";
+
+
 import "./defaultstyle.css";
 import "./App.css"
 import "./stage.css";
 
-import { invoke } from "@tauri-apps/api/tauri";
-import { useState } from "react";
-import { useImmer } from "use-immer";
 
 const racekeys = [
   "Human",
@@ -343,14 +345,18 @@ function Stage({ stage }) {
       // }
     }
 
+    const extra = extra.filter(e => e.v != 0).map(e => parseFloat(e.v) );
+    console.log(extra);
+
     const ret = {
       id: stage.id,
       name: name,
       positions: positions,
       tags: tags,
-      extra: extra.filter(e => e.v != 0)
-    }
-    invoke('save_stage', { stage: ret });
+      extra
+    };
+    console.log(ret);
+    // invoke('save_stage', { stage: ret });
   }
 
   return (

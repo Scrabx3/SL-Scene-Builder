@@ -153,6 +153,10 @@ function App() {
         key: "edit"
       },
       {
+        label: "clone stage",
+        key: "clone"
+      },
+      {
         type: "divider"
       },
       {
@@ -184,7 +188,10 @@ function App() {
       console.log(view);
       switch (key) {
         case 'edit':
-          invoke('stage_creator', { id: node.id })
+          invoke('stage_creator', { id: node.id });
+          break;
+        case 'clone':
+          invoke('stage_creator_from', { id: node.id });
           break;
         case 'makeroot':
           setStartAnim(node);
