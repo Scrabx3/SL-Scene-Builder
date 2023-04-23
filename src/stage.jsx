@@ -320,7 +320,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
 
       <div id="tags">
         <h2>Tags</h2>
-        <Dropdown menu={{ items }} trigger={['click']}>
+        <Dropdown menu={{ items: getTagMenu(), onClick: ({ key }) => { updateTags(key) } }}        >
           <a onClick={(e) => e.preventDefault()}>
             <Space>
               Add default tag
