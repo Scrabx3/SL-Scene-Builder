@@ -231,7 +231,7 @@ function App() {
   }
 
   return (
-    <div className="container">
+    <div>
       {nodeContext.show && <StageNodeContextMenu
         x={nodeContext.x}
         y={nodeContext.y}
@@ -240,9 +240,12 @@ function App() {
         hide={nodeContext.hide}
       />}
 
-      <button id="make_stage" onClick={() => { invoke('stage_creator', {}); }}>Add Stage</button> 
-      <div ref={graphholder_ref} id="graph">
+      <button id="make_stage" onClick={() => { invoke('stage_creator', {}); }}>Add Stage</button>
+
+      <div id="graph_container">
+        <div ref={graphholder_ref} id="graph"/>
       </div>
+
       <button id="save_graph" onClick={() => { console.log("TODO: implement"); }}>Save Scene</button>
     </div>
   );

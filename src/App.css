@@ -69,24 +69,14 @@ h3.h4,h5 {
   font-size: 1.2em;
 }
 
+#graph_container {
+  display: flex;
+  min-width: 400px;
+  min-height: 400px;
+}
+
 #graph {
-  position: relative;
+  flex: auto;
   border: white;
   border-style: dotted;
-  height: 90vh;
-  width: 90vw;
-}
-
-.node {
-  position: absolute;
-  height: 80px;
-  width: 160px;
-  border: yellow;
-  border-style: solid;
-}
-
-#node_context_menu {
-  position: absolute;
-  width: 200px;
-  z-index: 10000;
 }
