@@ -46,9 +46,20 @@ fieldset input{
  */
 
 /* Has to be class, using an id only affects the actual text field, without the border */
-.stagenamefield {
-    width: 700px;
+.stage-namefield {
+    width: 350px;
     margin: 10px;
+    color: white;
+}
+
+#stage-namefield-input {
+    color: white;
+    font-style: oblique;
+    font-weight: bolder;
+}
+
+#stage-namefield-input::placeholder {
+    color: rgba(255, 255, 255, 0.26);
 }
 
 #stageheader{
@@ -179,6 +190,11 @@ fieldset input{
     min-height: 66px;
 }
 
+.tag-select-add {
+    text-align: center;
+    color: black;
+}
+
 /* #stage_tags div {
     background-color: white;
     color: black;
@@ -204,10 +220,6 @@ fieldset input{
     background-color: #ffffff7e;
 } */
 
-#extra {
-    border-bottom: 5px solid #fff;
-}
-
 .ant-dropdown-menu {
     max-height: 250px;
     overflow: auto;
@@ -229,4 +241,40 @@ fieldset input{
 }
 .ant-dropdown-menu-submenu-expand-icon {
     max-height: 50px;
+}
+
+.extra-card {
+    height: 190px;
+}
+
+.extra-duration {
+    width: 220px;
+}
+
+.extra-duration-input {
+    width: 80%;
+}
+
+.extra-navinfo {
+    width: 300px;
+}
+
+.stage-header {
+    width: 100%;
+    position: sticky;
+    padding-inline-start: 20px;
+    padding-inline-end: 0px;
+    /* padding: 10; */
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.stage-header-menu {
+    float: right;
+}
+
+.stage-header-menu-entry {
+    min-width: 120px;
+    text-align: center;
 }

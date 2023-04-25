@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { invoke } from "@tauri-apps/api/tauri";
-import { DeleteOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons';
-import { Input, Button, Tag, Space, Tooltip, Dropdown, Popconfirm } from 'antd';
+import { DeleteOutlined, PlusOutlined, DownOutlined, SaveOutlined } from '@ant-design/icons';
+import { Input, Button, Tag, Space, Tooltip, Dropdown, Popconfirm, InputNumber, Card, Switch, Layout, Divider, Menu, Row, Col } from 'antd';
 import { useState, useRef, useEffect } from "react";
 import { useImmer } from "use-immer";
 
@@ -10,6 +10,9 @@ import { useStringListHandler } from "./util/useStringHandler";
 import "./defaultstyle.css";
 import "./App.css"
 import "./stage.css";
+
+const { TextArea } = Input;
+const { Header, Content, Footer, Sider } = Layout;
 
 const racekeys = [
   "Human",
@@ -111,39 +114,46 @@ const tags_nsfw = [
   "Vaginal"
 ]
 
-const getTagMenu = () => {
-  const addArray = (array) => {
-    let ret = [];
-    array.forEach(tag => {
-      ret.push({ label: tag, key: tag });
-    });
-    return ret;
-  };
-  let ret = [];
-  ret.push({
-    label: "Exclusive Tags:",
-    key: "exclusive",
-    children: addArray(tags_exclusive)
+const getTagMenu = (tags) => {
+  return tags.map(tag => {
+    return {
+      label: tag,
+      key: tag
+    }
   });
-  ret.push({ type: 'divider' });
-  ret.push({
-    label: "SFW Tags:",
-    key: "sfw",
-    children: addArray(tags_sfw)
-  });
-  ret.push({ type: 'divider' });
-  ret.push({
-    label: "NSFW Tags:",
-    key: "nsfw",
-    children: addArray(tags_nsfw)
-  });
+
+  // const addArray = (array) => {
+  //   let ret = [];
+  //   array.forEach(tag => {
+  //     ret.push({ label: tag, key: tag });
+  //   });
+  //   return ret;
+  // };
+  // let ret = [];
+  // ret.push({
+  //   label: "Exclusive Tags:",
+  //   key: "exclusive",
+  //   children: addArray(tags_exclusive)
+  // });
+  // ret.push({ type: 'divider' });
+  // ret.push({
+  //   label: "SFW Tags:",
+  //   key: "sfw",
+  //   children: addArray(tags_sfw)
+  // });
+  // ret.push({ type: 'divider' });
+  // ret.push({
+  //   label: "NSFW Tags:",
+  //   key: "nsfw",
+  //   children: addArray(tags_nsfw)
+  // });
 
   // ret = ret.concat(addArray(tags_exclusive))
   // ret.push({ type: 'divider' });
   // ret = ret.concat(addArray(tags_sfw))
   // ret.push({ type: 'divider' });
   // ret = ret.concat(addArray(tags_nsfw))
-  return ret;
+  // return ret;
 }
 
 document.addEventListener('DOMContentLoaded', async (event) => {
@@ -175,9 +185,22 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
   const [name, setName] = useState(_name);
   const [positions, updatePositions] = useImmer(_positions);
   const [tags, updateTags] = useStringListHandler(_tags, tags_exclusive);
+  const [fixedLen, setFixedLen] = useState(_extra.fixedLen);
+  const [isOrgasm, setIsOrgasm] = useState(_extra.isOrgasm);
+  const [navText, setNavText] = useState(_extra.navText);
 
-  const items = getTagMenu();
-  console.log(items);
+  function TagMenu({ my_tags, my_label }) {
+    return (
+      <Dropdown menu={{ items: getTagMenu(my_tags), onClick: ({ key }) => { updateTags(key) } }}        >
+        <a onClick={(e) => e.preventDefault()}>
+          <Button>
+            {my_label}
+            <DownOutlined />
+          </Button>
+        </a>
+      </Dropdown>
+    )
+  }
 
   function TagField() {
     const tagInputRef = useRef(null);
@@ -286,65 +309,126 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
     );
   }
 
+  function saveAndReturn() {
+    const makeExtra = (tag, v) => {
+      return { tag, v };
+    }
+
+    const stage = {
+      id: _id,
+      name,
+      positions,
+      tags,
+      extra: [
+        makeExtra('fixedLen', String(fixedLen || 0)),
+        makeExtra('isOrgasm', String(isOrgasm || false)),
+        makeExtra('navText', navText || ''),
+      ]
+    };
+    console.log(stage);
+    // invoke('save_stage', { stage });
+  }
+
   return (
-    <>
-      <div id="stageheader">
-        <h1>Stage</h1>
-        <Input className="stagenamefield" size="large" maxLength={50} showCount
-          value={name} onChange={(e) => setName(e.target.value)}
-          defaultValue={_name} placeholder={"Stage Name"}
-          onFocus={(e) => e.target.select()}
-        />
-      </div>
-      
-      <div id="positions">
-        <h2>Positions</h2>
-        {positions.map((p, i) => (
-          <div key={i} index={i} className="position">
-            {/* TODO: <PositionData i={i} /> */}
+    <Layout>
+      <Header className="stage-header">
+        <Row>
+          <Col>
+            <Input id="stage-namefield-input" className="stage-namefield" size="large" maxLength={30} bordered={false}
+              value={name} onChange={(e) => setName(e.target.value)}
+              defaultValue={_name} placeholder={"Stage Name"}
+              onFocus={(e) => e.target.select()}
+            />
+          </Col>
+          <Col flex={"auto"}>
+            <Menu className="stage-header-menu" theme="dark" mode="horizontal" selectable={false} defaultSelectedKeys={['save']}
+              items={[
+                {
+                  type: 'divider'
+                },
+                {
+                  label: 'Save', key: 'save', icon: <SaveOutlined />, className: 'stage-header-menu-entry'
+                }
+              ]}
+            />
+          </Col>
+        </Row>
+      </Header>
+
+      <Divider orientation="left">Positions</Divider>
+      {positions.map((p, i) => (
+        <div key={i} index={i} className="position">
+          {/* TODO: <PositionData i={i} /> */}
+          <Button type="dashed" icon={<DeleteOutlined />}
+            onClick={() => { updatePositions(p => { p.splice(i, 1) }) }}
+            disabled={positions.length === 1}
+          >
+            Remove
+          </Button>
+        </div>
+      ))}
+      <Button
+        onClick={() => { invoke('make_position').then((s) => { updatePositions(p => { p.push(s) }) }) }}
+        disabled={positions.length > 4}
+      >
+        Add Position
+      </Button>
+
+      <Divider orientation="left">Tags</Divider>
+      <Row>
+        <Col>
+          <Space size={'large'}>
+            <TagMenu my_tags={tags_nsfw} my_label={"NSFW"} />
+            <TagMenu my_tags={tags_sfw} my_label={"SFW"} />
+            <TagMenu my_tags={tags_exclusive} my_label={"Exclusive"} />
+            <Space.Compact style={{ width: '100%' }}>
+              <Input placeholder="Tag A, Tag B" />
+              <Button type="primary">Add</Button>
+            </Space.Compact>
+          </Space>
+        </Col>
+        <Col flex={"auto"}>
+          <Popconfirm
+            title="Clear tags"
+            description="Are you sure you want to delete ALL tags?"
+            placement="bottomLeft"
+            onConfirm={() => { updateTags([]) }}
+          >
             <Button type="dashed" icon={<DeleteOutlined />}
-              onClick={() => { updatePositions(p => { p.splice(i, 1) }) }}
-              disabled={positions.length === 1}
-            >
-              Remove
+              disabled={tags.length === 0}
+              style={{ float: 'right' }}>
+              Clear
             </Button>
-          </div>
-        ))}
-        <Button
-          onClick={() => { invoke('make_position').then((s) => { updatePositions(p => { p.push(s) }) }) }}
-          disabled={positions.length > 4}
+          </Popconfirm>
+        </Col>
+      </Row>
+      <TagField />
+
+      <Divider orientation="left">Extra</Divider>
+      <Space>
+        <Card className="extra-duration extra-card" title={"Duration"}
+          extra={<Tooltip title={<><p>Fixed duration of the stage</p><p>Useful for animations that should only play once.</p></>}><Button type="link">Info</Button></Tooltip>}
         >
-          Add Position
-        </Button>
-      </div>
-
-      <div id="tags">
-        <h2>Tags</h2>
-        <Dropdown menu={{ items: getTagMenu(), onClick: ({ key }) => { updateTags(key) } }}        >
-          <a onClick={(e) => e.preventDefault()}>
-            <Space>
-              Add default tag
-              <DownOutlined />
-            </Space>
-          </a>
-        </Dropdown>
-        <TagField />
-        <Popconfirm
-          title="Clear tags"
-          description="Are you sure you want to delete ALL tags?"
-          placement="bottomLeft"
-          disabled={tags.length === 0}
-          onConfirm={() => { updateTags([]) }}
+          <InputNumber className="extra-duration-input" controls decimalSeparator="," precision={1} step={0.1}
+            defaultValue={_extra.fixedLen} min={0.0}
+            value={fixedLen} onChange={(e) => setFixedLen(e ? e.value : undefined)}
+            placeholder="0.0">
+          </InputNumber>
+          <Space align="center" size={"middle"}>
+            <p>Orgasm Stage? </p>
+            <Switch checked={isOrgasm} onChange={(checked, e) => setIsOrgasm(!isOrgasm)} />
+          </Space>
+        </Card>
+        <Card className="extra-navinfo extra-card" title={"Navigation"}
+          extra={<Tooltip title={'A short text for the player to read when given the option to branch into this stage.'}><Button type="link">Info</Button></Tooltip>}
         >
-          <Button type="dashed" icon={<DeleteOutlined />}>Clear tags</Button>
-        </Popconfirm>
-      </div>
-
-      <div id="extra">
-        <h2>Extra</h2>
-
-      </div>
-    </>
+          <TextArea maxLength={100} showCount rows={3} style={{ resize: 'none' }}
+            defaultValue={_extra.navText}
+            value={navText} onChange={(e) => setNavText(e.target.value)}
+          ></TextArea>
+        </Card>
+      </Space>
+    </Layout>
   )
 }
 

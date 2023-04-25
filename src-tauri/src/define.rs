@@ -106,5 +106,5 @@ pub struct Offset
 pub struct Value
 {
 	tag: String,
-	v: f32
+	v: String
 }
