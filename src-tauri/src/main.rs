@@ -61,6 +61,27 @@ const STAGE_EDITOR_LABEL: &str = "stage_editor";
 
 /* State related */
 
+fn open_stage_window<R: Runtime>(app: tauri::AppHandle<R>, label: &String, name: &String) -> ()
+{
+  // 1024×768
+  let window = tauri::WindowBuilder::new(
+      &app,
+      label,
+      tauri::WindowUrl::App("./stage.html".into())
+    )
+    .title(format!("Stage Editor [{}]", name))
+    .build()
+    .unwrap();
+  if let Err(e) = window.set_size(tauri::Size::Physical(tauri::PhysicalSize{width: 1024, height: 768})) {
+    println!("Failed to set window size: {}", e);
+    return;
+  }
+  if let Err(e) = window.set_resizable(false) {
+    println!("Failed to disable resize on window: {}", e);
+    return;
+  }
+}
+
 #[tauri::command]
 async fn stage_creator<R: Runtime>(app: tauri::AppHandle<R>, id: Option<Uuid>)
 {
@@ -76,14 +97,8 @@ async fn stage_creator<R: Runtime>(app: tauri::AppHandle<R>, id: Option<Uuid>)
     .get_stage(&id)
     .and_then(|stage| { Some(stage.name.clone()) })
     .unwrap_or(String::from("UNTITLED"));
-  tauri::WindowBuilder::new(
-      &app,
-      label,
-      tauri::WindowUrl::App("./stage.html".into())
-    )
-    .title(format!("Stage Editor [{}]", name))
-    .build()
-    .unwrap();
+
+  open_stage_window(app, &label, &name);
 }
 
 #[tauri::command]
@@ -95,14 +110,7 @@ async fn stage_creator_from<R: Runtime>(app: tauri::AppHandle<R>, _window: tauri
     Some(stage) => {
       let tmp = define::Stage::from(stage);
       let res = data.insert_stage(tmp);
-      tauri::WindowBuilder::new(
-            &app,
-            format!("{}{}", STAGE_EDITOR_LABEL, res.id),
-            tauri::WindowUrl::App("./stage.html".into())
-          )
-          .title(format!("Stage Editor [{}]", res.name))
-          .build()
-          .unwrap();
+      open_stage_window(app, &format!("{}{}", STAGE_EDITOR_LABEL, res.id), &res.name);
     }
   }
   Ok(())
