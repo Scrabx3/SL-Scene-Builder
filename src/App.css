@@ -13,27 +13,27 @@ h1 {
   font-weight: lighter;
 }
 
-button {
-    padding: .5em;
-    border-radius: 1em;
-    font-weight: bold;
-    color: white;
-    background-color: #445fef;
-    border: 1px solid #445eef;
-    width: 80%;
-    cursor: pointer;
-    margin: 1em;
-    align-self: center;
-}
-button:hover {
-  background-color: #445eef7e;
-  border: 1px solid #445eef7e;
-}
+/* button { */
+    /* padding: .5em; */
+    /* border-radius: 1em; */
+    /* font-weight: bold; */
+    /* color: white; */
+    /* background-color: #445fef; */
+    /* border: 1px solid #445eef; */
+    /* width: 80%; */
+    /* cursor: pointer; */
+    /* margin: 1em; */
+    /* align-self: center; */
+/* } */
+/* button:hover { */
+  /* background-color: #445eef7e; */
+  /* border: 1px solid #445eef7e; */
+/* } */
 
-button {
-  box-shadow: none;
+/* button { */
+  /* box-shadow: none; */
   /* remove box shadow */
-}
+/* } */
 
 [type="checkbox"],
 [type="radio"] {
@@ -69,17 +69,23 @@ h3.h4,h5 {
   font-size: 1.2em;
 }
 
+.main-sider {
+  overflow: auto;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
 #graph_container {
   display: flex;
-  min-width: 400px;
-  min-height: 400px;
-  height: 90vh;
-  width: 90vw;
+  height: 60vh;
   margin: 25px;
 }
 
 #graph {
   flex: auto;
-  border: white;
+  border: black;
   border-style: dotted;
 }

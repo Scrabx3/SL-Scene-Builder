@@ -3,12 +3,16 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { register } from "@antv/x6-react-shape";
-import { Menu } from 'antd'
+import { Menu, Layout } from 'antd'
+// import {  DesktopOutlined,  FileOutlined,  PieChartOutlined,  TeamOutlined,  UserOutlined,} from '@ant-design/icons';
+import { ExperimentOutlined, FolderOutlined, PlusOutlined, PlusSquareOutlined, PlaySquareOutlined } from '@ant-design/icons';
 
 import { useStartAnim } from "./util/useStartAnim";
 import "./App.css";
 
-export const COLORS = {
+const { Header, Content, Footer, Sider } = Layout;
+
+const COLORS = {
   default: "#FFFFFF", // default node color
   start: "#ff9d00",   // start animation
   orgasm: "#d45fa5",  // orgasm stages
@@ -62,20 +66,24 @@ register({
 });
 
 function App() {
+  const [collapsed, setCollapsed] = useState(false);
+  const [activeAnim, setActiveAnim] = useState(null);
+
   const graphholder_ref = useRef(null);
   const [graph, setGraph] = useState(null);
   const [nodeContext, setNodeContext] = useState({ show: false, x: 0, y: 0, node: null, view: null });
+  const [startAnim, setStartAnim] = useStartAnim(null, COLORS);
 
   const [sceneName, setSceneName] = useState("");
   const [animations, setAnimations] = useState([]);
   const [stages, setStages] = useState([]);
-  const [startAnim, setStartAnim] = useStartAnim(null, COLORS);
 
   useEffect(() => {
     if (graph) return;
     let g = new Graph({
       container: graphholder_ref.current,
       panning: true,
+      autoResize: true,
       mousewheel: {
         enabled: true,
         modifiers: ['ctrl', 'meta'],
@@ -240,8 +248,36 @@ function App() {
     );
   }
 
+  const makeSidebar = () => {
+    const makeItem = (label, key, icon, children, disabled) => {
+      return { key, icon, children, label, disabled };
+    }
+    return [
+      makeItem('Add Animation', 'add', <PlusOutlined />),
+      makeItem('Animations', 'animations', <FolderOutlined />,
+        animations.map((v, i) =>
+          makeItem(v.name, i, <ExperimentOutlined />, [
+            makeItem("Edit", "editanim"),
+            makeItem("Delete", "delanim"),
+          ])
+        )
+      ),
+      makeItem('Stages', 'stages', <FolderOutlined />,
+        stages.map((v, i) =>
+          makeItem(v.name, i, <PlaySquareOutlined />, [
+            makeItem("Add to animation", "addanim", null, null, activeAnim),
+            { type: 'divider' },
+            makeItem("Edit", "editstage", null, null, activeAnim),
+            makeItem("Clone", "copystage", null, null, activeAnim),
+            makeItem("Delete", "delstage", null, null, activeAnim),
+          ])
+        )
+      ),
+    ];
+  }
+
   return (
-    <div>
+    <Layout hasSider>
       {nodeContext.show && <StageNodeContextMenu
         x={nodeContext.x}
         y={nodeContext.y}
@@ -250,16 +286,21 @@ function App() {
         hide={nodeContext.hide}
       />}
 
-      {/* TODO: vertical menu to add stages & animations as well as display existing ones */}
-      <button id="make_stage" onClick={() => { invoke('stage_creator', {}); }}>Add Stage</button>
-
-      {/* IDEA: horizontal menu to choose between multiple active graphs */}
-      <div id="graph_container">
-        <div ref={graphholder_ref} id="graph"/>
-      </div>
-
-      <button id="save_graph" onClick={() => { console.log("TODO: implement"); }}>Save Scene</button>
-    </div>
+      <Sider className="main-sider" collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
+        <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }} />
+        <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={makeSidebar()} />
+      </Sider>
+      <Layout className="site-layout">
+        {/* IDEA: horizontal menu to choose between multiple active graphs */}
+        <Header style={{ padding: 0 }} />
+        <button id="make_stage" onClick={() => { invoke('stage_creator', {}); }}>Add Stage</button>
+        <div id="graph_container">
+          <div ref={graphholder_ref} id="graph" />
+        </div>
+        <button id="save_graph" onClick={() => { console.log("TODO: implement"); }}>Save Scene</button>
+        {/* <Footer style={{ textAlign: 'center' }}>Ant Design ©2023 Created by Ant UED</Footer>  */}
+      </Layout>
+    </Layout>
   );
 }
 
