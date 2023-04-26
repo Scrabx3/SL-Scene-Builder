@@ -1,160 +1,21 @@
-import React from "react";
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import ReactDOM from "react-dom/client";
+import { useImmer } from "use-immer";
 import { invoke } from "@tauri-apps/api/tauri";
 import { DeleteOutlined, PlusOutlined, DownOutlined, SaveOutlined } from '@ant-design/icons';
-import { Input, Button, Tag, Space, Tooltip, Dropdown, Popconfirm, InputNumber, Card, Switch, Layout, Divider, Menu, Row, Col } from 'antd';
-import { useState, useRef, useEffect } from "react";
-import { useImmer } from "use-immer";
+import { Input, Button, Tag, Space, Tooltip, Dropdown, Popconfirm, InputNumber, Card, Switch, Layout, Divider, Menu, Row, Col, Tabs, Collapse, Select } from 'antd';
 
 import { useStringListHandler } from "./util/useStringHandler";
+import { tagsExclusive, tagsNSFW, tagsSFW } from "./common/Tags"
+import { raceKeys } from "./common/RaceKeys";
+import PositionField from "./stage/PositionField";
 import "./defaultstyle.css";
 import "./App.css"
 import "./stage.css";
 
-const { TextArea } = Input;
 const { Header, Content, Footer, Sider } = Layout;
-
-const racekeys = [
-  "Human",
-  "AshHoppers",
-  "Bears",
-  "Boars",
-  "BoarsAny",
-  "BoarsMounted",
-  "Canines",
-  "Chaurus",
-  "Chaurushunters",
-  "Chaurusreapers",
-  "Chickens",
-  "Cows",
-  "Deers",
-  "Dogs",
-  "DragonPriests",
-  "Dragons",
-  "Draugrs",
-  "DwarvenBallistas",
-  "DwarvenCenturions",
-  "DwarvenSpheres",
-  "DwarvenSpiders",
-  "Falmers",
-  "FlameAtronach",
-  "Foxes",
-  "FrostAtronach",
-  "Gargoyles",
-  "Giants",
-  "Goats",
-  "Hagravens",
-  "Horkers",
-  "Horses",
-  "IceWraiths",
-  "Lurkers",
-  "Mammoths",
-  "Mudcrabs",
-  "Netches",
-  "Rabbits",
-  "Rieklings",
-  "Sabrecats",
-  "Seekers",
-  "Skeevers",
-  "SlaughterFishes",
-  "StormAtronach",
-  "Spiders",
-  "LargeSpiders",
-  "GiantSpiders",
-  "Spriggans",
-  "Trolls",
-  "VampireLords",
-  "Werewolves",
-  "Wispmothers",
-  "Wisps",
-  "Wolves"
-];
-
-const tags_exclusive = [
-  "DisallowBed",
-  "BedOnly",
-  "Furniture"
-]
-
-const tags_sfw = [
-  "Hugging",
-  "Kissing",
-  "Kneeling",
-  "Standing",
-  "Lying"
-]
-
-const tags_nsfw = [
-  "69",
-  "Aggressive",
-  "Anal",
-  "Asphyxiation",
-  "Blowjob",
-  "Boobjob",
-  "Cowgirl",
-  "Deepthroat",
-  "Doggy",
-  "Double Penetration",
-  "Feet",
-  "Femdom",
-  "Footjob",
-  "Forced",
-  "Gay",
-  "Handjob",
-  "Lesbian",
-  "Loving",
-  "Masturbation",
-  "Missionary",
-  "Oral",
-  "Penetration",
-  "Reverse Cowgirl",
-  "Spitroast",
-  "Threesome",
-  "Triple Penetration",
-  "Vaginal"
-]
-
-const getTagMenu = (tags) => {
-  return tags.map(tag => {
-    return {
-      label: tag,
-      key: tag
-    }
-  });
-
-  // const addArray = (array) => {
-  //   let ret = [];
-  //   array.forEach(tag => {
-  //     ret.push({ label: tag, key: tag });
-  //   });
-  //   return ret;
-  // };
-  // let ret = [];
-  // ret.push({
-  //   label: "Exclusive Tags:",
-  //   key: "exclusive",
-  //   children: addArray(tags_exclusive)
-  // });
-  // ret.push({ type: 'divider' });
-  // ret.push({
-  //   label: "SFW Tags:",
-  //   key: "sfw",
-  //   children: addArray(tags_sfw)
-  // });
-  // ret.push({ type: 'divider' });
-  // ret.push({
-  //   label: "NSFW Tags:",
-  //   key: "nsfw",
-  //   children: addArray(tags_nsfw)
-  // });
-
-  // ret = ret.concat(addArray(tags_exclusive))
-  // ret.push({ type: 'divider' });
-  // ret = ret.concat(addArray(tags_sfw))
-  // ret.push({ type: 'divider' });
-  // ret = ret.concat(addArray(tags_nsfw))
-  // return ret;
-}
+const { Panel } = Collapse;
+const { TextArea } = Input;
 
 document.addEventListener('DOMContentLoaded', async (event) => {
   let stage = await invoke('get_stage');
@@ -181,20 +42,26 @@ document.addEventListener('DOMContentLoaded', async (event) => {
   );
 });
 
+function makePositionTab(p, i) {
+  return { key: `PTab${i}`, position: p }
+}
+
 function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
   const [name, setName] = useState(_name);
-  const [positions, updatePositions] = useImmer(_positions);
-  const [tags, updateTags] = useStringListHandler(_tags, tags_exclusive);
+  const [positions, updatePositions] = useImmer(_positions.map((p, i) => { return makePositionTab(p, i) }));
+  const [activePosition, setActivePosition] = useState(positions[0].key);
+  const positionIdx = useRef(_positions.length);
+  const [tags, updateTags] = useStringListHandler(_tags, tagsExclusive);
   const [fixedLen, setFixedLen] = useState(_extra.fixedLen);
   const [isOrgasm, setIsOrgasm] = useState(_extra.isOrgasm);
   const [navText, setNavText] = useState(_extra.navText);
 
-  function TagMenu({ my_tags, my_label }) {
+  function TagMenu({ tags, label }) {
     return (
-      <Dropdown menu={{ items: getTagMenu(my_tags), onClick: ({ key }) => { updateTags(key) } }}        >
+      <Dropdown menu={{ items: tags.map((tag) => { return {label: tag, key: tag }}), onClick: ({ key }) => { updateTags(key) } }}>
         <a onClick={(e) => e.preventDefault()}>
           <Button>
-            {my_label}
+            {label}
             <DownOutlined />
           </Button>
         </a>
@@ -212,25 +79,15 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
       tagInputRef.current?.focus();
     }, [editValue]);
 
-    // Create a new tag
-    const [inputVisible, setInputVisible] = useState(false);
-    const [inputValue, setInputValue] = useState('');
-
-    useEffect(() => {
-      if (inputVisible) {
-        tagInputRef.current?.focus();
-      }
-    }, [inputVisible]);
-
     // Impl
     const getColor = (colorTag) => {
-      if (tags_exclusive.indexOf(colorTag) > -1) {
+      if (tagsExclusive.indexOf(colorTag) > -1) {
         return 'purple';
       }
-      if (tags_sfw.indexOf(colorTag) > -1) {
+      if (tagsSFW.indexOf(colorTag) > -1) {
         return 'cyan';
       }
-      if (tags_nsfw.indexOf(colorTag) > -1) {
+      if (tagsNSFW.indexOf(colorTag) > -1) {
         return 'volcano';
       }
       return '';
@@ -243,16 +100,9 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
       updateTags(newTags);
     }
 
-    const handleAdd = (newTag) => {
-      updateTags(newTag);
-      setInputVisible(false);
-      setInputValue('');
-    }
-
     return (
       <div id="stage_tags">
         <Space size={[0, 8]} wrap>
-          {/* Display existing tags */}
           {tags.map((tag, i) => {
             if (i === editIndex) {
               const handleEditConfirm = (e) => {
@@ -291,24 +141,12 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
             );
             return isLongTag ? (<Tooltip title={tag} key={tag}>{tagElem}</Tooltip>) : (tagElem)
           })}
-          {/* Add tag field */}
-          {inputVisible ? (
-            <Input className="tagInputField" ref={tagInputRef} type="text" size="small"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onBlur={(e) => handleAdd(inputValue)}
-              onPressEnter={(e) => handleAdd(inputValue)}
-            />
-          ) : (
-            <Tag className="tagNewField" onClick={() => setInputVisible(true)}>
-              <PlusOutlined /> Add Tag
-            </Tag>
-          )}
         </Space>
       </div>
     );
   }
 
+  // TODO: implement
   function saveAndReturn() {
     const makeExtra = (tag, v) => {
       return { tag, v };
@@ -328,6 +166,23 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
     console.log(stage);
     // invoke('save_stage', { stage });
   }
+
+  const onPositionTabEdit = (targetKey, action) => {
+    if (action === 'add') {
+      invoke('make_position').then((res) => {
+        const next = makePositionTab(res, positionIdx.current++);
+        updatePositions(p => { p.push(next) });
+        setActivePosition(next.key);
+      });
+    } else {
+      const id = positions.findIndex(v => v.key === targetKey);
+      if (activePosition === targetKey) {
+        const newidx = id > 0 ? id - 1 : 1;
+        setActivePosition(positions[newidx].key);
+      }
+      updatePositions(p => { p.splice(id, 1) });
+    }
+  };
 
   return (
     <Layout>
@@ -356,31 +211,34 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
       </Header>
 
       <Divider orientation="left">Positions</Divider>
-      {positions.map((p, i) => (
-        <div key={i} index={i} className="position">
-          {/* TODO: <PositionData i={i} /> */}
-          <Button type="dashed" icon={<DeleteOutlined />}
-            onClick={() => { updatePositions(p => { p.splice(i, 1) }) }}
-            disabled={positions.length === 1}
-          >
-            Remove
-          </Button>
-        </div>
-      ))}
-      <Button
-        onClick={() => { invoke('make_position').then((s) => { updatePositions(p => { p.push(s) }) }) }}
-        disabled={positions.length > 4}
-      >
-        Add Position
-      </Button>
+      <Tabs
+        type="editable-card"
+        activeKey={activePosition}
+        hideAdd={positions.length > 4}
+        onEdit={onPositionTabEdit}
+        onChange={(e) => { setActivePosition(e) }}
+        items={
+          positions.map((p, i) => {
+            return {
+              label: String(i + 1),
+              closable: positions.length > 1,
+              key: p.key,
+              children: (
+                <div className="position">
+                  {/* <PositionField position={p.position}  /> */}
+                </div>
+              )
+            }
+          })}
+  	  />
 
       <Divider orientation="left">Tags</Divider>
       <Row>
         <Col>
           <Space size={'large'}>
-            <TagMenu my_tags={tags_nsfw} my_label={"NSFW"} />
-            <TagMenu my_tags={tags_sfw} my_label={"SFW"} />
-            <TagMenu my_tags={tags_exclusive} my_label={"Exclusive"} />
+            <TagMenu tags={tagsNSFW} label={"NSFW"} />
+            <TagMenu tags={tagsSFW} label={"SFW"} />
+            <TagMenu tags={tagsExclusive} label={"Exclusive"} />
             <Space.Compact style={{ width: '100%' }}>
               <Input placeholder="Tag A, Tag B" />
               <Button type="primary">Add</Button>
@@ -542,7 +400,7 @@ function Stage({stage}) {
                   }}
                   value={data.race}
                 >
-                  {racekeys.map((race) => (
+                  {raceKeys.map((race) => (
                     <option key={race}>{race}</option>
                   ))}
                 </select>
@@ -628,8 +486,8 @@ function Stage({stage}) {
       if (!tag || hasTag(tag))
         return;
 
-      if (tags_exclusive.includes(tag)) {
-        newtags = newtags.filter(t => !tags_exclusive.includes(t));
+      if (tagsExclusive.includes(tag)) {
+        newtags = newtags.filter(t => !tagsExclusive.includes(t));
       }
       newtags.push(tag);
     });
@@ -716,15 +574,15 @@ function Stage({stage}) {
             }}
           >
             <option disabled>--- Exclusive ---</option>
-            {tags_exclusive.map((tag) => (
+            {tagsExclusive.map((tag) => (
               <option key={tag}>{tag}</option>
             ))}
             <option disabled>--- SFW ---</option>
-            {tags_sfw.map((tag) => (
+            {tagsSFW.map((tag) => (
               <option key={tag}>{tag}</option>
             ))}
             <option disabled>--- NSFW ---</option>
-            {tags_nsfw.map((tag) => (
+            {tagsNSFW.map((tag) => (
               <option key={tag}>{tag}</option>
             ))}
           </select>

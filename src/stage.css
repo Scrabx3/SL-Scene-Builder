@@ -74,6 +74,21 @@ fieldset input{
 /**
  * Positions area Start
  */
+.position-race-text {
+    font-weight: bolder;
+    text-decoration: underline;
+}
+
+.position-race-select {
+    width: 180px;
+    text-align: left;
+}
+
+.position-behavior-input {
+    float: right;
+    max-width: 80%;
+}
+
 #positions {
     padding: 1em;
     border-bottom: 2px solid #445fef;
