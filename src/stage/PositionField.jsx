@@ -14,7 +14,6 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
   const [extra, updateExtra] = useImmer(position.extra || {
     submissive: false,
     optional: false,
-
     vampire: false,
     dead: false,
   });
@@ -26,14 +25,19 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
   });
 
 
-
   useImperativeHandle(ref, () => {
     return {
       getData() {
-
+        return {
+          event,
+          race,
+          sex,
+          extra,
+          offset,
+        };
       }
     };
-  }, [event, race]);
+  }, [event, race, sex, extra, offset]);
 
   function CheckboxEx({ obj, label, disabled, attr, updateFunc }) {
     return (

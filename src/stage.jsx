@@ -157,7 +157,8 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
       if (!position)
         return;
 
-      positions.push(position.getData());
+      const data = position.getData();
+      positions.push(data);
     })
 
     const stage = {
