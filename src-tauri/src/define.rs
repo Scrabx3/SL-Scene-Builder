@@ -21,7 +21,6 @@ pub struct Stage
 
 	positions: Vec<Position>,
 	tags: Vec<String>,
-
 	extra: Vec<Value>
 }
 
@@ -61,34 +60,44 @@ impl PartialEq for Stage {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Position
 {
-  genders: Vec<String>,
+  sex: Sex,
   race: String,
 	event: String,
 
-  extra: Vec<String>,
+  extra: PositionExtra,
 	offset: Offset
 }
 
 impl Position {
 	pub fn default() -> Position {
 		Position {
-			genders: vec![String::from("Male")],
+			sex: Sex { male: true, female: false, futa: false },
 			race: String::from("Human"),
 			event: String::from(""),
-			extra: vec![],
+			extra: PositionExtra { submissive: false, optional: false, vampire: false, dead: false },
 			offset: Offset { x: 0.0, y: 0.0, z: 0.0, rot: 0.0 }
 		}
 	}
 
 	pub fn from(origin: &Position) -> Position {
 		Position {
-			genders: origin.genders.clone(),
+			sex: origin.sex.clone(),
 			race: origin.race.clone(),
 			event: String::from(""),
 			extra: origin.extra.clone(),
 			offset: origin.offset.clone()
 		}
 	}
+}
+
+#[repr(C)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PositionExtra
+{
+	submissive: bool,
+	optional: bool,
+	vampire: bool,
+	dead: bool
 }
 
 #[repr(C)]
@@ -107,4 +116,13 @@ pub struct Value
 {
 	tag: String,
 	v: String
+}
+
+#[repr(C)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Sex
+{
+	male: bool,
+	female: bool,
+	futa: bool
 }

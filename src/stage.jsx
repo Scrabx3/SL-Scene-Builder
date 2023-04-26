@@ -96,9 +96,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
     }
 
     const handleDelete = (removedTag) => {
-      console.log("Removing tag", removedTag);
       const newTags = tags.filter((tag) => tag !== removedTag);
-      console.log(newTags);
       updateTags(newTags);
     }
 
@@ -154,6 +152,14 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
       return { tag, v };
     }
 
+    const positions = [];
+    positionRefs.current.forEach((position) => {
+      if (!position)
+        return;
+
+      positions.push(position.getData());
+    })
+
     const stage = {
       id: _id,
       name,
@@ -199,6 +205,13 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
           </Col>
           <Col flex={"auto"}>
             <Menu className="stage-header-menu" theme="dark" mode="horizontal" selectable={false} defaultSelectedKeys={['save']}
+              onClick={({key}) => {
+                switch (key) {
+                case 'save':
+                  saveAndReturn();
+                  break;
+                }
+              }}
               items={[
                 {
                   type: 'divider'
@@ -242,8 +255,13 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
               <TagMenu tags={tagsSFW} label={"SFW"} />
               <TagMenu tags={tagsExclusive} label={"Exclusive"} />
               <Space.Compact style={{ width: '100%' }}>
-                <Input placeholder="Tag A, Tag B" />
-                <Button type="primary">Add</Button>
+                <Input id="tagCustomInput" placeholder="Tag A, Tag B" />
+              <Button
+                type="primary"
+                onClick={(e) => { updateTags(document.getElementById('tagCustomInput').value) }}
+              >
+                Add
+              </Button>
               </Space.Compact>
             </Space>
           </Col>
@@ -648,4 +666,4 @@ function Stage({ stage }) {
   );
 }
 
-export default Stage;
+export default Editor;
