@@ -84,9 +84,9 @@ fieldset input{
     text-align: left;
 }
 
-.position-behavior-input {
-    float: right;
-    max-width: 80%;
+.position-attribute-card {
+    padding: 6px;
+    height: 135px;
 }
 
 #positions {

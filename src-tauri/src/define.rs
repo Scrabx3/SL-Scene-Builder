@@ -76,7 +76,7 @@ impl Position {
 			race: String::from("Human"),
 			event: String::from(""),
 			extra: vec![],
-			offset: Offset { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 }
+			offset: Offset { x: 0.0, y: 0.0, z: 0.0, rot: 0.0 }
 		}
 	}
 
@@ -98,7 +98,7 @@ pub struct Offset
 	x: f32,
 	y: f32,
 	z: f32,
-	angle: f32
+	rot: f32
 }
 
 #[repr(C)]

@@ -60,7 +60,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
 
   function TagMenu({ tags, label }) {
     return (
-      <Dropdown menu={{ items: tags.map((tag) => { return {label: tag, key: tag }}), onClick: ({ key }) => { updateTags(key) } }}>
+      <Dropdown menu={{ items: tags.map((tag) => { return { label: tag, key: tag } }), onClick: ({ key }) => { updateTags(key) } }}>
         <a onClick={(e) => e.preventDefault()}>
           <Button>
             {label}
@@ -212,87 +212,87 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
         </Row>
       </Header>
 
-      <Divider orientation="left">Positions</Divider>
-      <Tabs
-        type="editable-card"
-        activeKey={activePosition}
-        hideAdd={positions.length > 4}
-        onEdit={onPositionTabEdit}
-        onChange={(e) => { setActivePosition(e) }}
-        items={
-          positions.map((p, i) => {
-            return {
-              label: String(i + 1),
-              closable: positions.length > 1,
-              key: p.key,
-              children: (
-                <div className="position">
-                  <PositionField position={p.position} ref={(element) => { positionRefs.current[i] = element }} />
-                </div>
-              )
-            }
-          })}
-  	  />
+        <Divider orientation="left">Positions</Divider>
+        <Tabs
+          type="editable-card"
+          activeKey={activePosition}
+          hideAdd={positions.length > 4}
+          onEdit={onPositionTabEdit}
+          onChange={(e) => { setActivePosition(e) }}
+          items={
+            positions.map((p, i) => {
+              return {
+                label: String(i + 1),
+                closable: positions.length > 1,
+                key: p.key,
+                children: (
+                  <div className="position">
+                    <PositionField position={p.position} ref={(element) => { positionRefs.current[i] = element }} />
+                  </div>
+                )
+              }
+            })}
+        />
 
-      <Divider orientation="left">Tags</Divider>
-      <Row>
-        <Col>
-          <Space size={'large'}>
-            <TagMenu tags={tagsNSFW} label={"NSFW"} />
-            <TagMenu tags={tagsSFW} label={"SFW"} />
-            <TagMenu tags={tagsExclusive} label={"Exclusive"} />
-            <Space.Compact style={{ width: '100%' }}>
-              <Input placeholder="Tag A, Tag B" />
-              <Button type="primary">Add</Button>
-            </Space.Compact>
-          </Space>
-        </Col>
-        <Col flex={"auto"}>
-          <Popconfirm
-            title="Clear tags"
-            description="Are you sure you want to delete ALL tags?"
-            placement="bottomLeft"
-            onConfirm={() => { updateTags([]) }}
+        <Divider orientation="left">Tags</Divider>
+        <Row>
+          <Col>
+            <Space size={'large'}>
+              <TagMenu tags={tagsNSFW} label={"NSFW"} />
+              <TagMenu tags={tagsSFW} label={"SFW"} />
+              <TagMenu tags={tagsExclusive} label={"Exclusive"} />
+              <Space.Compact style={{ width: '100%' }}>
+                <Input placeholder="Tag A, Tag B" />
+                <Button type="primary">Add</Button>
+              </Space.Compact>
+            </Space>
+          </Col>
+          <Col flex={"auto"}>
+            <Popconfirm
+              title="Clear tags"
+              description="Are you sure you want to delete ALL tags?"
+              placement="bottomLeft"
+              onConfirm={() => { updateTags([]) }}
+            >
+              <Button type="dashed" icon={<DeleteOutlined />}
+                disabled={tags.length === 0}
+                style={{ float: 'right' }}>
+                Clear
+              </Button>
+            </Popconfirm>
+          </Col>
+        </Row>
+        <TagField />
+
+        <Divider orientation="left">Extra</Divider>
+        <Space>
+          <Card className="extra-duration extra-card" title={"Duration"}
+            extra={<Tooltip title={<><p>Fixed duration of the stage</p><p>Useful for animations that should only play once.</p></>}><Button type="link">Info</Button></Tooltip>}
           >
-            <Button type="dashed" icon={<DeleteOutlined />}
-              disabled={tags.length === 0}
-              style={{ float: 'right' }}>
-              Clear
-            </Button>
-          </Popconfirm>
-        </Col>
-      </Row>
-      <TagField />
-
-      <Divider orientation="left">Extra</Divider>
-      <Space>
-        <Card className="extra-duration extra-card" title={"Duration"}
-          extra={<Tooltip title={<><p>Fixed duration of the stage</p><p>Useful for animations that should only play once.</p></>}><Button type="link">Info</Button></Tooltip>}
-        >
-          <InputNumber className="extra-duration-input" controls decimalSeparator="," precision={1} step={0.1}
-            defaultValue={_extra.fixedLen} min={0.0}
-            value={fixedLen} onChange={(e) => setFixedLen(e ? e.value : undefined)}
-            placeholder="0.0">
-          </InputNumber>
-          <Space align="center" size={"middle"}>
-            <p>Orgasm Stage? </p>
-            <Switch checked={isOrgasm} onChange={(checked, e) => setIsOrgasm(!isOrgasm)} />
-          </Space>
-        </Card>
-        <Card className="extra-navinfo extra-card" title={"Navigation"}
-          extra={<Tooltip title={'A short text for the player to read when given the option to branch into this stage.'}><Button type="link">Info</Button></Tooltip>}
-        >
-          <TextArea maxLength={100} showCount rows={3} style={{ resize: 'none' }}
-            defaultValue={_extra.navText}
-            value={navText} onChange={(e) => setNavText(e.target.value)}
-          ></TextArea>
-        </Card>
-      </Space>
+            <InputNumber className="extra-duration-input" controls decimalSeparator="," precision={1} step={0.1}
+              defaultValue={_extra.fixedLen} min={0.0}
+              value={fixedLen} onChange={(e) => setFixedLen(e ? e.value : undefined)}
+              placeholder="0.0">
+            </InputNumber>
+            <Space align="center" size={"middle"}>
+              <p>Orgasm Stage? </p>
+              <Switch checked={isOrgasm} onChange={(checked, e) => setIsOrgasm(!isOrgasm)} />
+            </Space>
+          </Card>
+          <Card className="extra-navinfo extra-card" title={"Navigation"}
+            extra={<Tooltip title={'A short text for the player to read when given the option to branch into this stage.'}><Button type="link">Info</Button></Tooltip>}
+          >
+            <TextArea maxLength={100} showCount rows={3} style={{ resize: 'none' }}
+              defaultValue={_extra.navText}
+              value={navText} onChange={(e) => setNavText(e.target.value)}
+            ></TextArea>
+          </Card>
+        </Space>
     </Layout>
   )
 }
 
-function Stage({stage}) {
+function Stage({ stage }) {
   const [name, setName] = useState(stage.name);
   const [positions, updatePositions] = useImmer(stage.positions);
   const [tags, setTags] = useState(stage.tags);
@@ -448,7 +448,7 @@ function Stage({stage}) {
     let instance = instanceIdx === -1 ? { tag: tag, v: 0.0 } : { ...extra[instanceIdx] }
     return (
       <label>{label}
-        <input type="number" step={args.step} min={args.min} max={args.max} 
+        <input type="number" step={args.step} min={args.min} max={args.max}
           placeholder={args.placeholder}
           defaultValue={instance.v ? instance.v : undefined}
           onFocus={(evt) => { evt.target.select(); }}
