@@ -48,7 +48,9 @@ function makePositionTab(p, i) {
 
 function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
   const [name, setName] = useState(_name);
+  // COMEBACK: Split the positions data from this state
   const [positions, updatePositions] = useImmer(_positions.map((p, i) => { return makePositionTab(p, i) }));
+  const positionRefs = useRef([]);
   const [activePosition, setActivePosition] = useState(positions[0].key);
   const positionIdx = useRef(_positions.length);
   const [tags, updateTags] = useStringListHandler(_tags, tagsExclusive);
@@ -155,7 +157,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
     const stage = {
       id: _id,
       name,
-      positions,
+      positions,  // !IMPORTANT TODO: retrieve data from ref hooks here. Position state no longer updates its data
       tags,
       extra: [
         makeExtra('fixedLen', String(fixedLen || 0)),
@@ -225,7 +227,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
               key: p.key,
               children: (
                 <div className="position">
-                  {/* <PositionField position={p.position}  /> */}
+                  <PositionField position={p.position} ref={(element) => { positionRefs.current[i] = element }} />
                 </div>
               )
             }
