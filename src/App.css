@@ -78,10 +78,10 @@ h3.h4,h5 {
   bottom: 0;
 }
 
-#graph_container {
+.graph-container {
   display: flex;
-  height: 60vh;
-  margin: 25px;
+  height: 70vh;
+  margin: 10px;
 }
 
 #graph {

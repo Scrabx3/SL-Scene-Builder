@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { register } from "@antv/x6-react-shape";
-import { Menu, Layout, Card, Input } from 'antd'
+import { Menu, Layout, Card, Input, Space, Button } from 'antd'
 import { useImmer } from "use-immer";
 // import {  DesktopOutlined,  FileOutlined,  PieChartOutlined,  TeamOutlined,  UserOutlined,} from '@ant-design/icons';
 import { ExperimentOutlined, FolderOutlined, PlusOutlined, SaveOutlined, PlaySquareOutlined } from '@ant-design/icons';
@@ -14,7 +14,7 @@ import "./App.css";
 const { Header, Content, Footer, Sider } = Layout;
 
 const COLORS = {
-  default: "#FFFFFF", // default node color
+  default: "#ccc", // default node color
   start: "#ff9d00",   // start animation
   orgasm: "#d45fa5",  // orgasm stages
   fixed: "#52a855",   // fixed length stages
@@ -107,7 +107,7 @@ function App() {
             connector: "rounded",
             attrs: {
               line: {
-                stroke: "#fff"
+                stroke: "#000"
               }
             }
           });
@@ -359,15 +359,20 @@ function App() {
         {/* IDEA: tabs to choose between multiple active graphs */}
         <Header style={{ padding: 0 }} />
         <div>
-          <Card title={<Input size="large" maxLength={30} bordered={false}
-            value={name} onChange={(e) => setName(e.target.value)}
-            onFocus={(e) => e.target.select()}
-          />}>
-            <button id="make_stage" onClick={() => { invoke('stage_creator', {}); }}>New Stage</button>
-            <div id="graph_container">
+          <Card
+            title={<Input size="large" maxLength={30} bordered={false}
+              value={name} onChange={(e) => setName(e.target.value)}
+              onFocus={(e) => e.target.select()}
+            />}
+            extra={
+              <Space.Compact block>
+                <Button onClick={() => { invoke('stage_creator', {}); }}>New Stage</Button>
+                <Button onClick={() => { console.log("TODO: implement"); }} type="primary">Save</Button>
+            </Space.Compact>}
+          >
+            <div className="graph-container">
               <div ref={graph_container} id="graph" />
             </div>
-            <button id="save_graph" onClick={() => { console.log("TODO: implement"); }}>Save</button>
           </Card>
         </div>
         {/* <Footer style={{ textAlign: 'center' }}>Ant Design ©2023 Created by Ant UED</Footer>  */}
