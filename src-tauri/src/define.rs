@@ -6,10 +6,23 @@ use std::collections::BTreeMap;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Animation
 {
-	name: String,
+	pub id: Uuid,
+	pub name: String,
 	
 	start_animation: Uuid,
 	graph: BTreeMap<Uuid, Vec<Uuid>>
+}
+
+impl Animation
+{
+	pub fn default() -> Animation {
+		Animation { 
+			id: Uuid::nil(), 
+			name: "".into(), 
+			start_animation: Uuid::nil(), 
+			graph: BTreeMap::new()
+		}
+	}
 }
 
 #[repr(C)]
@@ -54,6 +67,14 @@ impl PartialEq for Stage {
   fn eq(&self, other: &Self) -> bool {
     self.id == other.id
   }
+}
+
+#[repr(C)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Value
+{
+	tag: String,
+	v: String
 }
 
 #[repr(C)]
@@ -108,14 +129,6 @@ pub struct Offset
 	y: f32,
 	z: f32,
 	rot: f32
-}
-
-#[repr(C)]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Value
-{
-	tag: String,
-	v: String
 }
 
 #[repr(C)]

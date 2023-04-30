@@ -3,9 +3,10 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { register } from "@antv/x6-react-shape";
-import { Menu, Layout } from 'antd'
+import { Menu, Layout, Card, Input } from 'antd'
+import { useImmer } from "use-immer";
 // import {  DesktopOutlined,  FileOutlined,  PieChartOutlined,  TeamOutlined,  UserOutlined,} from '@ant-design/icons';
-import { ExperimentOutlined, FolderOutlined, PlusOutlined, PlusSquareOutlined, PlaySquareOutlined } from '@ant-design/icons';
+import { ExperimentOutlined, FolderOutlined, PlusOutlined, SaveOutlined, PlaySquareOutlined } from '@ant-design/icons';
 
 import { useStartAnim } from "./util/useStartAnim";
 import "./App.css";
@@ -66,22 +67,20 @@ register({
 });
 
 function App() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);  // Sider collapsed?
+  const graph_container = useRef(null);
   const [activeAnim, setActiveAnim] = useState(null);
-
-  const graphholder_ref = useRef(null);
+  const [scenes, updateScenes] = useImmer([]);
+  const [stages, updateStages] = useImmer([]);
   const [graph, setGraph] = useState(null);
-  const [nodeContext, setNodeContext] = useState({ show: false, x: 0, y: 0, node: null, view: null });
+  const [nodeContext, setNodeContext] = useState({ show: false, x: 0, y: 0, node: null });
+  const [name, setName] = useState('Untitled');
   const [startAnim, setStartAnim] = useStartAnim(null, COLORS);
-
-  const [sceneName, setSceneName] = useState("");
-  const [animations, setAnimations] = useState([]);
-  const [stages, setStages] = useState([]);
 
   useEffect(() => {
     if (graph) return;
     let g = new Graph({
-      container: graphholder_ref.current,
+      container: graph_container.current,
       panning: true,
       autoResize: true,
       mousewheel: {
@@ -126,42 +125,34 @@ function App() {
         x: e.pageX,
         y: e.pageY,
         node: node,
-        view: view,
         hide: () => { setNodeContext({ show: false }) }
       });
     });
     setGraph(g);
   }, [graph]);
 
-  const unlisten = listen('save_stage', (event) => {
-    const stage = event.payload;
-    let nodes = graph.getNodes();
-    let res = nodes.find(node => node.id === stage.id);
-    if (res) {  // edited
-      const node = res;
-      const txt = stage.name.length > 8 ? stage.name.substr(0, 7) + "..." : stage.name;
-      node.prop('name', txt);
-    } else {
-      const node = graph.addNode({
-        shape: 'stage_node',
-        id: stage.id,
-        x: 40,
-        y: 40,
-        ports: {
-          items: [{ group: 'default' },],
-        },
-      });
-      node.on("change:position", (args) => {
-        graph.getEdges().forEach(edge => {
-          const edgeView = graph.findViewByCell(edge)
-          edgeView.update()
-        });
-      });
-      if (nodes.length === 0) {
-        setStartAnim(node);
+
+  const addStageToGraph = (stage) => {
+    const node = graph.addNode({
+      shape: 'stage_node',
+      id: stage.id,
+      x: 40,
+      y: 40,
+      ports: {
+        items: [{ group: 'default' },],
+      },
+      data: {
+
       }
-    }
-  });
+    });
+    node.on("change:position", (args) => {
+      graph.getEdges().forEach(edge => {
+        const edgeView = graph.findViewByCell(edge)
+        edgeView.update()
+      });
+    });
+    return node;
+  }
 
   function StageNodeContextMenu({ x, y, node, view, hide }) {
     const menuRef = useRef(null);
@@ -195,7 +186,7 @@ function App() {
       }
     ];
 
-    document.addEventListener('click', (e) => {
+    document.addEventListener('mousedown', (e) => {
       if (!menuRef.current || menuRef.current.menu.list.contains(e.target)) {
         return;
       }
@@ -224,7 +215,6 @@ function App() {
           break;
         case 'remove':
           node.remove();
-          // IDEA: invoke some functions to kill the stage entirely (in backend) if its not referenced anywhere else
           break;
         default:
           break;
@@ -236,8 +226,9 @@ function App() {
       <Menu
         ref={menuRef}
         onSelect={onSelected}
-        id="node_context_menu"
+        className="node-context-menu"
         style={{
+          // position: 'absolute',
           top: `${y}px`,
           left: `${x}px`,
         }}
@@ -248,24 +239,82 @@ function App() {
     );
   }
 
-  const makeSidebar = () => {
+  const nodebyid = (id) => {
+    for (node in graph.getNodes()) {
+      if (node.id === id)
+        return node;
+    }
+    return undefined;
+  }
+
+  const addDefaultStages = async (animation) => {
+    for (const [key, value] of Object.entries(animation.graph)) {
+      console.log("Adding node", key);
+      try {
+        const root = await invoke('get_stage_by_id', { id: key })
+        addStageToGraph(root);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    for (const [key, value] of Object.entries(animation.graph)) {
+      const root = nodebyid(key);
+      if (!root) continue;
+      for (id in value) {
+        const it = nodebyid(id);
+        if (!it) continue;
+        graph.addEdge({
+          source: root,
+          target: it,
+        })
+      }
+    }
+  }
+
+  listen('save_stage', (event) => {
+    const stage = event.payload;
+    console.log("Saving stage", stage);
+    const nodes = graph.getNodes();
+    const hasNode = nodes.find(node => node.id === stage.id);
+    if (hasNode) {
+      const txt = stage.name.length > 8 ? stage.name.substr(0, 7) + "..." : stage.name;
+      hasNode.prop('name', txt);
+    } else {
+      const node = addStageToGraph(stage)
+      console.log(node);
+      if (nodes.length === 0) {
+        setStartAnim(node);
+      }
+      if (stages.find(it => it.id === stage.id) === undefined) {
+        updateStages(prev => { prev.push(stage); });
+      }
+    }
+  });
+  const removeStage = (stage) => {
+    console.log("Removing stage", stage);
+    updateStages(prev => prev.filter(it => it.id !== stage.id));
+  }
+
+  const makeSidebarMenu = () => {
     const makeItem = (label, key, icon, children, disabled) => {
       return { key, icon, children, label, disabled };
     }
     return [
-      makeItem('Add Animation', 'add', <PlusOutlined />),
-      makeItem('Animations', 'animations', <FolderOutlined />,
-        animations.map((v, i) =>
-          makeItem(v.name, i, <ExperimentOutlined />, [
+      makeItem('New Scene', 'add', <PlusOutlined />),
+      makeItem('Save Scene', 'save', <SaveOutlined />),
+      { type: 'divider' },
+      makeItem('Scenes', 'animations', <FolderOutlined />,
+        scenes.map((scene) =>
+          makeItem(scene.name, scene.id, <ExperimentOutlined />, [
             makeItem("Edit", "editanim"),
             makeItem("Delete", "delanim"),
           ])
         )
       ),
       makeItem('Stages', 'stages', <FolderOutlined />,
-        stages.map((v, i) =>
-          makeItem(v.name, i, <PlaySquareOutlined />, [
-            makeItem("Add to animation", "addanim", null, null, activeAnim),
+        stages.map((stage) =>
+          makeItem(stage.name, stage.id, <PlaySquareOutlined />, [
+            makeItem("Add to scene", "addanim", null, null, activeAnim),
             { type: 'divider' },
             makeItem("Edit", "editstage", null, null, activeAnim),
             makeItem("Clone", "copystage", null, null, activeAnim),
@@ -274,6 +323,19 @@ function App() {
         )
       ),
     ];
+  }
+
+  const onSiderSelect = async (e) => {
+    const { item, key, keyPath, selectedKeys, domEvent } = e
+    console.log(e);
+    switch (key) {
+      case 'add':
+        const new_anim = await invoke('blank_animation');
+        setActiveAnim(new_anim);
+        break;
+      default:
+        break;
+    }
   }
 
   return (
@@ -288,16 +350,26 @@ function App() {
 
       <Sider className="main-sider" collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
         <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }} />
-        <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={makeSidebar()} />
+        <Menu theme="dark" mode="inline" selectable={false}
+          items={makeSidebarMenu()}
+          onClick={onSiderSelect}
+        />
       </Sider>
       <Layout className="site-layout">
-        {/* IDEA: horizontal menu to choose between multiple active graphs */}
+        {/* IDEA: tabs to choose between multiple active graphs */}
         <Header style={{ padding: 0 }} />
-        <button id="make_stage" onClick={() => { invoke('stage_creator', {}); }}>Add Stage</button>
-        <div id="graph_container">
-          <div ref={graphholder_ref} id="graph" />
+        <div>
+          <Card title={<Input size="large" maxLength={30} bordered={false}
+            value={name} onChange={(e) => setName(e.target.value)}
+            onFocus={(e) => e.target.select()}
+          />}>
+            <button id="make_stage" onClick={() => { invoke('stage_creator', {}); }}>New Stage</button>
+            <div id="graph_container">
+              <div ref={graph_container} id="graph" />
+            </div>
+            <button id="save_graph" onClick={() => { console.log("TODO: implement"); }}>Save</button>
+          </Card>
         </div>
-        <button id="save_graph" onClick={() => { console.log("TODO: implement"); }}>Save Scene</button>
         {/* <Footer style={{ textAlign: 'center' }}>Ant Design ©2023 Created by Ant UED</Footer>  */}
       </Layout>
     </Layout>

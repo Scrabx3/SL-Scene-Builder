@@ -16,6 +16,10 @@ fn main()
 {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
+      blank_animation,
+      save_animation,
+      get_stage_by_id,
+      delete_stage,
       stage_creator,
       stage_creator_from,
       get_stage,
@@ -59,7 +63,20 @@ fn main()
 
 const STAGE_EDITOR_LABEL: &str = "stage_editor";
 
-/* State related */
+/* Scene */
+
+#[tauri::command]
+async fn blank_animation<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>) -> define::Animation {
+  define::Animation::default()
+}
+
+#[tauri::command]
+async fn save_animation<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, animation: define::Animation) -> Result<(), String> {
+  // data::DATA.lock().unwrap()
+  Ok(())
+}
+
+/* Stage */
 
 fn open_stage_window<R: Runtime>(app: tauri::AppHandle<R>, label: &String, name: &String) -> ()
 {
@@ -80,6 +97,15 @@ fn open_stage_window<R: Runtime>(app: tauri::AppHandle<R>, label: &String, name:
     println!("Failed to disable resize on window: {}", e);
     return;
   }
+}
+
+#[tauri::command]
+async fn get_stage_by_id<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>, id: Uuid) -> Result<define::Stage, String> {
+  data::DATA.lock()
+    .unwrap()
+    .get_stage(&id)
+    .ok_or(format!("No stage with given ID: {}", id.to_string()))
+    .and_then(|stage| { Ok(stage.clone()) })
 }
 
 #[tauri::command]
@@ -114,7 +140,7 @@ async fn stage_creator_from<R: Runtime>(app: tauri::AppHandle<R>, _window: tauri
     }
   }
   Ok(())
-} 
+}
 
 #[tauri::command]
 fn get_stage<R: Runtime>(_app: tauri::AppHandle<R>, window: tauri::Window<R>) -> define::Stage {
@@ -145,6 +171,15 @@ async fn save_stage<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<
     .expect("Failed to send callback event to main window");
 
   window.close().expect("Failed to close stage builder window");
+}
+
+#[tauri::command]
+fn delete_stage(id: Uuid) -> Result<(), String> {
+  let ret = data::DATA.lock().unwrap().remove_stage(&id);
+  if ret.is_err() {
+    return Err(format!("Invalid stage id {}", id.to_string()));
+  }
+  Ok(())
 }
 
 /* Position related */

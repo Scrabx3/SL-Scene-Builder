@@ -43,19 +43,15 @@ impl Scene {
     self.stages.get(&id).unwrap()
   }
 
-  // pub fn remove_stage(&mut self, stage: &define::Stage) -> Result<define::Stage, ()> {
-  //   self.remove_stage_by_id(&stage.id)
-  // }
-  
-  // pub fn remove_stage_by_id(&mut self, id: &Uuid) -> Result<define::Stage, ()>
-  // {
-  //   let res = self.stages.remove(id);
+  pub fn remove_stage(&mut self, id: &Uuid) -> Result<define::Stage, ()>
+  {
+    let res = self.stages.remove(id);
     
-  //   if res.is_none() {
-  //     return Err(());
-  //   }
-  //   Ok(res.unwrap())
-  // }
+    if res.is_none() {
+      return Err(());
+    }
+    Ok(res.unwrap())
+  }
   
   // TODO: write these. one should read a json file and associated data to populate, the other print the same files out from data here
   // pub fn read_file(&self) -> Result<(), &'static str> {
