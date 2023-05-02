@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, vec};
 
 #[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -9,8 +9,8 @@ pub struct Animation
 	pub id: Uuid,
 	pub name: String,
 	
-	start_animation: Uuid,
-	graph: BTreeMap<Uuid, Vec<Uuid>>
+	pub start_animation: Uuid,
+	pub graph: BTreeMap<Uuid, GraphNode>
 }
 
 impl Animation
@@ -27,14 +27,23 @@ impl Animation
 
 #[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GraphNode
+{
+	pub edges: Vec<Uuid>,
+	pub x: f32,
+	pub y: f32
+}
+
+#[repr(C)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Stage
 {
 	pub id: Uuid,
 	pub name: String,
 
-	positions: Vec<Position>,
-	tags: Vec<String>,
-	extra: Vec<Value>
+	pub positions: Vec<Position>,
+	pub tags: Vec<String>,
+	pub extra: Vec<Value>
 }
 
 impl Stage {
@@ -73,20 +82,20 @@ impl PartialEq for Stage {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Value
 {
-	tag: String,
-	v: String
+	pub tag: String,
+	pub v: String
 }
 
 #[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Position
 {
-  sex: Sex,
-  race: String,
-	event: String,
+  pub sex: Sex,
+  pub race: String,
+	pub event: String,
 
-  extra: PositionExtra,
-	offset: Offset
+  pub extra: PositionExtra,
+	pub offset: Offset
 }
 
 impl Position {

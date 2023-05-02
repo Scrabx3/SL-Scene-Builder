@@ -80,7 +80,8 @@ h3.h4,h5 {
 
 .graph-container {
   display: flex;
-  height: 70vh;
+  z-index: 500;
+  height: 68vh;
   margin: 10px;
 }
 
@@ -93,4 +94,23 @@ h3.h4,h5 {
 .node-context-menu {
   position: absolute;
   z-index: 10000;
+}
+
+.graph-no-scene-placeholder {
+  /* margin by default is {32 x 8}px */
+  height: calc(100% - 64px);
+}
+
+.stage-node-content {
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  border: #222431;
+  border-radius: 5px;
+  border-style: solid;
+}
+
+.stage-node-content-control-buttons {
+  z-index: 2;
+  float: right;
 }

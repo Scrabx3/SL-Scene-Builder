@@ -11,14 +11,14 @@ pub struct Scene
 {
   author: String,
 
-  animations: Vec<define::Animation>,
+  animations: HashMap<Uuid, define::Animation>,
   stages: HashMap<Uuid, define::Stage>
 }
 pub static DATA: Lazy<Mutex<Scene>> = Lazy::new(|| {
   let s = Scene {
     author: String::from(""),
 
-    animations: Vec::new(),
+    animations: HashMap::new(),
     stages: HashMap::new()
   };
   Mutex::new(s)
@@ -29,12 +29,9 @@ impl Scene {
     self.stages.get(id)
   }
 
-  pub fn insert_stage(&mut self, mut stage: define::Stage) -> &define::Stage{
+  pub fn insert_stage(&mut self, mut stage: define::Stage) -> &define::Stage {
     if stage.id.is_nil() {
       stage.id = Uuid::new_v4();
-      if stage.name.is_empty() {
-        stage.name = "UNTITLED".into();
-      }
       println!("Inserted new stage with id: {}", stage.id.to_string());
     }
     let id = stage.id;
@@ -43,14 +40,40 @@ impl Scene {
     self.stages.get(&id).unwrap()
   }
 
-  pub fn remove_stage(&mut self, id: &Uuid) -> Result<define::Stage, ()>
-  {
-    let res = self.stages.remove(id);
-    
-    if res.is_none() {
-      return Err(());
+  pub fn remove_stage(&mut self, id: &Uuid) -> Option<define::Stage> {
+    self.stages.remove(id)
+  }
+
+  pub fn get_stage_usage_count(&self, id: &Uuid) -> u32 {
+    let mut ret = 0;
+    for (_, value) in &self.animations {
+      for (key, _) in &value.graph {
+        if key == id {
+          ret += 1;
+        }
+      }
     }
-    Ok(res.unwrap())
+
+    ret
+  }
+
+  // pub fn get_animation(&self, id: &Uuid) -> Option<&define::Animation> {
+    // self.animations.get(id)
+  // }
+
+  pub fn insert_animation(&mut self, mut scene: define::Animation) -> &define::Animation {
+    if scene.id.is_nil() {
+      scene.id = Uuid::new_v4();
+      println!("Inserted new stage with id: {}", scene.id.to_string());
+    }
+    let id = scene.id;
+    self.animations.insert(id, scene);
+
+    self.animations.get(&id).unwrap()
+  }
+
+  pub fn remove_animation(&mut self, id: &Uuid) -> Option<define::Animation> {
+    self.animations.remove(id)
   }
   
   // TODO: write these. one should read a json file and associated data to populate, the other print the same files out from data here

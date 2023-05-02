@@ -2,7 +2,6 @@
   all(not(debug_assertions), target_os = "windows"),
   windows_subsystem = "windows"
 )]
-use std::fmt::format;
 
 use substring::Substring;
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu, WindowBuilder, Manager, Runtime};
@@ -18,6 +17,7 @@ fn main()
     .invoke_handler(tauri::generate_handler![
       blank_animation,
       save_animation,
+      delete_animation,
       get_stage_by_id,
       delete_stage,
       stage_creator,
@@ -71,9 +71,17 @@ async fn blank_animation<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::
 }
 
 #[tauri::command]
-async fn save_animation<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, animation: define::Animation) -> Result<(), String> {
-  // data::DATA.lock().unwrap()
-  Ok(())
+async fn save_animation<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>, animation: define::Animation) -> define::Animation {
+  data::DATA.lock().unwrap()
+    .insert_animation(animation)
+    .clone()
+}
+
+#[tauri::command]
+async fn delete_animation<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>, id: Uuid) -> Result<define::Animation, String> {
+  data::DATA.lock().unwrap()
+    .remove_animation(&id)
+    .ok_or("Given id does not represent a valid stage".into())
 }
 
 /* Stage */
@@ -174,12 +182,23 @@ async fn save_stage<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<
 }
 
 #[tauri::command]
-fn delete_stage(id: Uuid) -> Result<(), String> {
-  let ret = data::DATA.lock().unwrap().remove_stage(&id);
-  if ret.is_err() {
+async fn delete_stage<R: Runtime>(_app: tauri::AppHandle<R>, window: tauri::Window<R>, id: Uuid) -> Result<bool, String> {
+  let mut data = data::DATA.lock().unwrap();
+  let count = data.get_stage_usage_count(&id);
+  if count > 0 {
+    let res = tauri::api::dialog::blocking::confirm(
+      Some(&window),
+      "Delete Stage", 
+      format!("This stage is referenced by {} scenes. Are you sure you want to delete it?", count)
+    );
+    if !res {
+      return Ok(false);
+    }
+  }
+  if data.remove_stage(&id).is_none() {
     return Err(format!("Invalid stage id {}", id.to_string()));
   }
-  Ok(())
+  Ok(true)
 }
 
 /* Position related */
