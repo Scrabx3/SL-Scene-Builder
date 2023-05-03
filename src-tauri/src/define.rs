@@ -43,7 +43,7 @@ pub struct Stage
 
 	pub positions: Vec<Position>,
 	pub tags: Vec<String>,
-	pub extra: Vec<Value>
+	pub extra: StageExtra
 }
 
 impl Stage {
@@ -53,7 +53,7 @@ impl Stage {
 			name: "".into(),
 			positions: vec![Position::default()],
 			tags: vec![],
-			extra: vec![]
+			extra: StageExtra::default(),
 		}
 	}
 
@@ -67,7 +67,7 @@ impl Stage {
 			name: format!("{} - {}", origin.name, "COPY"),
 			positions,
 			tags: origin.tags.clone(),
-			extra: vec![]
+			extra: StageExtra::default(),
 		}
 	}
 }
@@ -80,10 +80,21 @@ impl PartialEq for Stage {
 
 #[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Value
+pub struct StageExtra
 {
-	pub tag: String,
-	pub v: String
+	pub fixed_len: f32,
+	pub is_orgasm: bool,
+	pub nav_text: String,
+}
+
+impl StageExtra {
+	pub fn default() -> StageExtra {
+		StageExtra { 
+			fixed_len: 0.0, 
+			is_orgasm: false, 
+			nav_text: "".into()
+		}
+	}
 }
 
 #[repr(C)]
