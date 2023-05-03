@@ -1,24 +1,16 @@
 import { useState, useEffect, useRef } from "react";
+import { useImmer } from "use-immer";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { register } from "@antv/x6-react-shape";
 import { Menu, Layout, Card, Input, Space, Button, Empty, Descriptions, Row, Col } from 'antd'
-import { useImmer } from "use-immer";
-// import {  DesktopOutlined,  FileOutlined,  PieChartOutlined,  TeamOutlined,  UserOutlined,} from '@ant-design/icons';
-import {
-  ExperimentOutlined, FolderOutlined, PlusOutlined, ClockCircleOutlined, EditOutlined,
-  CopyOutlined, CloseOutlined, RightOutlined, HeartOutlined, CheckOutlined,
-} from '@ant-design/icons';
-
-import { useStartAnim } from "./util/useStartAnim";
+import { ExperimentOutlined, FolderOutlined, PlusOutlined, EditOutlined, CopyOutlined, CloseOutlined } from '@ant-design/icons';
 import "./App.css";
 
 const { Header, Content, Footer, Sider } = Layout;
-
 const NODE_HEIGHT = 130;
 const NODE_WIDTH = 230;
-
 const STAGE_EDGE = {
   router: {
     name: "metro",
@@ -42,12 +34,15 @@ Graph.registerEdge(
 );
 
 function StageNode({ node }) {
-  const { isOrgasm, fixedLen } = node.data;
   const label = node.prop('name');
   const color =
-    isOrgasm ? '#d45fa5' :
-      fixedLen ? '#52a855' :
-        '#9F9F9F';  
+    node.prop('isOrgasm') ? '#d45fa5' :
+      node.prop('fixedLen') ? '#52a855' :
+        '#9F9F9F';
+
+  useEffect(() => {
+    console.log("something smh");
+  }, [])
   return (
     <div 
       className="stage-node-content"
@@ -103,7 +98,11 @@ register({
       },
     ]
   },
-  effect: ['name'],
+  effect: [
+    'name',
+    'isOrgasm',
+    'fixedLen',
+  ],
   component: StageNode,
 });
 
@@ -311,6 +310,8 @@ function App() {
     const hasNode = nodes.find(node => node.id === stage.id);
     if (hasNode) {
       hasNode.prop('name', stage.name);
+      hasNode.prop('isOrgasm', stage.extra.is_orgasm);
+      hasNode.prop('fixedLen', stage.extra.fixed_len);
     } else {
       const node = addStageToGraph(stage)
       if (activeScene && !activeScene.start_animation) {
