@@ -3,122 +3,23 @@ import { useImmer } from "use-immer";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
-import { register } from "@antv/x6-react-shape";
-import { Menu, Layout, Card, Input, Space, Button, Empty, Row, Col } from 'antd'
-import { ExperimentOutlined, FolderOutlined, PlusOutlined, EditOutlined, CopyOutlined, CloseOutlined } from '@ant-design/icons';
-import "./App.css";
-
+import { Menu, Layout, Card, Input, Space, Button, Empty, Modal } from 'antd'
+import { ExperimentOutlined, FolderOutlined, PlusOutlined } from '@ant-design/icons';
 const { Header, Content, Footer, Sider } = Layout;
-const NODE_HEIGHT = 130;
-const NODE_WIDTH = 230;
-const STAGE_EDGE = {
-  router: {
-    name: "metro",
-    args: {
-      padding: 20,
-      startDirections: ["right"],
-      endDirections: ["left", "top", "bottom"],
-    },
-  },
-  connector: "rounded",
-  attrs: {
-    line: {
-      stroke: "#000"
-    }
-  }
-}
+const { confirm } = Modal;
+
+import { STAGE_EDGE } from "./scene/SceneEdge"
+import "./scene/SceneNode"
+import "./App.css";
 
 function idIsNil(id) {
   // not ideal but ids here are always formatted as hex strings so this should suffice
   return id === '00000000-0000-0000-0000-000000000000';
 }
 
-Graph.registerEdge(
-  'stage_edge',
-  STAGE_EDGE,
-  true
-);
-
-function StageNode({ node }) {
-  const makeColor = (r, g, b, a = 1) => {
-    return `rgba(${r}, ${g}, ${b}, ${a})`;
-  }
-  const label = node.prop('name');
-  const color =
-    node.prop('isOrgasm') ? makeColor(212, 95, 165) :
-      node.prop('fixedLen') ? makeColor(82, 168, 85) :
-        makeColor(159, 159, 159);
-  const start = node.prop('isStart');
-
-  return (
-    <div 
-      className="stage-node-content"
-      style={{
-        backgroundColor: color,
-        borderColor: start ? makeColor(255, 0, 0) : undefined,
-      }}>
-      <Row>
-        <Col flex={'auto'}>
-          <Space.Compact size="small" className="stage-node-content-control-buttons">
-            <Button onClick={() => { invoke('stage_creator', { id: node.id }) }}><EditOutlined /></Button>
-            <Button onClick={() => { invoke('stage_creator_from', { id: node.id }) }}><CopyOutlined /></Button>
-            <Button onClick={() => { node.remove() }} danger><CloseOutlined /></Button>
-          </Space.Compact>
-        </Col>
-      </Row>
-      <Row>
-        <h2>{label ? label : 'Untitled'}</h2>
-      </Row>
-    </div>
-  )
+function makeMenuItem(label, key, icon, children, disabled, danger) {
+  return { key, icon, children, label, disabled, danger };
 }
-
-register({
-  shape: "stage_node",
-  width: NODE_WIDTH,
-  height: NODE_HEIGHT,
-  ports: {
-    groups: {
-      default: {
-        markup: [
-          {
-            tagName: 'rect',
-            selector: 'portBodySide'
-          },
-        ],
-        attrs: {
-          portBodySide: {
-            width: 10,
-            height: NODE_HEIGHT - 50,
-            strokeWidth: 2,
-            stroke: '#222431',
-            fill: '#EFF4FF',
-            magnet: true,
-          },
-        },
-        position: {
-          name: 'right',
-          args: {
-            dy: - NODE_HEIGHT / 2 + 30,
-            dx: - 5
-          }
-        }
-      },
-    },
-    items: [
-      {
-        group: 'default',
-      },
-    ]
-  },
-  effect: [
-    'name',
-    'isOrgasm',
-    'fixedLen',
-    'isStart',
-  ],
-  component: StageNode,
-});
 
 function App() {
   const [collapsed, setCollapsed] = useState(false);  // Sider collapsed?
@@ -127,48 +28,26 @@ function App() {
   const [graph, setGraph] = useState(null);
 
   const [scenes, updateScenes] = useImmer([]);
-  const [activeScene, updateActiveScene] = useImmer(null)
+  const [activeScene, updateActiveScene] = useImmer(null);
 
-  function StageNodeContextMenu({ x, y, node, hide }) {
+  function StageNodeContextMenu({ x, y, node }) {
     const menuRef = useRef(null);
     const items = [
-      {
-        label: "Edit stage",
-        key: "edit"
-      },
-      {
-        label: "clone stage",
-        key: "clone"
-      },
-      {
-        type: "divider"
-      },
-      {
-        label: "Mark as root",
-        key: "makeroot"
-      },
-      {
-        label: "Remove connections",
-        key: "removeconnections"
-      },
-      {
-        type: "divider"
-      },
-      {
-        label: "Remove stage",
-        key: "remove",
-        danger: true
-      }
+      makeMenuItem('Edit', 'edit'),
+      makeMenuItem('Clone', 'clone'),
+      { type: "divider" },
+      makeMenuItem('Mark as root', 'makeroot'),
+      makeMenuItem('Remove connections', 'removeconnections'),
+      { type: "divider" },
+      makeMenuItem('Delete', 'remove', null, null, false, true),
     ];
 
     document.addEventListener('mousedown', (e) => {
-      if (!menuRef.current || menuRef.current.menu.list.contains(e.target)) {
-        return;
-      }
-      hide();
+      if (!menuRef.current || menuRef.current.menu.list.contains(e.target)) return;
+      setNodeContext({ show: false });
     });
 
-    const onSelected = ({ item, key, keyPath, selectedKeys, domEvent }) => {
+    const onSelected = ({ key }) => {
       switch (key) {
         case 'edit':
           invoke('stage_creator', { id: node.id });
@@ -182,9 +61,7 @@ function App() {
         case 'removeconnections':
           {
             const edges = graph.getConnectedEdges(node);
-            edges.forEach(edge => {
-              edge.remove();
-            });
+            edges.forEach(edge => edge.remove());
           }
           break;
         case 'remove':
@@ -194,7 +71,7 @@ function App() {
           console.log("Unrecognized input %s", key);
           break;
       }
-      hide();
+      setNodeContext({ show: false });
     }
 
     return (
@@ -246,57 +123,12 @@ function App() {
         show: true,
         x: e.pageX,
         y: e.pageY,
-        node: node,
-        hide: () => { setNodeContext({ show: false }) }
+        node: node
       });
     });
     g.zoom(-0.2)
     setGraph(g);
   }, [graph]);
-
-  const setActiveScene = async (newscene) => {
-    if (activeScene && newscene.id === activeScene.id) {
-      updateActiveScene(newscene);
-      return;
-    }
-
-    const nodebyid = (id) => {
-      const nodes = graph.getNodes();
-      for (const node of nodes) {
-        if (node.id === id)
-          return node;
-      }
-      return undefined;
-    }
-    graph.clearCells();
-    updateActiveScene(newscene);
-    for (const [key, {x, y}] of Object.entries(newscene.graph)) {
-      try {
-        const root = await invoke('get_stage_by_id', { id: key })
-        addStageToGraph(root, x, y);
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    for (const [key, { edges }] of Object.entries(newscene.graph)) {
-      const sourceNode = nodebyid(key);
-      if (!sourceNode) continue;
-      const sourcePort = sourceNode.ports.items[0];
-      edges.forEach(id => {
-        const target = nodebyid(id);
-        if (!target) return;
-        graph.addEdge({
-          shape: 'stage_edge',
-          source: {
-            cell: sourceNode,
-            port: sourcePort.id
-          },
-          target,
-        })
-      })
-    }
-    graph.centerContent();
-  }
 
   const updateStartAnimation = (newStartNode) => {
     updateActiveScene(prev => {
@@ -313,6 +145,59 @@ function App() {
       prev.start_animation = newStartNode.id;
     });
   }
+
+  const setActiveScene = async (newscene) => {
+    if (activeScene && newscene.id === activeScene.id) {
+      updateActiveScene(newscene);
+      return;
+    }
+    graph.clearCells();
+    updateActiveScene(newscene);
+    for (const [key, { x, y }] of Object.entries(newscene.graph)) {
+      try {
+        const root = await invoke('get_stage_by_id', { id: key })
+        addStageToGraph(root, x, y);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    const nodes = graph.getNodes();
+    for (const [sourceid, { edges }] of Object.entries(newscene.graph)) {
+      const sourceNode = nodes.find(node => node.id === sourceid);
+      if (!sourceNode) continue;
+      const sourcePort = sourceNode.ports.items[0];
+      edges.forEach(targetid => {
+        const target = nodes.find(node => node.id === targetid);
+        if (!target) return;
+        graph.addEdge({
+          shape: 'stage_edge',
+          source: {
+            cell: sourceNode,
+            port: sourcePort.id
+          },
+          target,
+        });
+      });
+    }
+    graph.centerContent();
+  }
+
+  // Callback after stage has been edited in other window
+  listen('save_stage', (event) => {
+    const stage = event.payload;
+    const nodes = graph.getNodes();
+    const hasNode = nodes.find(node => node.id === stage.id);
+    if (hasNode) {
+      hasNode.prop('name', stage.name);
+      hasNode.prop('isOrgasm', stage.extra.is_orgasm);
+      hasNode.prop('fixedLen', stage.extra.fixed_len);
+    } else {
+      const node = addStageToGraph(stage)
+      if (activeScene && idIsNil(activeScene.start_animation)) {
+        updateStartAnimation(node)
+      }
+    }
+  });
 
   const addStageToGraph = (stage, x = 40, y = 40) => {
     const node = graph.addNode({
@@ -333,22 +218,6 @@ function App() {
     });
     return node;
   }
-
-  listen('save_stage', (event) => {
-    const stage = event.payload;
-    const nodes = graph.getNodes();
-    const hasNode = nodes.find(node => node.id === stage.id);
-    if (hasNode) {
-      hasNode.prop('name', stage.name);
-      hasNode.prop('isOrgasm', stage.extra.is_orgasm);
-      hasNode.prop('fixedLen', stage.extra.fixed_len);
-    } else {
-      const node = addStageToGraph(stage)
-      if (activeScene && idIsNil(activeScene.start_animation)) {
-        updateStartAnimation(node)
-      }
-    }
-  });
 
   const saveScene = () => {
     const scene = {...activeScene,
@@ -382,17 +251,14 @@ function App() {
   }
 
   const makeSidebarMenu = () => {
-    const makeItem = (label, key, icon, children, disabled, danger) => {
-      return { key, icon, children, label, disabled, danger };
-    }
     return [
-      makeItem('New Scene', 'add', <PlusOutlined />),
+      makeMenuItem('New Scene', 'add', <PlusOutlined />),
       { type: 'divider' },
-      makeItem('Scenes', 'animations', <FolderOutlined />,
+      makeMenuItem('Scenes', 'animations', <FolderOutlined />,
         scenes.map((scene) =>
-          makeItem(scene.name, scene.id, <ExperimentOutlined />, [
-            makeItem("Edit", "editanim_" + scene.id),
-            makeItem("Delete", "delanim_" + scene.id, null, null, false, true),
+          makeMenuItem(scene.name, scene.id, <ExperimentOutlined />, [
+            makeMenuItem("Edit", "editanim_" + scene.id),
+            makeMenuItem("Delete", "delanim_" + scene.id, null, null, false, true),
           ])
         )
       )
@@ -401,15 +267,15 @@ function App() {
 
   const onSiderSelect = async ({ key }) => {
     const idx = key.lastIndexOf("_");
-    const k = idx == -1 ? key : key.substring(0, idx);
-    switch (k) {
+    const option = idx == -1 ? key : key.substring(0, idx);
+    const id = key.substring(idx + 1);
+    switch (option) {
       case 'add':
         const new_anim = await invoke('blank_animation');
         setActiveScene(new_anim);
         break;
       case 'editanim':
         {
-          const id = key.substring(idx + 1);
           const scene = scenes.find(scene => scene.id === id);
           setActiveScene(scene);
           break;
@@ -428,6 +294,7 @@ function App() {
           }
         }
       default:
+        console.log("Unrecognized option %s", option);
         break;
     }
   }
@@ -435,10 +302,9 @@ function App() {
   return (
     <Layout hasSider>
       {nodeContext.show && <StageNodeContextMenu
-        x={nodeContext.x} µ
+        x={nodeContext.x}
         y={nodeContext.y}
         node={nodeContext.node}
-        hide={nodeContext.hide}
       />}
 
       <Sider className="main-sider" collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
