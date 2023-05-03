@@ -54,9 +54,9 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
   const [activePosition, setActivePosition] = useState(positions[0].key);
   const positionIdx = useRef(_positions.length);
   const [tags, updateTags] = useStringListHandler(_tags, tagsExclusive);
-  const [fixedLen, setFixedLen] = useState(_extra.fixedLen);
-  const [isOrgasm, setIsOrgasm] = useState(_extra.isOrgasm);
-  const [navText, setNavText] = useState(_extra.navText);
+  const [fixedLen, setFixedLen] = useState(_extra.fixed_len);
+  const [isOrgasm, setIsOrgasm] = useState(_extra.is_orgasm);
+  const [navText, setNavText] = useState(_extra.nav_text);
 
   function TagMenu({ tags, label }) {
     return (
