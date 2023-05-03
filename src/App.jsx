@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { register } from "@antv/x6-react-shape";
-import { Menu, Layout, Card, Input, Space, Button, Empty, Descriptions, Row, Col } from 'antd'
+import { Menu, Layout, Card, Input, Space, Button, Empty, Row, Col } from 'antd'
 import { ExperimentOutlined, FolderOutlined, PlusOutlined, EditOutlined, CopyOutlined, CloseOutlined } from '@ant-design/icons';
 import "./App.css";
 
@@ -15,6 +15,7 @@ const STAGE_EDGE = {
   router: {
     name: "metro",
     args: {
+      padding: 20,
       startDirections: ["right"],
       endDirections: ["left", "top", "bottom"],
     },
@@ -27,6 +28,11 @@ const STAGE_EDGE = {
   }
 }
 
+function idIsNil(id) {
+  // not ideal but ids here are always formatted as hex strings so this should suffice
+  return id === '00000000-0000-0000-0000-000000000000';
+}
+
 Graph.registerEdge(
   'stage_edge',
   STAGE_EDGE,
@@ -34,20 +40,22 @@ Graph.registerEdge(
 );
 
 function StageNode({ node }) {
+  const makeColor = (r, g, b, a = 1) => {
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
   const label = node.prop('name');
   const color =
-    node.prop('isOrgasm') ? '#d45fa5' :
-      node.prop('fixedLen') ? '#52a855' :
-        '#9F9F9F';
+    node.prop('isOrgasm') ? makeColor(212, 95, 165) :
+      node.prop('fixedLen') ? makeColor(82, 168, 85) :
+        makeColor(159, 159, 159);
+  const start = node.prop('isStart');
 
-  useEffect(() => {
-    console.log("something smh");
-  }, [])
   return (
     <div 
       className="stage-node-content"
       style={{
-        backgroundColor: color
+        backgroundColor: color,
+        borderColor: start ? makeColor(255, 0, 0) : undefined,
       }}>
       <Row>
         <Col flex={'auto'}>
@@ -80,21 +88,26 @@ register({
         ],
         attrs: {
           portBodySide: {
-            width: 20,
-            height: 50,
-            strokeWidth: 1,
-            stroke: '#000',
+            width: 10,
+            height: NODE_HEIGHT - 50,
+            strokeWidth: 2,
+            stroke: '#222431',
             fill: '#EFF4FF',
             magnet: true,
           },
         },
-        position: 'right'
+        position: {
+          name: 'right',
+          args: {
+            dy: - NODE_HEIGHT / 2 + 30,
+            dx: - 5
+          }
+        }
       },
     },
     items: [
       {
         group: 'default',
-        args: { dy: -25, dx: -10 }
       },
     ]
   },
@@ -102,6 +115,7 @@ register({
     'name',
     'isOrgasm',
     'fixedLen',
+    'isStart',
   ],
   component: StageNode,
 });
@@ -265,14 +279,18 @@ function App() {
       }
     }
     for (const [key, { edges }] of Object.entries(newscene.graph)) {
-      const source = nodebyid(key);
-      if (!source) continue;
+      const sourceNode = nodebyid(key);
+      if (!sourceNode) continue;
+      const sourcePort = sourceNode.ports.items[0];
       edges.forEach(id => {
         const target = nodebyid(id);
         if (!target) return;
         graph.addEdge({
           shape: 'stage_edge',
-          source,
+          source: {
+            cell: sourceNode,
+            port: sourcePort.id
+          },
           target,
         })
       })
@@ -280,8 +298,20 @@ function App() {
     graph.centerContent();
   }
 
-  const updateStartAnimation = (newstart) => {
-    updateActiveScene(prev => { prev.start_animation = newstart });
+  const updateStartAnimation = (newStartNode) => {
+    updateActiveScene(prev => {
+      if (!idIsNil(prev.start_animation)) {
+        const nodes = graph.getNodes();
+        for (const node of nodes) {
+          if (node.id === prev.start_animation) {
+            node.prop('isStart', false);
+            break;
+          }
+        }
+      }
+      newStartNode.prop('isStart', true);
+      prev.start_animation = newStartNode.id;
+    });
   }
 
   const addStageToGraph = (stage, x = 40, y = 40) => {
@@ -314,7 +344,7 @@ function App() {
       hasNode.prop('fixedLen', stage.extra.fixed_len);
     } else {
       const node = addStageToGraph(stage)
-      if (activeScene && !activeScene.start_animation) {
+      if (activeScene && idIsNil(activeScene.start_animation)) {
         updateStartAnimation(node)
       }
     }
