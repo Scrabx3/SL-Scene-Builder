@@ -3,8 +3,8 @@ import { useImmer } from "use-immer";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
-import { Menu, Layout, Card, Input, Space, Button, Empty, Modal } from 'antd'
-import { ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip } from 'antd'
+import { ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, DiffOutlined } from '@ant-design/icons';
 const { Header, Content, Footer, Sider } = Layout;
 const { confirm } = Modal;
 
@@ -28,7 +28,9 @@ function App() {
   const [graph, setGraph] = useState(null);
 
   const [scenes, updateScenes] = useImmer([]);
+  // const [_active, editActive, replaceActive];
   const [activeScene, updateActiveScene] = useImmer(null);
+  const [edited, setEdited] = useState(false);
 
   function StageNodeContextMenu({ x, y, node }) {
     const menuRef = useRef(null);
@@ -144,11 +146,27 @@ function App() {
       newStartNode.prop('isStart', true);
       prev.start_animation = newStartNode.id;
     });
+    setEdited(true);
   }
 
   const setActiveScene = async (newscene) => {
     if (activeScene && newscene.id === activeScene.id) {
       updateActiveScene(newscene);
+      setEdited(true);
+      return;
+    }
+    if (edited) {
+      confirm({
+        title: 'Unsaved changes',
+        icon: <ExclamationCircleOutlined />,
+        content: `Are you sure you want to continue? Unsaved changes will be lost.`,
+        okText: 'Continue without saving',
+        onOk() {
+          setEdited(false);
+          setActiveScene(newscene);
+        },
+        onCancel() { },
+      });
       return;
     }
     graph.clearCells();
@@ -247,6 +265,7 @@ function App() {
           prev[w] = scene;
         }
       });
+      setEdited(false);
     });
   }
 
@@ -292,6 +311,7 @@ function App() {
                 updateScenes(prev => prev.filter(scene => scene.id !== id));
                 if (activeScene && activeScene.id === id) {
                   updateActiveScene(null);
+                  setEdited(false);
                 }
               } catch (error) {
                 console.log(error);
@@ -330,11 +350,17 @@ function App() {
           <div style={!activeScene ? { display: 'none' } : {}}>
             <Card
               title={activeScene ?
-                <Input size="large" maxLength={30} bordered={false}
-                  value={activeScene.name} onChange={(e) => updateActiveScene(prev => { prev.name = e.target.value })}
-                  onFocus={(e) => e.target.select()}
-                  placeholder="Scene Name"
-                /> : <></>}
+                <Space>
+                  {edited ?
+                    <Tooltip title={'Unsaved changes'}>
+                      <DiffOutlined />
+                    </Tooltip> : <></>}
+                  <Input size="large" maxLength={30} bordered={false}
+                    value={activeScene.name} onChange={(e) => { updateActiveScene(prev => { prev.name = e.target.value }), setEdited(true); }}
+                    onFocus={(e) => e.target.select()}
+                    placeholder="Scene Name"
+                  />
+                </Space> : <></>}
               extra={activeScene ?
                 <Space.Compact block>
                   <Button onClick={() => { invoke('stage_creator', {}); }}>New Stage</Button>
