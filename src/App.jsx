@@ -19,13 +19,6 @@ const { Header, Content, Footer, Sider } = Layout;
 const NODE_HEIGHT = 130;
 const NODE_WIDTH = 230;
 
-const COLORS = {
-  default: "#ccc",    // default node color
-  start: "#ff9d00",   // start animation
-  orgasm: "#d45fa5",  // orgasm stages
-  fixed: "#52a855",   // fixed length stages
-};
-
 const STAGE_EDGE = {
   router: {
     name: "metro",
@@ -49,13 +42,17 @@ Graph.registerEdge(
 );
 
 function StageNode({ node }) {
+  const { isOrgasm, fixedLen } = node.data;
   const label = node.prop('name');
-  const color = node.prop('color');
+  const color =
+    isOrgasm ? '#d45fa5' :
+      fixedLen ? '#52a855' :
+        '#9F9F9F';  
   return (
     <div 
       className="stage-node-content"
       style={{
-        backgroundColor: color ? color : '#9F9F9F'
+        backgroundColor: color
       }}>
       <Row>
         <Col flex={'auto'}>
@@ -106,7 +103,7 @@ register({
       },
     ]
   },
-  effect: ['name', 'color'],
+  effect: ['name'],
   component: StageNode,
 });
 
@@ -224,9 +221,6 @@ function App() {
         createEdge() {
           return new Shape.Edge(STAGE_EDGE);
         }
-      },
-      onPortRendered(e) {
-        console.log(e);
       }
     });
     g.on("edge:contextmenu", ({ e, x, y, edge, view }) => {
@@ -298,7 +292,8 @@ function App() {
       x,
       y,
       data: {
-        // TODO: ?
+        isOrgasm: stage.extra.is_orgasm,
+        fixedLen: stage.extra.fixed_len,
       }
     });
     node.on("change:position", (args) => {
@@ -331,7 +326,6 @@ function App() {
         let ret = {};
         nodes.forEach(node => {
           const position = node.getPosition();
-          console.log(position);
           const edges = graph.getOutgoingEdges(node);
           const value = edges ? edges.map(e => e.getTargetCellId()) : [];
           ret[node.id] = {
@@ -424,7 +418,6 @@ function App() {
         />
       </Sider>
       <Layout className="site-layout">
-        {/* IDEA: tabs to choose between multiple active graphs */}
         <Header style={{ padding: 0 }} />
         <Content>
           {/* Hyper hacky workaround because graph doesnt render nodes if I put the graph interface into a child component zzz */}
