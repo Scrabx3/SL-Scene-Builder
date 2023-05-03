@@ -54,9 +54,9 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
   const [activePosition, setActivePosition] = useState(positions[0].key);
   const positionIdx = useRef(_positions.length);
   const [tags, updateTags] = useStringListHandler(_tags, tagsExclusive);
-  const [fixedLen, setFixedLen] = useState(_extra.fixed_len);
-  const [isOrgasm, setIsOrgasm] = useState(_extra.is_orgasm);
-  const [navText, setNavText] = useState(_extra.nav_text);
+  const [fixedLen, setFixedLen] = useState(_extra.fixed_len || undefined);
+  const [isOrgasm, setIsOrgasm] = useState(_extra.is_orgasm || false);
+  const [navText, setNavText] = useState(_extra.nav_text || undefined);
 
   function TagMenu({ tags, label }) {
     return (
@@ -290,7 +290,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
           </InputNumber>
           <Space align="center" size={"middle"}>
             <p>Orgasm Stage? </p>
-            <Switch checked={isOrgasm} onChange={(checked, e) => setIsOrgasm(!isOrgasm)} />
+            <Switch checked={isOrgasm} onChange={(checked, e) => setIsOrgasm(checked)} />
           </Space>
         </Card>
         <Card className="extra-navinfo extra-card" title={"Navigation"}
