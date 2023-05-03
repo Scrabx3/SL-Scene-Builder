@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { Menu, Layout, Card, Input, Space, Button, Empty, Modal } from 'antd'
-import { ExperimentOutlined, FolderOutlined, PlusOutlined } from '@ant-design/icons';
+import { ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 const { Header, Content, Footer, Sider } = Layout;
 const { confirm } = Modal;
 
@@ -269,6 +269,7 @@ function App() {
     const idx = key.lastIndexOf("_");
     const option = idx == -1 ? key : key.substring(0, idx);
     const id = key.substring(idx + 1);
+    const scene = scenes.find(scene => scene.id === id);
     switch (option) {
       case 'add':
         const new_anim = await invoke('blank_animation');
@@ -276,22 +277,29 @@ function App() {
         break;
       case 'editanim':
         {
-          const scene = scenes.find(scene => scene.id === id);
           setActiveScene(scene);
           break;
         }
       case 'delanim':
         {
-          const id = key.substring(idx + 1);
-          try {
-            invoke('delete_animation', { id });
-            updateScenes(prev => prev.filter(scene => scene.id !== id));
-            if (activeScene && activeScene.id === id) {
-              updateActiveScene(null);
-            }
-          } catch (error) {
-            console.log(error);
-          }
+          confirm({
+            title: 'Deleting Scene',
+            icon: <ExclamationCircleOutlined />,
+            content: `Are you sure you want to delete the scene '${scene.name}'?\n\nThis action cannot be undone.`,
+            onOk() {
+              try {
+                invoke('delete_animation', { id });
+                updateScenes(prev => prev.filter(scene => scene.id !== id));
+                if (activeScene && activeScene.id === id) {
+                  updateActiveScene(null);
+                }
+              } catch (error) {
+                console.log(error);
+              }
+            },
+            onCancel() { },
+          });
+          break;
         }
       default:
         console.log("Unrecognized option %s", option);
