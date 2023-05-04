@@ -50,11 +50,6 @@ fn main()
       });
       Ok(())
     })
-    .on_page_load(|window, _| {
-      if window.label().starts_with("stage_builder") {
-
-      }
-    })
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

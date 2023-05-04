@@ -23,7 +23,6 @@ function makeMenuItem(label, key, icon, children, disabled, danger) {
 
 function App() {
   const [collapsed, setCollapsed] = useState(false);  // Sider collapsed?
-  const [nodeContext, setNodeContext] = useState({ show: false, x: 0, y: 0, node: null });
   const graphcontainer_ref = useRef(null);
   const [graph, setGraph] = useState(null);
 
@@ -32,71 +31,11 @@ function App() {
   const [edited, setEdited] = useState(0);
   const inEdit = useRef(0);
 
-  function StageNodeContextMenu({ x, y, node }) {
-    const menuRef = useRef(null);
-    const items = [
-      makeMenuItem('Edit', 'edit'),
-      makeMenuItem('Clone', 'clone'),
-      { type: "divider" },
-      makeMenuItem('Mark as root', 'makeroot'),
-      makeMenuItem('Remove connections', 'removeconnections'),
-      { type: "divider" },
-      makeMenuItem('Delete', 'remove', null, null, false, true),
-    ];
-
-    document.addEventListener('mousedown', (e) => {
-      if (!menuRef.current || menuRef.current.menu.list.contains(e.target)) return;
-      setNodeContext({ show: false });
-    });
-
-    const onSelected = ({ key }) => {
-      switch (key) {
-        case 'edit':
-          invoke('stage_creator', { id: node.id });
-          break;
-        case 'clone':
-          invoke('stage_creator_from', { id: node.id });
-          break;
-        case 'makeroot':
-          updateStartAnimation(node);
-          break;
-        case 'removeconnections':
-          {
-            const edges = graph.getConnectedEdges(node);
-            edges.forEach(edge => edge.remove());
-          }
-          break;
-        case 'remove':
-          node.remove();
-          break;
-        default:
-          console.log("Unrecognized input %s", key);
-          break;
-      }
-      setNodeContext({ show: false });
-    }
-
-    return (
-      <Menu
-        ref={menuRef}
-        onSelect={onSelected}
-        className="node-context-menu"
-        style={{
-          top: `${y}px`,
-          left: `${x}px`,
-        }}
-        theme="light"
-        mode="vertical"
-        items={items}
-      />
-    );
-  }
-
   useEffect(() => {
     if (graph) return;
     let g = new Graph({
       container: graphcontainer_ref.current,
-      grid: true,
+      grid: false,
       panning: true,
       autoResize: true,
       mousewheel: {
@@ -114,15 +53,6 @@ function App() {
           return new Shape.Edge(STAGE_EDGE);
         }
       }
-    });
-    g.on("node:contextmenu", ({ e, x, y, node, view }) => {
-      e.stopPropagation();
-      setNodeContext({
-        show: true,
-        x: e.pageX,
-        y: e.pageY,
-        node: node
-      });
     });
     g.on("node:removed", (e) => {
       if (!inEdit.current) {
@@ -145,6 +75,12 @@ function App() {
     });
     g.on("edge:connected", (e) => {
       setEdited(true);
+    });
+    g.on("node:test", (e) => {
+      console.log("Received test", e);
+    });
+    g.on("node:doRemove", ({ node }) => {
+      console.log("Do remove on node ", node);
     });
     g.zoom(-0.2);
     setGraph(g);
@@ -347,12 +283,6 @@ function App() {
 
   return (
     <Layout hasSider>
-      {nodeContext.show && <StageNodeContextMenu
-        x={nodeContext.x}
-        y={nodeContext.y}
-        node={nodeContext.node}
-      />}
-
       <Sider className="main-sider" collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
         <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }} />
         <Menu theme="dark" mode="inline" selectable={false}
