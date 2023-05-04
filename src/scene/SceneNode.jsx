@@ -32,16 +32,24 @@ function StageNode({ node, graph }) {
     makeMenuItem('Delete', 'remove', false, true),
   ];
 
+  const editStage = () => {
+    invoke('stage_creator', { id: node.id });
+  }
+
+  const cloneStage = () => {
+    invoke('stage_creator_from', { id: node.id });
+  }
+
   const onContextSelect = ({ key, keyPath, domEvent }) => {
     switch (key) {
       case 'edit':
-        invoke('stage_creator', { id: node.id });
+        editStage();
         break;
       case 'clone':
-        invoke('stage_creator_from', { id: node.id });
+        cloneStage();
         break;
       case 'makeroot':
-        graph.emit("node:doMarkRoot");
+        graph.emit("node:doMarkRoot", { newRoot: node });
         break;
       case 'removeconnections':
         const edges = graph.getConnectedEdges(node);
@@ -67,12 +75,9 @@ function StageNode({ node, graph }) {
         <Row>
           <Col flex={'auto'}>
             <Space.Compact size="small" className="stage-node-content-control-buttons">
-              <Button onClick={() => { invoke('stage_creator', { id: node.id }) }}><EditOutlined /></Button>
-              <Button onClick={() => { invoke('stage_creator_from', { id: node.id }) }}><CopyOutlined /></Button>
-              <Button onClick={() => {
-                graph.emit("node:doRemove", { node });
-                // node.remove() 
-              }} danger><CloseOutlined /></Button>
+              <Button onClick={() => { editStage() }}><EditOutlined /></Button>
+              <Button onClick={() => { cloneStage() }}><CopyOutlined /></Button>
+              <Button onClick={() => { node.remove() }} danger><CloseOutlined /></Button>
             </Space.Compact>
           </Col>
         </Row>

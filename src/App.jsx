@@ -32,7 +32,6 @@ function App() {
   const inEdit = useRef(0);
 
   useEffect(() => {
-    if (graph) return;
     let g = new Graph({
       container: graphcontainer_ref.current,
       grid: false,
@@ -54,54 +53,53 @@ function App() {
         }
       }
     });
-    g.on("node:removed", (e) => {
+    g.zoom(-0.2);
+    setGraph(g);
+  }, []);
+
+  useEffect(() => {
+    if (!graph) {
+      return;
+    }
+    graph.on("node:removed", (e) => {
       if (!inEdit.current) {
         setEdited(true);
       }
     });
-    g.on("node:added", (e) => {
+    graph.on("node:added", (e) => {
       if (!inEdit.current) {
         setEdited(true);
       }
     });
-    g.on("node:moved", (e) => {
+    graph.on("node:moved", (e) => {
       setEdited(true);
     });
-    g.on("edge:contextmenu", ({ e, x, y, edge, view }) => {
+    graph.on("edge:contextmenu", ({ e, x, y, edge, view }) => {
       e.stopPropagation();
       edge.remove();
       // Doing this here cuz edge remove event also fires for invalid edges
       setEdited(true);
     });
-    g.on("edge:connected", (e) => {
+    graph.on("edge:connected", (e) => {
       setEdited(true);
     });
-    g.on("node:test", (e) => {
-      console.log("Received test", e);
-    });
-    g.on("node:doRemove", ({ node }) => {
-      console.log("Do remove on node ", node);
-    });
-    g.zoom(-0.2);
-    setGraph(g);
-  }, [graph]);
-
-  const updateStartAnimation = (newStartNode) => {
-    updateActiveScene(prev => {
-      if (!idIsNil(prev.start_animation)) {
-        const nodes = graph.getNodes();
-        for (const node of nodes) {
-          if (node.id === prev.start_animation) {
-            node.prop('isStart', false);
-            break;
+    graph.on("node:doMarkRoot", ({ newRoot }) => {
+      updateActiveScene(prev => {
+        if (!idIsNil(prev.start_animation)) {
+          const nodes = graph.getNodes();
+          for (const node of nodes) {
+            if (node.id === prev.start_animation) {
+              node.prop('isStart', false);
+              break;
+            }
           }
         }
-      }
-      newStartNode.prop('isStart', true);
-      prev.start_animation = newStartNode.id;
+        newRoot.prop('isStart', true);
+        prev.start_animation = newRoot.id;
+      });
+      setEdited(true);
     });
-    setEdited(true);
-  }
+  }, [graph])
 
   const setActiveScene = async (newscene) => {
     if (!inEdit.current && edited > 0) {
@@ -164,7 +162,7 @@ function App() {
     } else {
       const node = addStageToGraph(stage)
       if (activeScene && idIsNil(activeScene.start_animation)) {
-        updateStartAnimation(node)
+        graph.emit("node:doMarkRoot", { newRoot: node });
       }
     }
   });
