@@ -3,8 +3,8 @@ import { useImmer } from "use-immer";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
-import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip } from 'antd'
-import { ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, DiffOutlined } from '@ant-design/icons';
+import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification } from 'antd'
+import { ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, DiffOutlined, WarningOutlined } from '@ant-design/icons';
 const { Header, Content, Footer, Sider } = Layout;
 const { confirm } = Modal;
 
@@ -23,6 +23,7 @@ function makeMenuItem(label, key, icon, children, disabled, danger) {
 
 function App() {
   const [collapsed, setCollapsed] = useState(false);  // Sider collapsed?
+  const [api, contextHolder] = notification.useNotification();
   const graphcontainer_ref = useRef(null);
   const [graph, setGraph] = useState(null);
 
@@ -32,7 +33,7 @@ function App() {
   const inEdit = useRef(0);
 
   useEffect(() => {
-    let g = new Graph({
+    const newGraph = new Graph({
       container: graphcontainer_ref.current,
       grid: false,
       panning: true,
@@ -52,32 +53,40 @@ function App() {
           return new Shape.Edge(STAGE_EDGE);
         }
       }
-    });
-    g.zoom(-0.2);
-    setGraph(g);
+    })
+      .zoom(-0.2);
+    setGraph(newGraph);
   }, []);
 
   useEffect(() => {
     if (!graph) {
       return;
     }
-    graph.on("node:removed", (e) => {
-      if (!inEdit.current) {
-        setEdited(true);
+    // Removed & added events will fire multiple times when the active scene is switched
+    graph.on("node:removed", ({ cell, node, options }) => {
+      if (inEdit.current) {
+        return;
       }
-    });
-    graph.on("node:added", (e) => {
-      if (!inEdit.current) {
-        setEdited(true);
-      }
-    });
-    graph.on("node:moved", (e) => {
+      updateActiveScene(prev => {
+        if (prev.start_animation === node.id) {
+          prev.start_animation = null;
+        }
+      })
       setEdited(true);
     });
+    graph.on("node:added", (evt) => {
+      if (inEdit.current) {
+        return;
+      }
+      setEdited(true);
+    });
+    graph.on("node:moved", (evt) => {
+      setEdited(true);
+    });
+    // Edge remove event also fires for invalid edges
     graph.on("edge:contextmenu", ({ e, x, y, edge, view }) => {
       e.stopPropagation();
       edge.remove();
-      // Doing this here cuz edge remove event also fires for invalid edges
       setEdited(true);
     });
     graph.on("edge:connected", (e) => {
@@ -99,7 +108,7 @@ function App() {
       });
       setEdited(true);
     });
-  }, [graph])
+  }, [graph]);
 
   const setActiveScene = async (newscene) => {
     if (!inEdit.current && edited > 0) {
@@ -160,8 +169,8 @@ function App() {
       hasNode.prop('isOrgasm', stage.extra.is_orgasm);
       hasNode.prop('fixedLen', stage.extra.fixed_len);
     } else {
-      const node = addStageToGraph(stage)
-      if (activeScene && idIsNil(activeScene.start_animation)) {
+      const node = addStageToGraph(stage);
+      if (activeScene && (!activeScene.start_animation || idIsNil(activeScene.start_animation))) {
         graph.emit("node:doMarkRoot", { newRoot: node });
       }
     }
@@ -188,6 +197,42 @@ function App() {
   }
 
   const saveScene = () => {
+    let doSave = true;
+    if (!activeScene.name) {
+      api['error']({
+        message: 'Missing Name',
+        description: 'Add a short, descriptive name to your scene.',
+        placement: 'bottomLeft',
+        onClick(evt) {
+          const elm = document.getElementById('stageNameInputField');
+          elm.focus();
+        }
+      });
+      doSave = false;
+    }
+    const nodes = graph.getNodes();
+    const startNode = nodes.find(node => node.id === activeScene.start_animation);
+    if (!startNode) {
+      api['error']({
+        message: 'Missing Start Animation',
+        description: 'Choose the stage which is starting the animation.',
+        placement: 'bottomLeft'
+      });
+      doSave = false;
+    } else {
+      const dfsGraph = graph.getSuccessors(startNode);
+      if (dfsGraph.length + 1 < nodes.length) {
+        api['warning']({
+          message: 'Unreachable Stages',
+          description: 'Scene contains stages which cannot be reached from the start animation',
+          placement: 'bottomLeft'
+        });
+      }
+    }
+
+    if (!doSave) {
+      return;
+    }
     const scene = {
       ...activeScene,
       graph: function () {
@@ -281,6 +326,7 @@ function App() {
 
   return (
     <Layout hasSider>
+      {contextHolder}
       <Sider className="main-sider" collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
         <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }} />
         <Menu theme="dark" mode="inline" selectable={false}
@@ -302,7 +348,7 @@ function App() {
                       <DiffOutlined />
                     </Tooltip>
                   </div>
-                  <Input size="large" maxLength={30} bordered={false}
+                  <Input size="large" maxLength={30} bordered={false} id="stageNameInputField"
                     value={activeScene.name} onChange={(e) => { updateActiveScene(prev => { prev.name = e.target.value }); setEdited(true); }}
                     onFocus={(e) => e.target.select()}
                     placeholder="Scene Name"
