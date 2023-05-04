@@ -28,9 +28,9 @@ function App() {
   const [graph, setGraph] = useState(null);
 
   const [scenes, updateScenes] = useImmer([]);
-  // const [_active, editActive, replaceActive];
   const [activeScene, updateActiveScene] = useImmer(null);
-  const [edited, setEdited] = useState(false);
+  const [edited, setEdited] = useState(0);
+  const inEdit = useRef(0);
 
   function StageNodeContextMenu({ x, y, node }) {
     const menuRef = useRef(null);
@@ -115,10 +115,6 @@ function App() {
         }
       }
     });
-    g.on("edge:contextmenu", ({ e, x, y, edge, view }) => {
-      e.stopPropagation();
-      edge.remove();
-    });
     g.on("node:contextmenu", ({ e, x, y, node, view }) => {
       e.stopPropagation();
       setNodeContext({
@@ -128,7 +124,29 @@ function App() {
         node: node
       });
     });
-    g.zoom(-0.2)
+    g.on("node:removed", (e) => {
+      if (!inEdit.current) {
+        setEdited(true);
+      }
+    });
+    g.on("node:added", (e) => {
+      if (!inEdit.current) {
+        setEdited(true);
+      }
+    });
+    g.on("node:moved", (e) => {
+      setEdited(true);
+    });
+    g.on("edge:contextmenu", ({ e, x, y, edge, view }) => {
+      e.stopPropagation();
+      edge.remove();
+      // Doing this here cuz edge remove event also fires for invalid edges
+      setEdited(true);
+    });
+    g.on("edge:connected", (e) => {
+      setEdited(true);
+    });
+    g.zoom(-0.2);
     setGraph(g);
   }, [graph]);
 
@@ -150,25 +168,21 @@ function App() {
   }
 
   const setActiveScene = async (newscene) => {
-    if (activeScene && newscene.id === activeScene.id) {
-      updateActiveScene(newscene);
-      setEdited(true);
-      return;
-    }
-    if (edited) {
+    if (!inEdit.current && edited > 0) {
       confirm({
         title: 'Unsaved changes',
         icon: <ExclamationCircleOutlined />,
         content: `Are you sure you want to continue? Unsaved changes will be lost.`,
         okText: 'Continue without saving',
         onOk() {
-          setEdited(false);
+          inEdit.current = true;
           setActiveScene(newscene);
         },
         onCancel() { },
       });
       return;
     }
+    inEdit.current = true;
     graph.clearCells();
     updateActiveScene(newscene);
     for (const [key, { x, y }] of Object.entries(newscene.graph)) {
@@ -197,10 +211,12 @@ function App() {
         });
       });
     }
+    inEdit.current = false;
     graph.centerContent();
+    setEdited(false);
   }
 
-  // Callback after stage has been edited in other window
+  // Callback after stage has been saved in other window
   listen('save_stage', (event) => {
     const stage = event.payload;
     const nodes = graph.getNodes();
@@ -238,7 +254,8 @@ function App() {
   }
 
   const saveScene = () => {
-    const scene = {...activeScene,
+    const scene = {
+      ...activeScene,
       graph: function () {
         const nodes = graph.getNodes();
         let ret = {};
@@ -257,7 +274,7 @@ function App() {
     };
     invoke('save_animation', { animation: scene }).then((scene) => {
       updateActiveScene(scene);
-      updateScenes(prev => { 
+      updateScenes(prev => {
         const w = prev.findIndex(it => it.id === scene.id);
         if (w === -1) {
           prev.push(scene);
@@ -298,10 +315,8 @@ function App() {
         setActiveScene(new_anim);
         break;
       case 'editanim':
-        {
-          setActiveScene(scene);
-          break;
-        }
+        setActiveScene(scene);
+        break;
       case 'delanim':
         {
           confirm({
@@ -354,12 +369,13 @@ function App() {
             <Card
               title={activeScene ?
                 <Space>
-                  {edited ?
+                  <div style={edited < 1 ? { display: 'none' } : {}}>
                     <Tooltip title={'Unsaved changes'}>
                       <DiffOutlined />
-                    </Tooltip> : <></>}
+                    </Tooltip>
+                  </div>
                   <Input size="large" maxLength={30} bordered={false}
-                    value={activeScene.name} onChange={(e) => { updateActiveScene(prev => { prev.name = e.target.value }), setEdited(true); }}
+                    value={activeScene.name} onChange={(e) => { updateActiveScene(prev => { prev.name = e.target.value }); setEdited(true); }}
                     onFocus={(e) => e.target.select()}
                     placeholder="Scene Name"
                   />
