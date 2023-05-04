@@ -274,12 +274,15 @@ function App() {
       makeMenuItem('New Scene', 'add', <PlusOutlined />),
       { type: 'divider' },
       makeMenuItem('Scenes', 'animations', <FolderOutlined />,
-        scenes.map((scene) =>
-          makeMenuItem(scene.name, scene.id, <ExperimentOutlined />, [
+        scenes.map((scene) => {
+          return makeMenuItem(
+            <Tooltip title={scene.name} mouseEnterDelay={0.5}>
+              {scene.name}
+            </Tooltip>, scene.id, <ExperimentOutlined />, [
             makeMenuItem("Edit", "editanim_" + scene.id),
             makeMenuItem("Delete", "delanim_" + scene.id, null, null, false, true),
-          ])
-        )
+          ]);
+        })
       )
     ];
   }
