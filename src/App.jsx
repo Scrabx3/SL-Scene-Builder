@@ -3,8 +3,13 @@ import { useImmer } from "use-immer";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
-import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification } from 'antd'
-import { ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, DiffOutlined, WarningOutlined } from '@ant-design/icons';
+import { History } from "@antv/x6-plugin-history";
+import { Selection } from "@antv/x6-plugin-selection";
+import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification, Divider, Switch } from 'antd'
+import {
+  ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, DiffOutlined, ZoomInOutlined, ZoomOutOutlined,
+  DeleteOutlined, DoubleLeftOutlined, DoubleRightOutlined, PicCenterOutlined, CompressOutlined, PushpinOutlined, DragOutlined
+} from '@ant-design/icons';
 const { Header, Content, Footer, Sider } = Layout;
 const { confirm } = Modal;
 
@@ -35,12 +40,12 @@ function App() {
   useEffect(() => {
     const newGraph = new Graph({
       container: graphcontainer_ref.current,
-      grid: false,
+      // grid: true,
       panning: true,
       autoResize: true,
       mousewheel: {
         enabled: true,
-        modifiers: ['ctrl', 'meta'],
+        // modifiers: ['ctrl']
       },
       connecting: {
         allowBlank: false,
@@ -54,7 +59,18 @@ function App() {
         }
       }
     })
-      .zoom(-0.2);
+      .zoomTo(1.0)
+      .use(new History({
+        enabled: true,
+      }))
+      .use(new Selection({
+        enabled: true,
+        showNodeSelectionBox: true,
+        multiple: true,
+        movable: true,
+        rubberband: true,
+        modifiers: ['ctrl']
+      }));
     setGraph(newGraph);
   }, []);
 
@@ -62,8 +78,9 @@ function App() {
     if (!graph) {
       return;
     }
+    console.log("use Graph effect");
     // Removed & added events will fire multiple times when the active scene is switched
-    graph.on("node:removed", ({ cell, node, options }) => {
+    graph.on("node:removed", ({ node }) => {
       if (inEdit.current) {
         return;
       }
@@ -80,8 +97,16 @@ function App() {
       }
       setEdited(true);
     });
-    graph.on("node:moved", (evt) => {
-      setEdited(true);
+    graph.on("node:moved", ({e, x, y, node, view}) => {
+      const box = node.getBBox();
+      const views = graph.findViewsInArea(box);
+      views.forEach(it => {
+        if (!it.isEdgeView()) {
+          return;
+        }
+        it.update();
+      });
+      // setEdited(true);
     });
     // Edge remove event also fires for invalid edges
     graph.on("edge:contextmenu", ({ e, x, y, edge, view }) => {
@@ -109,6 +134,18 @@ function App() {
       setEdited(true);
     });
   }, [graph]);
+
+  const clearGraph = () => {
+    confirm({
+      title: 'Clear Graph',
+      icon: <QuestionCircleOutlined />,
+      content: 'This will remove all nodes and edges from the current scene. Do you want to continue?',
+      onOk() {
+        graph.clearCells();
+        setEdited(true);
+      }
+    })
+  }
 
   const setActiveScene = async (newscene) => {
     if (!inEdit.current && edited > 0) {
@@ -177,7 +214,7 @@ function App() {
   });
 
   const addStageToGraph = (stage, x = 40, y = 40) => {
-    const node = graph.addNode({
+    return graph.addNode({
       shape: 'stage_node',
       id: stage.id,
       x,
@@ -187,13 +224,6 @@ function App() {
         fixedLen: stage.extra.fixed_len,
       }
     });
-    node.on("change:position", (args) => {
-      graph.getEdges().forEach(edge => {
-        const edgeView = graph.findViewByCell(edge)
-        edgeView.update()
-      });
-    });
-    return node;
   }
 
   const saveScene = () => {
@@ -265,23 +295,21 @@ function App() {
     });
   }
 
-  const makeSidebarMenu = () => {
-    return [
-      makeMenuItem('New Scene', 'add', <PlusOutlined />),
-      { type: 'divider' },
-      makeMenuItem('Scenes', 'animations', <FolderOutlined />,
-        scenes.map((scene) => {
-          return makeMenuItem(
-            <Tooltip title={scene.name} mouseEnterDelay={0.5}>
-              {scene.name}
-            </Tooltip>, scene.id, <ExperimentOutlined />, [
-            makeMenuItem("Edit", "editanim_" + scene.id),
-            makeMenuItem("Delete", "delanim_" + scene.id, null, null, false, true),
-          ]);
-        })
-      )
-    ];
-  }
+  const sideBarMenu = [
+    makeMenuItem('New Scene', 'add', <PlusOutlined />),
+    { type: 'divider' },
+    makeMenuItem('Scenes', 'animations', <FolderOutlined />,
+      scenes.map((scene) => {
+        return makeMenuItem(
+          <Tooltip title={scene.name} mouseEnterDelay={0.5}>
+            {scene.name}
+          </Tooltip>, scene.id, <ExperimentOutlined />, [
+          makeMenuItem("Edit", "editanim_" + scene.id),
+          makeMenuItem("Delete", "delanim_" + scene.id, null, null, false, true),
+        ]);
+      })
+    )
+  ];
 
   const onSiderSelect = async ({ key }) => {
     const idx = key.lastIndexOf("_");
@@ -329,18 +357,15 @@ function App() {
       {contextHolder}
       <Sider className="main-sider" collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
         <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }} />
-        <Menu theme="dark" mode="inline" selectable={false}
-          items={makeSidebarMenu()}
-          onClick={onSiderSelect}
-        />
+        <Menu theme="dark" mode="inline" selectable={false} items={sideBarMenu} onClick={onSiderSelect} />
       </Sider>
       <Layout className="site-layout">
-        <Header style={{ padding: 0 }} />
         <Content>
           {/* Hyper hacky workaround because graph doesnt render nodes if I put the graph interface into a child component zzz */}
           {/* if (activeScene) ... */}
-          <div style={!activeScene ? { display: 'none' } : {}}>
+          <div style={{ display: !activeScene ? 'none' : undefined, height: '100%', width: '100%' }}>
             <Card
+              className="graph-editor-field"
               title={activeScene ?
                 <Space>
                   <div style={edited < 1 ? { display: 'none' } : {}}>
@@ -354,12 +379,44 @@ function App() {
                     placeholder="Scene Name"
                   />
                 </Space> : <></>}
-              extra={activeScene ?
+              extra={
                 <Space.Compact block>
-                  <Button onClick={() => { invoke('stage_creator', {}); }}>New Stage</Button>
+                  <Button onClick={() => { invoke('stage_creator', {}); }}>Add Stage</Button>
                   <Button onClick={saveScene} type="primary">Save</Button>
-                </Space.Compact> : <></>}
+                </Space.Compact>}
+              bodyStyle={{ height: 'calc(100% - 55px)' }}
             >
+              <div className="graph-toolbox">
+                <Space size={'small'} align='center' style={{ float: 'right' }}>
+                  <Tooltip title='Undo' mouseEnterDelay={0.5}>
+                    <Button type='text' size='small' icon={<DoubleLeftOutlined />} onClick={() => { if (graph.canUndo()) graph.undo() }} />
+                  </Tooltip>
+                  <Tooltip title='Redo' mouseEnterDelay={0.5}>
+                    <Button type='text' size='small' icon={<DoubleRightOutlined />} onClick={() => { if (graph.canRedo()) graph.redo() }} />
+                  </Tooltip>
+                  <Divider type="vertical" />
+                  <Tooltip title='Center content' mouseEnterDelay={0.5}>
+                    <Button type='text' size='small' icon={<CompressOutlined />} onClick={() => graph.centerContent()} />
+                  </Tooltip>
+                  <Tooltip title='Fit to screen' mouseEnterDelay={0.5}>
+                    <Button type='text' size='small' icon={<PicCenterOutlined />} onClick={() => graph.zoomToFit()} />
+                  </Tooltip>
+                  <Tooltip title='Lock canvas' mouseEnterDelay={0.5}>
+                    <Switch size="small" checkedChildren={<PushpinOutlined />} unCheckedChildren={<DragOutlined />} onChange={(checked) => { graph.togglePanning(!checked) }} />
+                  </Tooltip>
+                  <Divider type="vertical" />
+                  <Tooltip title='Zoom out' mouseEnterDelay={0.5}>
+                    <Button type='text' size='small' icon={<ZoomOutOutlined />} onClick={() => graph.zoom(-1.2)} />
+                  </Tooltip>
+                  <Tooltip title='Zoom in' mouseEnterDelay={0.5}>
+                    <Button type='text' size='small' icon={<ZoomInOutlined />} onClick={() => graph.zoom(1.2)} />
+                  </Tooltip>
+                  <Divider type="vertical" />
+                  <Tooltip title='Clear canvas' mouseEnterDelay={0.5}>
+                    <Button type='text' size='small' danger icon={<DeleteOutlined />} disabled={!graph || !graph.getNodes().length} onClick={clearGraph} />
+                  </Tooltip>
+                </Space>
+              </div>
               <div className="graph-container">
                 <div id="graph" ref={graphcontainer_ref} />
               </div>
