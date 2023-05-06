@@ -78,6 +78,7 @@ function App() {
     if (!graph) {
       return;
     }
+    // NOTE: gotta reload window every time this prints after the 1st one
     console.log("use Graph effect");
     // Removed & added events will fire multiple times when the active scene is switched
     graph.on("node:removed", ({ node }) => {
@@ -218,10 +219,10 @@ function App() {
   }
 
   const updateNodeProps = (stage, node, belongingScene) => {
-    console.log("Updating props", stage, node, belongingScene);
     node.prop('name', stage.name);
     node.prop('isOrgasm', stage.extra.is_orgasm);
     node.prop('fixedLen', stage.extra.fixed_len);
+    node.prop('navText', stage.extra.nav_text);
     node.prop('isStart', belongingScene && belongingScene.start_animation === stage.id);
   }
 
@@ -366,7 +367,7 @@ function App() {
             <Card
               className="graph-editor-field"
               title={activeScene ?
-                <Space>
+                <Space.Compact style={{width: '100%'}}>
                   <div style={edited < 1 ? { display: 'none' } : {}}>
                     <Tooltip title={'Unsaved changes'}>
                       <DiffOutlined />
@@ -377,7 +378,7 @@ function App() {
                     onFocus={(e) => e.target.select()}
                     placeholder="Scene Name"
                   />
-                </Space> : <></>}
+                </Space.Compact> : <></>}
               extra={
                 <Space.Compact block>
                   <Button onClick={() => { invoke('stage_creator', {}); }}>Add Stage</Button>

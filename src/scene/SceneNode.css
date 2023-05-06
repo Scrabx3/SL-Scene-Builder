@@ -1,0 +1,35 @@
+.stage-content {
+  text-align: center;
+  height: 100%;
+  width: 100%;
+  color: black;
+  border: rgba(33, 35, 48, 0.90);
+  background-color: rgb(240, 248, 255, 0.9);
+  /* background-color: rgb(255, 20, 147); */
+  /* color:#dda0dd; */
+  border-radius: 5px;
+  border-style: double;
+  border-width: 6px;
+}
+
+.stage-content h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.node-attribute-icons {
+  overflow: hidden;
+  height: 26.5px;
+  max-width: 90px;
+  margin-top: 3px;
+  margin-left: 4px;
+}
+
+.node-controll-button-holder {
+  position: absolute;
+  margin-top: 4px;
+  margin-right: 3px;
+  top: 0px;
+  right: 0px;
+}
