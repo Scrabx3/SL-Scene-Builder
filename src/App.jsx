@@ -26,6 +26,8 @@ function makeMenuItem(label, key, icon, children, disabled, danger) {
   return { key, icon, children, label, disabled, danger };
 }
 
+const ZOOM_OPTIONS = { minScale: 0.25, maxScale: 5 };
+
 function App() {
   const [collapsed, setCollapsed] = useState(false);  // Sider collapsed?
   const [api, contextHolder] = notification.useNotification();
@@ -45,6 +47,8 @@ function App() {
       autoResize: true,
       mousewheel: {
         enabled: true,
+        minScale: ZOOM_OPTIONS.minScale,
+        maxScale: ZOOM_OPTIONS.maxScale,
         // modifiers: ['ctrl']
       },
       connecting: {
@@ -56,6 +60,13 @@ function App() {
         allowNode: true,
         createEdge() {
           return new Shape.Edge(STAGE_EDGE);
+        },
+        // validateConnection(args) {
+        //   console.log("validateConnection", args);
+        // },
+        validateEdge(args, arg2) {
+          console.log("validateEdge", args);
+          console.log("validateEdge", arg2);
         }
       }
     })
@@ -406,10 +417,10 @@ function App() {
                   </Tooltip>
                   <Divider type="vertical" />
                   <Tooltip title='Zoom out' mouseEnterDelay={0.5}>
-                    <Button type='text' size='small' icon={<ZoomOutOutlined />} onClick={() => graph.zoom(-1.2)} />
+                    <Button type='text' size='small' icon={<ZoomOutOutlined />} onClick={() => { graph.zoomTo(graph.zoom() * 0.8, ZOOM_OPTIONS) }} />
                   </Tooltip>
                   <Tooltip title='Zoom in' mouseEnterDelay={0.5}>
-                    <Button type='text' size='small' icon={<ZoomInOutlined />} onClick={() => graph.zoom(1.2)} />
+                    <Button type='text' size='small' icon={<ZoomInOutlined />} onClick={() => { graph.zoomTo(graph.zoom() * 1.2, ZOOM_OPTIONS) }} />
                   </Tooltip>
                   <Divider type="vertical" />
                   <Tooltip title='Clear canvas' mouseEnterDelay={0.5}>

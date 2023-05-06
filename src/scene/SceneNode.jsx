@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Space, Button, Row, Dropdown, Tooltip } from 'antd'
 import Icon, { EditOutlined, CopyOutlined, CloseOutlined, WarningOutlined, ArrowRightOutlined, HeartFilled } from '@ant-design/icons';
 import { register } from "@antv/x6-react-shape";
@@ -23,12 +23,14 @@ function FixedLength(props) {
     </svg>
   );
   return (
-    < Icon component={fixedLen_svg} {...props} />
+    <Icon component={fixedLen_svg} {...props} />
   )
 }
 
 function StageNode({ node, graph }) {
   const [hovered, setHover] = useState(false);
+  // const ports = graph.findViewByCell(node).container.querySelectorAll('.x6-port-body');
+
   const label = node.prop('name');
   const start = node.prop('isStart');
   const navText = node.prop('navText');
@@ -85,8 +87,8 @@ function StageNode({ node, graph }) {
   return (
     <Dropdown menu={{ items: contextItems, onClick: onContextSelect }} trigger={['contextMenu']}>
       <div
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
+        onMouseEnter={() => { setHover(true); }}
+        onMouseLeave={() => { setHover(false); }}
         className="stage-content"
         style={{
           backgroundColor: color,
@@ -114,13 +116,13 @@ function StageNode({ node, graph }) {
           <div style={hovered ? {} : { display: 'none' }}>
             <Space.Compact className="node-controll-button-holder">
               <Tooltip title={'Edit'} mouseEnterDelay={0.5}>
-                <Button type='text' onClick={() => { editStage() }} icon={<EditOutlined />} />
+                <Button size='small' type='text' onClick={() => { editStage() }} icon={<EditOutlined />} />
               </Tooltip>
               <Tooltip title={'Clone'} mouseEnterDelay={0.5}>
-                <Button type='text' onClick={() => { cloneStage() }} icon={<CopyOutlined />} />
+                <Button size='small' type='text' onClick={() => { cloneStage() }} icon={<CopyOutlined />} />
               </Tooltip>
               <Tooltip title={'Delete'} mouseEnterDelay={0.5}>
-                <Button type='text' onClick={() => { node.remove() }} icon={<CloseOutlined style={{ color: 'red' }} />} />
+                <Button size='small' type='text' onClick={() => { node.remove() }} icon={<CloseOutlined style={{ color: 'red' }} />} />
               </Tooltip>
             </Space.Compact>
           </div>
