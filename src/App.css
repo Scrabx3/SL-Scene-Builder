@@ -123,9 +123,10 @@ h5 {
 
 #graph {
   flex: 1;
-  overflow: hidden;
-  border: black;
-  border-style: dotted;
+  background-color: #F9F9F9;
+  border-radius: 5px;
+  border-color: hsla(232, 18%, 16%, 0.1);
+  border-style: solid;
 }
 
 .graph-no-scene-placeholder {

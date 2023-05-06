@@ -44,8 +44,8 @@ function StageNode({ node, graph }) {
   const fixedLen = node.prop('fixedLen');
 
   const color =
-    orgasm ? makeColor(233, 192, 233, 0.9) :
-      fixedLen ? makeColor(175, 235, 255, 0.9) :
+    orgasm ? makeColor(233, 192, 233, 1) :
+      fixedLen ? makeColor(175, 235, 255, 1) :
         undefined;
 
   node.prop('ports/groups/default/attrs/path/stroke', start ? START_COLOR : PORT_DEFAULTS.stroke);

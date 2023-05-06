@@ -3,9 +3,7 @@
   width: 100%;
   color: black;
   border: rgba(33, 35, 48, 0.90);
-  background-color: rgb(240, 248, 255, 0.9);
-  /* background-color: rgb(255, 20, 147); */
-  /* color:#dda0dd; */
+  background-color: rgb(240, 248, 255, 1);
   border-radius: 5px;
   border-style: double;
   border-width: 6px;
