@@ -1,5 +1,4 @@
 .stage-content {
-  text-align: center;
   height: 100%;
   width: 100%;
   color: black;
@@ -12,13 +11,25 @@
   border-width: 6px;
 }
 
-.stage-content h3 {
+.stage-name {
+  height: 46px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+
+  margin: 5.25px;
+  margin-left: 12px;
+  margin-right: 12px;
+
   overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
+}
+
+.node-header {
+   border-bottom: 2px solid black
 }
 
 .node-attribute-icons {
+  z-index: 10;
   overflow: hidden;
   height: 26.5px;
   max-width: 90px;
@@ -32,4 +43,5 @@
   margin-right: 3px;
   top: 0px;
   right: 0px;
+  z-index: 20;
 }
