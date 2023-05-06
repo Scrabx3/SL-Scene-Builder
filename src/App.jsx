@@ -147,6 +147,21 @@ function App() {
     });
   }, [graph]);
 
+  useEffect(() => {
+    // Callback after stage has been saved in other window
+    const unlisten = listen('save_stage', (event) => {
+      const stage = event.payload;
+      const nodes = graph.getNodes();
+      let node = nodes.find(node => node.id === stage.id);
+      if (!node)
+        node = addStageToGraph(stage);
+      updateNodeProps(stage, node, activeScene);
+    });
+    return () => {
+      unlisten.then(res => { res() });
+    }
+  }, [activeScene])
+
   const clearGraph = () => {
     confirm({
       title: 'Clear Graph',
@@ -208,16 +223,6 @@ function App() {
     graph.centerContent();
     setEdited(false);
   }
-
-  // Callback after stage has been saved in other window
-  listen('save_stage', (event) => {
-    const stage = event.payload;
-    const nodes = graph.getNodes();
-    let node = nodes.find(node => node.id === stage.id);
-    if (!node)
-      node = addStageToGraph(stage);
-    updateNodeProps(stage, node, activeScene);
-  });
 
   const addStageToGraph = (stage, x = 40, y = 40) => {
     const node = graph.addNode({
