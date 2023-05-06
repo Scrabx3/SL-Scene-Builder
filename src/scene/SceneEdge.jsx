@@ -17,8 +17,10 @@ export const STAGE_EDGE = {
   }
 }
 
+export const STAGE_EDGE_SHAPEID = 'stage_edge';
+
 Graph.registerEdge(
-  'stage_edge',
+  STAGE_EDGE_SHAPEID,
   STAGE_EDGE,
   true
 );

@@ -13,7 +13,7 @@ import {
 const { Header, Content, Footer, Sider } = Layout;
 const { confirm } = Modal;
 
-import { STAGE_EDGE } from "./scene/SceneEdge"
+import { STAGE_EDGE, STAGE_EDGE_SHAPEID } from "./scene/SceneEdge"
 import "./scene/SceneNode"
 import "./App.css";
 
@@ -183,7 +183,7 @@ function App() {
         const target = nodes.find(node => node.id === targetid);
         if (!target) return;
         graph.addEdge({
-          shape: 'stage_edge',
+          shape: STAGE_EDGE_SHAPEID,
           source: {
             cell: sourceNode,
             port: sourcePort.id
