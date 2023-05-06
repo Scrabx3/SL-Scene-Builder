@@ -167,8 +167,9 @@ function App() {
     updateActiveScene(newscene);
     for (const [key, { x, y }] of Object.entries(newscene.graph)) {
       try {
-        const root = await invoke('get_stage_by_id', { id: key })
-        addStageToGraph(root, x, y);
+        const stage = await invoke('get_stage_by_id', { id: key })
+        const node = addStageToGraph(stage, x, y);
+        updateNodeProps(stage, node, newscene);
       } catch (error) {
         console.log(error);
       }
@@ -200,30 +201,28 @@ function App() {
   listen('save_stage', (event) => {
     const stage = event.payload;
     const nodes = graph.getNodes();
-    const hasNode = nodes.find(node => node.id === stage.id);
-    if (hasNode) {
-      hasNode.prop('name', stage.name);
-      hasNode.prop('isOrgasm', stage.extra.is_orgasm);
-      hasNode.prop('fixedLen', stage.extra.fixed_len);
-    } else {
-      const node = addStageToGraph(stage);
-      if (activeScene && (!activeScene.start_animation || idIsNil(activeScene.start_animation))) {
-        graph.emit("node:doMarkRoot", { newRoot: node });
-      }
-    }
+    let node = nodes.find(node => node.id === stage.id);
+    if (!node)
+      node = addStageToGraph(stage);
+    updateNodeProps(stage, node, activeScene);
   });
 
   const addStageToGraph = (stage, x = 40, y = 40) => {
-    return graph.addNode({
+    const node = graph.addNode({
       shape: 'stage_node',
       id: stage.id,
       x,
       y,
-      data: {
-        isOrgasm: stage.extra.is_orgasm,
-        fixedLen: stage.extra.fixed_len,
-      }
     });
+    return node;
+  }
+
+  const updateNodeProps = (stage, node, belongingScene) => {
+    console.log("Updating props", stage, node, belongingScene);
+    node.prop('name', stage.name);
+    node.prop('isOrgasm', stage.extra.is_orgasm);
+    node.prop('fixedLen', stage.extra.fixed_len);
+    node.prop('isStart', belongingScene && belongingScene.start_animation === stage.id);
   }
 
   const saveScene = () => {
