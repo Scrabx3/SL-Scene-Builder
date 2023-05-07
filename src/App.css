@@ -139,9 +139,8 @@ h5 {
 }
 
 .graph-no-scene-placeholder {
-  /* margin by default is {32 x 8}px */
   margin: 8px;
-  margin-top: 32px;
-  margin-bottom: 32px;
-  height: calc(100% - 2 * 32px);
+  margin-top: 64px;
+  margin-bottom: 64px;
+  height: calc(100% - 2 * 64px);
 }

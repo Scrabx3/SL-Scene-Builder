@@ -47,7 +47,7 @@ function App() {
             color: '#eee'
           },
           {
-            color: '#ddd',
+            color: 'rgba(33, 35, 48, 0.1)',
             thickness: 3,
             factor: 5
           }
@@ -173,6 +173,9 @@ function App() {
   }, [activeScene, graph])
 
   const clearGraph = () => {
+    if (graph.getCellCount() == 0)
+      return;
+
     confirm({
       title: 'Clear Graph',
       icon: <QuestionCircleOutlined />,
@@ -444,7 +447,7 @@ function App() {
                   </Tooltip>
                   <Divider type="vertical" />
                   <Tooltip title='Clear canvas' mouseEnterDelay={0.5}>
-                    <Button type='text' size='small' danger icon={<DeleteOutlined />} disabled={!graph || !graph.getNodes().length} onClick={clearGraph} />
+                    <Button type='text' size='small' danger icon={<DeleteOutlined />} onClick={clearGraph} />
                   </Tooltip>
                 </Space>
               </div>
