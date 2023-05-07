@@ -125,6 +125,9 @@ function App() {
         });
         setEdited(true);
       })
+      .on('node:dblclick', ({ node }) => {
+        invoke('stage_creator', { id: node.id });
+      })
       .on("edge:contextmenu", ({ e, x, y, edge, view }) => {
         e.stopPropagation();
         edge.remove();
