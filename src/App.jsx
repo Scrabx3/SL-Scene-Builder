@@ -16,12 +16,6 @@ const { confirm } = Modal;
 import { STAGE_EDGE, STAGE_EDGE_SHAPEID } from "./scene/SceneEdge"
 import "./scene/SceneNode"
 import "./App.css";
-import { bottomLeft } from "@antv/x6/lib/registry/node-anchor/bbox";
-
-function idIsNil(id) {
-  // not ideal but ids here are always formatted as hex strings so this should suffice
-  return id === '00000000-0000-0000-0000-000000000000';
-}
 
 function makeMenuItem(label, key, icon, children, disabled, danger) {
   return { key, icon, children, label, disabled, danger };
@@ -424,7 +418,7 @@ function App() {
               bodyStyle={{ height: 'calc(100% - 55px)' }}
             >
               <div className="graph-toolbox">
-                <Space size={'small'} align='center' style={{ float: 'right' }}>
+                <Space className="graph-toolbox-content" size={'small'} align='center'>
                   <Tooltip title='Undo' mouseEnterDelay={0.5}>
                     <Button type='text' size='small' icon={<DoubleLeftOutlined />} onClick={() => { if (graph.canUndo()) graph.undo() }} />
                   </Tooltip>

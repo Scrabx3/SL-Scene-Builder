@@ -112,6 +112,15 @@ h5 {
   padding-right: 16px;
 }
 
+.graph-toolbox-content {
+  float: right;
+}
+
+.graph-toolbox-content .ant-space-item {
+  display: flex;
+  align-content: center;
+}
+
 .graph-container {
   display: flex;
   overflow: hidden;
