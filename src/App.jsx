@@ -16,6 +16,7 @@ const { confirm } = Modal;
 import { STAGE_EDGE, STAGE_EDGE_SHAPEID } from "./scene/SceneEdge"
 import "./scene/SceneNode"
 import "./App.css";
+import { bottomLeft } from "@antv/x6/lib/registry/node-anchor/bbox";
 
 function idIsNil(id) {
   // not ideal but ids here are always formatted as hex strings so this should suffice
@@ -42,7 +43,22 @@ function App() {
   useEffect(() => {
     const newGraph = new Graph({
       container: graphcontainer_ref.current,
-      // grid: true,
+      grid: {
+        visible: true,
+        size: 10,
+        type: 'doubleMesh',
+        args: [
+          {
+            thickness: 1,
+            color: '#eee'
+          },
+          {
+            color: '#ddd',
+            thickness: 3,
+            factor: 5
+          }
+        ]
+      },
       panning: true,
       autoResize: true,
       mousewheel: {
@@ -61,12 +77,16 @@ function App() {
         createEdge() {
           return new Shape.Edge(STAGE_EDGE);
         },
-        // validateConnection(args) {
-        //   console.log("validateConnection", args);
-        // },
-        validateEdge(args, arg2) {
-          console.log("validateEdge", args);
-          console.log("validateEdge", arg2);
+        validateEdge({ edge, type, previous }) {
+          const source = this.getCellById(edge.source.cell);
+          if (source.prop('fixedLen')) {
+            const edges = this.getOutgoingEdges(source);
+            edges.forEach(it => {
+              if (it.id !== edge.id)
+                it.remove();
+            });
+          }
+          return true;
         }
       }
     })
@@ -82,17 +102,8 @@ function App() {
         rubberband: true,
         modifiers: ['ctrl']
       }));
-    setGraph(newGraph);
-  }, []);
 
-  useEffect(() => {
-    if (!graph) {
-      return;
-    }
-    // NOTE: gotta reload window every time this prints after the 1st one
-    console.log("use Graph effect");
-    // Removed & added events will fire multiple times when the active scene is switched
-    graph.on("node:removed", ({ node }) => {
+    newGraph.on("node:removed", ({ node }) => {
       if (inEdit.current) {
         return;
       }
@@ -102,50 +113,49 @@ function App() {
         }
       })
       setEdited(true);
-    });
-    graph.on("node:added", (evt) => {
-      if (inEdit.current) {
-        return;
-      }
-      setEdited(true);
-    });
-    graph.on("node:moved", ({e, x, y, node, view}) => {
-      const box = node.getBBox();
-      const views = graph.findViewsInArea(box);
-      views.forEach(it => {
-        if (!it.isEdgeView()) {
+    })
+      .on("node:added", (evt) => {
+        if (inEdit.current) {
           return;
         }
-        it.update();
-      });
-      // setEdited(true);
-    });
-    // Edge remove event also fires for invalid edges
-    graph.on("edge:contextmenu", ({ e, x, y, edge, view }) => {
-      e.stopPropagation();
-      edge.remove();
-      setEdited(true);
-    });
-    graph.on("edge:connected", (e) => {
-      setEdited(true);
-    });
-    graph.on("node:doMarkRoot", ({ newRoot }) => {
-      updateActiveScene(prev => {
-        if (!idIsNil(prev.start_animation)) {
-          const nodes = graph.getNodes();
-          for (const node of nodes) {
-            if (node.id === prev.start_animation) {
-              node.prop('isStart', false);
-              break;
-            }
+        setEdited(true);
+      })
+      .on("node:moved", ({ e, x, y, node, view }) => {
+        const box = node.getBBox();
+        const views = newGraph.findViewsInArea(box);
+        views.forEach(it => {
+          if (!it.isEdgeView()) {
+            return;
           }
-        }
-        newRoot.prop('isStart', true);
-        prev.start_animation = newRoot.id;
+          it.update();
+        });
+        setEdited(true);
+      })
+      .on("edge:contextmenu", ({ e, x, y, edge, view }) => {
+        e.stopPropagation();
+        edge.remove();
+        setEdited(true);
+      })
+      .on("edge:connected", (e) => {
+        setEdited(true);
+      })
+      .on("node:doMarkRoot", ({ newRoot }) => {
+        updateActiveScene(prev => {
+          const cell = newGraph.getCellById(prev.start_animation);
+          if (cell) { cell.prop('isStart', false); }
+          newRoot.prop('isStart', true);
+          prev.start_animation = newRoot.id;
+        });
+        setEdited(true);
       });
-      setEdited(true);
-    });
-  }, [graph]);
+    setGraph(newGraph);
+    return () => {
+      newGraph.clearCells();
+      newGraph.clearGrid();
+      newGraph.clearBackground();
+      newGraph.disposePlugins();
+    }
+  }, []);
 
   useEffect(() => {
     // Callback after stage has been saved in other window
@@ -153,14 +163,20 @@ function App() {
       const stage = event.payload;
       const nodes = graph.getNodes();
       let node = nodes.find(node => node.id === stage.id);
-      if (!node)
-        node = addStageToGraph(stage);
+      if (!node) node = addStageToGraph(stage);
       updateNodeProps(stage, node, activeScene);
+      if (node.prop('fixedLen')) {
+        const edges = graph.getOutgoingEdges(node);
+        for (let i = 1; i < edges.length; i++) {
+          const element = edges[i];
+          element.remove();
+        }
+      }
     });
     return () => {
       unlisten.then(res => { res() });
     }
-  }, [activeScene])
+  }, [activeScene, graph])
 
   const clearGraph = () => {
     confirm({
@@ -261,7 +277,7 @@ function App() {
     if (!startNode) {
       api['error']({
         message: 'Missing Start Animation',
-        description: 'Choose the stage which is starting the animation.',
+        description: 'Choose the stage which the scene is supposed to start at.',
         placement: 'bottomLeft'
       });
       doSave = false;
@@ -279,6 +295,11 @@ function App() {
     if (!doSave) {
       return;
     }
+    // api['success']({
+    //   message: 'Saved Scene',
+    //   description: `Scene ${activeScene.name} has successfully been saved.`,
+    //   placement: 'bottomLeft'
+    // });
     const scene = {
       ...activeScene,
       graph: function () {
@@ -383,7 +404,7 @@ function App() {
             <Card
               className="graph-editor-field"
               title={activeScene ?
-                <Space.Compact style={{width: '100%'}}>
+                <Space.Compact style={{ width: '100%' }}>
                   <div style={edited < 1 ? { display: 'none' } : {}}>
                     <Tooltip title={'Unsaved changes'}>
                       <DiffOutlined />
