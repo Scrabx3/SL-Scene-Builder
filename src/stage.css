@@ -79,16 +79,6 @@ fieldset input{
     text-decoration: underline;
 }
 
-.position-race-select {
-    width: 180px;
-    text-align: left;
-}
-
-.position-attribute-card {
-    padding: 6px;
-    height: 135px;
-}
-
 #positions {
     padding: 1em;
     border-bottom: 2px solid #445fef;

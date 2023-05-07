@@ -2,6 +2,7 @@ import React, { useState, forwardRef, useImperativeHandle } from "react";
 import { Button, Card, Checkbox, Col, Input, Row, Select, Space, Tooltip, InputNumber } from "antd";
 import { raceKeys } from "../common/RaceKeys";
 import { useImmer } from "use-immer";
+import './PositionField.css'
 
 const PositionField = forwardRef(function PositionField({ position, constraints }, ref) {
   const [event, setEvent] = useState(position.event);
@@ -53,8 +54,9 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
 
   return (
     <div>
-      <Row>
-        <Col flex={1}>
+      <Row gutter={[2, 2]}>
+        <Col span={8}>
+          {/* Race */}
           <Card className="position-attribute-card" title={'Race'}>
             <Select
               className='position-race-select'
@@ -71,8 +73,9 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
             />
           </Card>
         </Col>
-        <Col flex={1}>
-          <Card className="position-attribute-card position-base-card" title={"Sex"}
+        <Col span={8}>
+          {/* Sex */}
+          <Card className="position-attribute-card" title={"Sex"}
             extra={<Tooltip title={'The sexes compatible with this position. Tick all that apply.'}><Button type="link">Info</Button></Tooltip>}
           >
             <Space size={'large'}>
@@ -98,84 +101,86 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
             </Space>
           </Card>
         </Col>
-        <Col flex={1}>
+        <Col span={8}>
+          {/* behavior file */}
           <Card className="position-attribute-card" title={'Animation'}
             extra={<Tooltip title={'The behavior file (.hkx) describing the animation for this position. Without extension.'}><Button type="link">Info</Button></Tooltip>}>
-            <Input className="position-behavior-input" addonAfter={'.hkx'}
+            <Input addonAfter={'.hkx'}
               value={event} onChange={(e) => { setEvent(e.target.value) }}
               placeholder="Behavior file"
             />
           </Card>
         </Col>
-      </Row>
-      <Row>
-        <Col flex={1}>
-          <Card title={'Meta Data'}
+
+        <Col span={12}>
+          {/* Meta */}
+          <Card className="position-attribute-card" title={'Meta Data'}
             extra={<Tooltip title={'Meta data describing this position. Hover options for more info.'}><Button type="link">Info</Button></Tooltip>}
           >
-            <Tooltip title={'Taker/Bottom position of the animation, if any. There may only be 1 submissive position per scene.'}>
-              {/* div here is necessary to avoid 'findDOMNode is depreciated' error */}
-              <div>
-                <CheckboxEx
-                  obj={extra}
-                  label={'Submissive'}
-                  attr={'submissive'}
-                  updateFunc={updateExtra}
-                />
-              </div>
-            </Tooltip>
-            <Tooltip title={'A position that is not mandatory for the scene to play out correctly.'}>
-              <div>
-                <CheckboxEx
-                  obj={extra}
-                  label={'Optional'}
-                  attr={'optional'}
-                  updateFunc={updateExtra}
-                />
-              </div>
-            </Tooltip>
-            <Tooltip title={'The animation assumes the actor to be a vampire.'}>
-              <div>
-                <CheckboxEx
-                  obj={extra}
-                  label={'Vampire'}
-                  attr={'vampire'}
-                  updateFunc={updateExtra}
-                />
-              </div>
-            </Tooltip>
-            <Tooltip title={'The actor animated in this position is unconscious/dead.'}>
-              <div>
-                <CheckboxEx
-                  obj={extra}
-                  label={'Unconscious'}
-                  attr={'dead'}
-                  updateFunc={updateExtra}
-                />
-              </div>
-            </Tooltip>
+            {/* div here is necessary to avoid 'findDOMNode is depreciated' error */}
+            <Row gutter={[12, 12]}>
+              <Col span={12}>
+                <Tooltip title={'Taker/Bottom position of the animation, if any. There may only be 1 submissive position per scene.'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Submissive'} attr={'submissive'} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col>
+              <Col span={12}>
+                <Tooltip title={'A position that is not mandatory for the scene to play out correctly.'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Optional'} attr={'optional'} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col>
+              <Col span={12}>
+                <Tooltip title={'The animation assumes the actor to be a vampire.'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Vampire'} attr={'vampire'} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col>
+              <Col span={12}>
+                <Tooltip title={'The actor animated in this position is unconscious/dead.'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Unconscious'} attr={'dead'} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col>
+            </Row>
           </Card>
         </Col>
-        <Col flex={1}>
-          <Card title={'Offset'}
+        <Col span={12}>
+          {/* Offset */}
+          <Card className="position-attribute-card" title={'Offset'}
             extra={<Tooltip title={'The offset of this actor relative to the center of the animation.'}><Button type="link">Info</Button></Tooltip>}
           >
-            <InputNumber addonBefore={'X'} controls decimalSeparator="," precision={1} step={0.1}
-              value={offset.x ? offset.x : undefined} onChange={(e) => { updateOffset(prev => { prev.x = e }) }}
-              placeholder="0.0" 
-            />
-            <InputNumber addonBefore={'Y'} controls decimalSeparator="," precision={1} step={0.1}
-              value={offset.y ? offset.y : undefined} onChange={(e) => { updateOffset(prev => { prev.y = e }) }}
-              placeholder="0.0"
-            />
-            <InputNumber addonBefore={'Z'} controls decimalSeparator="," precision={1} step={0.1}
-              value={offset.z ? offset.z : undefined} onChange={(e) => { updateOffset(prev => { prev.z = e }) }}
-              placeholder="0.0"
-            />
-            <InputNumber addonBefore={'Rot'} controls decimalSeparator="," precision={1} step={0.1} min={0.0} max={359.9}
-              value={offset.rot ? offset.rot : undefined} onChange={(e) => { updateOffset(prev => { prev.rot = e }) }}
-              placeholder="0.0"
-            />
+            <Row gutter={[12, 12]}>
+              <Col span={12}>
+                <InputNumber addonBefore={'X'} controls decimalSeparator="," precision={1} step={0.1}
+                  value={offset.x ? offset.x : undefined} onChange={(e) => { updateOffset(prev => { prev.x = e }) }}
+                  placeholder="0.0"
+                />
+              </Col>
+              <Col span={12}>
+                <InputNumber addonBefore={'Y'} controls decimalSeparator="," precision={1} step={0.1}
+                  value={offset.y ? offset.y : undefined} onChange={(e) => { updateOffset(prev => { prev.y = e }) }}
+                  placeholder="0.0"
+                />
+              </Col>
+              <Col span={12}>
+                <InputNumber addonBefore={'Z'} controls decimalSeparator="," precision={1} step={0.1}
+                  value={offset.z ? offset.z : undefined} onChange={(e) => { updateOffset(prev => { prev.z = e }) }}
+                  placeholder="0.0"
+                />
+              </Col>
+              <Col span={12}>
+                <InputNumber addonBefore={'°'} controls decimalSeparator="," precision={1} step={0.1} min={0.0} max={359.9}
+                  value={offset.rot ? offset.rot : undefined} onChange={(e) => { updateOffset(prev => { prev.rot = e }) }}
+                  placeholder="0.0"
+                />
+              </Col>
+            </Row>
           </Card>
         </Col>
       </Row>
