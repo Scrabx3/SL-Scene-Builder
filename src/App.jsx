@@ -156,8 +156,7 @@ function App() {
 
   useEffect(() => {
     // Callback after stage has been saved in other window
-    const unlisten = listen('save_stage', (event) => {
-      const stage = event.payload;
+    const unlisten = listen('on_stage_saved', ({ stage }) => {
       const nodes = graph.getNodes();
       let node = nodes.find(node => node.id === stage.id);
       if (!node) node = addStageToGraph(stage);

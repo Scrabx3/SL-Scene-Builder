@@ -1,20 +1,17 @@
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { emit, listen } from '@tauri-apps/api/event'
+import { invoke } from "@tauri-apps/api/tauri";
 import ReactDOM from "react-dom/client";
 import { useImmer } from "use-immer";
-import { invoke } from "@tauri-apps/api/tauri";
-import { DeleteOutlined, PlusOutlined, DownOutlined, SaveOutlined } from '@ant-design/icons';
-import { Input, Button, Tag, Space, Tooltip, Dropdown, Popconfirm, InputNumber, Card, Switch, Layout, Divider, Menu, Row, Col, Tabs, Collapse, Select } from 'antd';
+import { DeleteOutlined, DownOutlined, SaveOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Input, Button, Tag, Space, Tooltip, Dropdown, Popconfirm, InputNumber, Card, Layout, Divider, Menu, Row, Col, Tabs, Select, TreeSelect } from 'antd';
 
 import { useStringListHandler } from "./util/useStringHandler";
 import { tagsExclusive, tagsNSFW, tagsSFW } from "./common/Tags"
-import { raceKeys } from "./common/RaceKeys";
 import PositionField from "./stage/PositionField";
-import "./defaultstyle.css";
-import "./App.css"
 import "./stage.css";
 
 const { Header, Content, Footer, Sider } = Layout;
-const { Panel } = Collapse;
 const { TextArea } = Input;
 
 document.addEventListener('DOMContentLoaded', async (event) => {
@@ -39,15 +36,25 @@ function makePositionTab(p, i) {
 }
 
 function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
+  // Name
   const [name, setName] = useState(_name);
+  // Positions
   const [positions, updatePositions] = useImmer(_positions.map((p, i) => { return makePositionTab(p, i) }));
-  const positionRefs = useRef([]);
   const [activePosition, setActivePosition] = useState(positions[0].key);
+  const positionRefs = useRef([]);
   const positionIdx = useRef(_positions.length);
+  // Tags
   const [tags, updateTags] = useStringListHandler(_tags, tagsExclusive);
+  // Extra
   const [fixedLen, setFixedLen] = useState(_extra.fixed_len || undefined);
-  const [isOrgasm, setIsOrgasm] = useState(_extra.is_orgasm || false);
   const [navText, setNavText] = useState(_extra.nav_text || undefined);
+  // const [furniture, updateFurniture] = useState(_extra.furniture || {
+  //   shapes: [],
+  //   x: undefined,
+  //   y: undefined,
+  //   z: undefined,
+  //   rot: undefined
+  // });
 
   function TagMenu({ tags, label }) {
     return (
@@ -92,7 +99,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
     }
 
     return (
-      <div id="stage_tags">
+      <div className="tag-display-field">
         <Space size={[0, 8]} wrap>
           {tags.map((tag, i) => {
             if (i === editIndex) {
@@ -108,7 +115,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
                 setEditIndex(-1);
               }
               return (
-                <Input className="tagInputField" ref={tagInputRef} key={tag} size="small"
+                <Input className="stage-tag-input" ref={tagInputRef} key={tag} size="small"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   onBlur={handleEditConfirm}
@@ -119,7 +126,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
             const isLongTag = tag.length > 20;
             const c = getColor(tag);
             const tagElem = (
-              <Tag className="tagField" key={tag} closable onClose={() => handleDelete(tag)} color={c}>
+              <Tag className="stage-tag" key={tag} closable onClose={() => handleDelete(tag)} color={c}>
                 <span onDoubleClick={(e) => {
                   if (c) return;
                   e.preventDefault();
@@ -138,14 +145,23 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
   }
 
   function saveAndReturn() {
+    let errors = false;
+    // TODO: do some checks to make sure the stage is valid
+    let is_orgasm = false;
     const positions = [];
-    positionRefs.current.forEach((position) => {
+    for (const position of positionRefs.current) {
       if (!position)
-        return;
+        continue;
 
       const data = position.getData();
+      if (data.extra.climax)
+        is_orgasm = true;
+
       positions.push(data);
-    })
+    }
+
+    if (errors)
+      return;
 
     const stage = {
       id: _id,
@@ -154,12 +170,17 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
       tags,
       extra: {
         fixed_len: fixedLen || 0.0,
-        is_orgasm: isOrgasm || false,
         nav_text: navText || '',
+        is_orgasm,
       }
     };
     // console.log(stage);
     invoke('save_stage', { stage });
+    // IDEA: isolate back end here and have these managed by front end only
+    // when an animation is saved on the main window, send all stages still in use there to the back end to lower
+    // amount of oprhaned stages
+    // emit('on_stage_saved', { stage });
+    // window.close();
   }
 
   const onPositionTabEdit = (targetKey, action) => {
@@ -200,9 +221,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
                 }
               }}
               items={[
-                {
-                  type: 'divider'
-                },
+                { type: 'divider' },
                 {
                   label: 'Save', key: 'save', icon: <SaveOutlined />, className: 'stage-header-menu-entry'
                 }
@@ -222,7 +241,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
         items={
           positions.map((p, i) => {
             return {
-              label: String(i + 1),
+              label: `Position ${i + 1}`,
               closable: positions.length > 1,
               key: p.key,
               children: (
@@ -235,12 +254,12 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
       />
 
       <Divider orientation="left">Tags</Divider>
-      <Row>
+      <Row className="tag-header-row">
         <Col>
-          <Space size={'large'}>
+          <Space size={'middle'}>
             <TagMenu tags={tagsNSFW} label={"NSFW"} />
             <TagMenu tags={tagsSFW} label={"SFW"} />
-            <TagMenu tags={tagsExclusive} label={"Exclusive"} />
+            {/* <TagMenu tags={tagsExclusive} label={"Exclusive"} /> */}
             <Space.Compact style={{ width: '100%' }}>
               <Input id="tagCustomInput" placeholder="Tag A, Tag B" />
               <Button
@@ -270,28 +289,52 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
       <TagField />
 
       <Divider orientation="left">Extra</Divider>
-      <Space>
-        <Card className="extra-duration extra-card" title={"Duration"}
-          extra={<Tooltip title={<><p>Fixed duration of the stage</p><p>Useful for animations that should only play once.</p></>}><Button type="link">Info</Button></Tooltip>}
-        >
-          <InputNumber className="extra-duration-input" controls decimalSeparator="," precision={1} step={0.1}
-            defaultValue={_extra.fixedLen} min={0.0}
-            value={fixedLen} onChange={(e) => setFixedLen(e)}
-            placeholder="0.0">
-          </InputNumber>
-          <Space align="center" size={"middle"}>
-            <p>Orgasm Stage? </p>
-            <Switch checked={isOrgasm} onChange={(checked, e) => setIsOrgasm(checked)} />
-          </Space>
-        </Card>
-        <Card className="extra-navinfo extra-card" title={"Navigation"}
+      <Space wrap align='start'>
+        <Card title={"Navigation"}
           extra={<Tooltip title={'A short text for the player to read when given the option to branch into this stage.'}><Button type="link">Info</Button></Tooltip>}
         >
-          <TextArea maxLength={100} showCount rows={3} style={{ resize: 'none' }}
+          <TextArea className="extra-navinfo-textarea" maxLength={100} showCount rows={3} style={{ resize: 'none' }}
             defaultValue={_extra.navText}
             value={navText} onChange={(e) => setNavText(e.target.value)}
           ></TextArea>
         </Card>
+        <Card title={"Fixed Duration"}
+          extra={<Tooltip title={'Duration of an animation that should only play once (does not loop).'}><Button type="link">Info</Button></Tooltip>}
+        >
+          <Space direction="vertical">
+            <InputNumber className="extra-duration-input" controls precision={0} step={10}
+              defaultValue={_extra.fixedLen} min={0}
+              value={fixedLen} onChange={(e) => setFixedLen(e)}
+              placeholder="0"
+              addonAfter={'ms'}
+            />
+          </Space>
+        </Card>
+        {/* <Card title={'Furniture'}>
+          <TreeSelect placeholder={'Furniture'} treeData={[]} />
+          <Row gutter={[12, 12]}>
+            <Col span={12}>
+              <InputNumber addonBefore={'X'} controls decimalSeparator="," precision={1} step={0.1}
+                placeholder="0.0"
+              />
+            </Col>
+            <Col span={12}>
+              <InputNumber addonBefore={'Y'} controls decimalSeparator="," precision={1} step={0.1}
+                placeholder="0.0"
+              />
+            </Col>
+            <Col span={12}>
+              <InputNumber addonBefore={'Z'} controls decimalSeparator="," precision={1} step={0.1}
+                placeholder="0.0"
+              />
+            </Col>
+            <Col span={12}>
+              <InputNumber addonBefore={'°'} controls decimalSeparator="," precision={1} step={0.1} min={0.0} max={359.9}
+                placeholder="0.0"
+              />
+            </Col>
+          </Row>
+        </Card> */}
       </Space>
     </Layout>
   )

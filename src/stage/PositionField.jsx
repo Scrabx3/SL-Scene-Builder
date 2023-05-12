@@ -24,6 +24,7 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
     z: undefined,
     rot: undefined,
   });
+  const [scale, setScale] = useState(position.scal);
 
 
   useImperativeHandle(ref, () => {
@@ -79,25 +80,9 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
             extra={<Tooltip title={'The sexes compatible with this position. Tick all that apply.'}><Button type="link">Info</Button></Tooltip>}
           >
             <Space size={'large'}>
-              <CheckboxEx
-                obj={sex}
-                label={'Male'}
-                attr={'male'}
-                updateFunc={updateSex}
-              />
-              <CheckboxEx
-                obj={sex}
-                label={'Female'}
-                attr={'female'}
-                updateFunc={updateSex}
-              />
-              <CheckboxEx
-                obj={sex}
-                label={'Futa'}
-                disabled={race !== 'Human'}
-                attr={'futa'}
-                updateFunc={updateSex}
-              />
+              <CheckboxEx obj={sex} label={'Male'} attr={'male'} updateFunc={updateSex} />
+              <CheckboxEx obj={sex} label={'Female'} attr={'female'} updateFunc={updateSex} />
+              <CheckboxEx obj={sex} label={'Futa'} disabled={race !== 'Human'} attr={'futa'} updateFunc={updateSex} />
             </Space>
           </Card>
         </Col>
@@ -113,37 +98,44 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
         </Col>
 
         <Col span={12}>
-          {/* Meta */}
-          <Card className="position-attribute-card" title={'Meta Data'}
-            extra={<Tooltip title={'Meta data describing this position. Hover options for more info.'}><Button type="link">Info</Button></Tooltip>}
+          {/* Data */}
+          <Card className="position-attribute-card" title={'Data'}
+            extra={<Tooltip title={'Data describing this position. Hover options for more info.'}><Button type="link">Info</Button></Tooltip>}
           >
             {/* div here is necessary to avoid 'findDOMNode is depreciated' error */}
-            <Row gutter={[12, 12]}>
-              <Col span={12}>
-                <Tooltip title={'Taker/Bottom position of the animation, if any. There may only be 1 submissive position per scene.'}>
+            <Row gutter={[8, 16]} justify={'space-between'}>
+              <Col>
+                <Tooltip title={'Taker/Bottom position of the animation, if any.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Submissive'} attr={'submissive'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
-              <Col span={12}>
-                <Tooltip title={'A position that is not mandatory for the scene to play out correctly.'}>
+              <Col>
+                <Tooltip title={'If this actor climaxes in this stage.'}>
                   <div>
-                    <CheckboxEx obj={extra} label={'Optional'} attr={'optional'} updateFunc={updateExtra} />
+                    <CheckboxEx obj={extra} label={'Climax'} attr={'climax'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
-              <Col span={12}>
+              <Col>
                 <Tooltip title={'The animation assumes the actor to be a vampire.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Vampire'} attr={'vampire'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
-              <Col span={12}>
+              <Col>
                 <Tooltip title={'The actor animated in this position is unconscious/dead.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Unconscious'} attr={'dead'} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col>
+              <Col>
+                <Tooltip title={'A position that is not mandatory for the scene to play out correctly.'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Optional'} attr={'optional'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
@@ -181,6 +173,17 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
                 />
               </Col>
             </Row>
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card className="position-attribute-card" title={'Scale'}
+            extra={<Tooltip title={'This positions scale info'}><Button type="link">Info</Button></Tooltip>}
+          >
+            <InputNumber addonBefore={'Factor'} controls decimalSeparator=","
+              precision={2} min={0.5} max={1.9} step={0.01}
+              value={scale} onChange={(e) => { setScale(e) }}
+              placeholder="1.0"
+            />
           </Card>
         </Col>
       </Row>

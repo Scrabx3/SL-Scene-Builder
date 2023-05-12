@@ -170,7 +170,7 @@ async fn save_stage<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<
 
   app.get_window("main_window")
     .expect("Unable to get main window")
-    .emit("save_stage", stage_ref)
+    .emit("on_stage_saved", stage_ref)
     .expect("Failed to send callback event to main window");
 
   window.close().expect("Failed to close stage builder window");
