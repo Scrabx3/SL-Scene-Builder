@@ -126,7 +126,7 @@ function App() {
         setEdited(true);
       })
       .on('node:dblclick', ({ node }) => {
-        invoke('stage_creator', { id: node.id });
+        invoke('open_stage_editor', { stage: node.prop('stage') });
       })
       .on("edge:contextmenu", ({ e, x, y, edge, view }) => {
         e.stopPropagation();
@@ -156,7 +156,9 @@ function App() {
 
   useEffect(() => {
     // Callback after stage has been saved in other window
-    const unlisten = listen('on_stage_saved', ({ stage }) => {
+    const unlisten = listen('on_stage_saved', (event) => {
+      const stage = event.payload;
+      console.log("Saving new stage", stage);
       const nodes = graph.getNodes();
       let node = nodes.find(node => node.id === stage.id);
       if (!node) node = addStageToGraph(stage);
@@ -208,13 +210,9 @@ function App() {
     graph.clearCells();
     updateActiveScene(newscene);
     for (const [key, { x, y }] of Object.entries(newscene.graph)) {
-      try {
-        const stage = await invoke('get_stage_by_id', { id: key })
-        const node = addStageToGraph(stage, x, y);
-        updateNodeProps(stage, node, newscene);
-      } catch (error) {
-        console.log(error);
-      }
+      const stage = newscene.stages.find(stage => stage.id === key);
+      const node = addStageToGraph(stage, x, y);
+      updateNodeProps(stage, node, newscene);
     }
     const nodes = graph.getNodes();
     for (const [sourceid, { edges }] of Object.entries(newscene.graph)) {
@@ -250,10 +248,8 @@ function App() {
   }
 
   const updateNodeProps = (stage, node, belongingScene) => {
-    node.prop('name', stage.name);
-    node.prop('isOrgasm', stage.extra.is_orgasm);
+    node.prop('stage', stage);
     node.prop('fixedLen', stage.extra.fixed_len);
-    node.prop('navText', stage.extra.nav_text);
     node.prop('isStart', belongingScene && belongingScene.start_animation === stage.id);
   }
 
@@ -317,7 +313,7 @@ function App() {
         return ret;
       }()
     };
-    invoke('save_animation', { animation: scene }).then((scene) => {
+    invoke('save_scene', { animation: scene }).then((scene) => {
       updateActiveScene(scene);
       updateScenes(prev => {
         const w = prev.findIndex(it => it.id === scene.id);
@@ -354,7 +350,7 @@ function App() {
     const scene = scenes.find(scene => scene.id === id);
     switch (option) {
       case 'add':
-        const new_anim = await invoke('blank_animation');
+        const new_anim = await invoke('create_blank_scene');
         setActiveScene(new_anim);
         break;
       case 'editanim':
@@ -368,7 +364,7 @@ function App() {
             content: `Are you sure you want to delete the scene '${scene.name}'?\n\nThis action cannot be undone.`,
             onOk() {
               try {
-                invoke('delete_animation', { id });
+                invoke('delete_scene', { id });
                 updateScenes(prev => prev.filter(scene => scene.id !== id));
                 if (activeScene && activeScene.id === id) {
                   updateActiveScene(null);
@@ -417,7 +413,7 @@ function App() {
                 </Space.Compact> : <></>}
               extra={
                 <Space.Compact block>
-                  <Button onClick={() => { invoke('stage_creator', {}); }}>Add Stage</Button>
+                  <Button onClick={() => { invoke('open_stage_editor', {}); }}>Add Stage</Button>
                   <Button onClick={saveScene} type="primary">Save</Button>
                 </Space.Compact>}
               bodyStyle={{ height: 'calc(100% - 55px)' }}

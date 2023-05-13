@@ -2,10 +2,10 @@
 pub mod project;
 
 // A directed, tree-like graph connecting stages into one large dynamic animation
-mod scene;
+pub mod scene;
 
 // A set of n actors being animated by a single animation under specified constraints
-mod stage;
+pub mod stage;
 
 // A single position representing some actor to animate
-mod position;
+pub mod position;

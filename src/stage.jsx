@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { emit, listen } from '@tauri-apps/api/event'
+import { emit, listen, once } from '@tauri-apps/api/event'
 import { invoke } from "@tauri-apps/api/tauri";
 import ReactDOM from "react-dom/client";
 import { useImmer } from "use-immer";
@@ -14,21 +14,37 @@ import "./stage.css";
 const { Header, Content, Footer, Sider } = Layout;
 const { TextArea } = Input;
 
-document.addEventListener('DOMContentLoaded', async (event) => {
-  let stage = await invoke('get_stage');
-  console.log("Loading stage", stage);
-  ReactDOM.createRoot(document.getElementById("root_s")).render(
-    <React.StrictMode>
-      <Editor
-        _id={stage.id}
-        _name={stage.name}
-        _positions={stage.positions}
-        _tags={stage.tags}
-        _extra={stage.extra}
-        _constraints={null} // TODO: constraints to ensure a new stage submits to scene parameters its made for
-      />
-    </React.StrictMode>
-  );
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const load = (stage) => {
+    ReactDOM.createRoot(document.getElementById("root_s")).render(
+      <React.StrictMode>
+        <Editor
+          _id={stage.id}
+          _name={stage.name}
+          _positions={stage.positions}
+          _tags={stage.tags}
+          _extra={stage.extra}
+          _constraints={null} // TODO: constraints to ensure a new stage submits to scene parameters its made for
+        />
+      </React.StrictMode>
+    );
+  }
+  const stagestr = window.sessionStorage.getItem('stage_origin');
+  if (stagestr) {
+    const stage = await JSON.parse(stagestr);
+    console.log("Loading stage", stage);
+    load(stage);
+    return;
+  }
+  // Send Event to backend that the dom is loaded and wait for it to send the window data
+  once('on_data_received', (event) => {
+    const stage = event.payload;
+    console.log("Storing stage", stage);
+    window.sessionStorage.setItem('stage_origin', JSON.stringify(stage));
+    load(stage);
+  }).then(f => f());
+  await emit('on_request_data');
 });
 
 function makePositionTab(p, i) {
@@ -175,12 +191,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
       }
     };
     // console.log(stage);
-    invoke('save_stage', { stage });
-    // IDEA: isolate back end here and have these managed by front end only
-    // when an animation is saved on the main window, send all stages still in use there to the back end to lower
-    // amount of oprhaned stages
-    // emit('on_stage_saved', { stage });
-    // window.close();
+    invoke('stage_save_and_close', { stage });
   }
 
   const onPositionTabEdit = (targetKey, action) => {
