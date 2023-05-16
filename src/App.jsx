@@ -102,9 +102,10 @@ function App() {
         return;
       }
       updateActiveScene(prev => {
-        if (prev.start_animation === node.id) {
-          prev.start_animation = null;
+        if (prev.root === node.id) {
+          prev.root = null;
         }
+        prev.stages = prev.stages.filter(it => it.id !== node.id);
       })
       setEdited(true);
     })
@@ -138,10 +139,10 @@ function App() {
       })
       .on("node:doMarkRoot", ({ newRoot }) => {
         updateActiveScene(prev => {
-          const cell = newGraph.getCellById(prev.start_animation);
+          const cell = newGraph.getCellById(prev.root);
           if (cell) { cell.prop('isStart', false); }
           newRoot.prop('isStart', true);
-          prev.start_animation = newRoot.id;
+          prev.root = newRoot.id;
         });
         setEdited(true);
       });
@@ -170,6 +171,14 @@ function App() {
           element.remove();
         }
       }
+      updateActiveScene(prev => {
+        let idx = prev.stages.findIndex(it => it.id === stage.id);
+        if (idx === -1) {
+          prev.stages.push(stage) 
+        } else {
+          prev.stages[idx] = stage;
+        }
+      });
     });
     return () => {
       unlisten.then(res => { res() });
@@ -250,7 +259,7 @@ function App() {
   const updateNodeProps = (stage, node, belongingScene) => {
     node.prop('stage', stage);
     node.prop('fixedLen', stage.extra.fixed_len);
-    node.prop('isStart', belongingScene && belongingScene.start_animation === stage.id);
+    node.prop('isStart', belongingScene && belongingScene.root === stage.id);
   }
 
   const saveScene = () => {
@@ -268,7 +277,7 @@ function App() {
       doSave = false;
     }
     const nodes = graph.getNodes();
-    const startNode = nodes.find(node => node.id === activeScene.start_animation);
+    const startNode = nodes.find(node => node.id === activeScene.root);
     if (!startNode) {
       api['error']({
         message: 'Missing Start Animation',
@@ -305,7 +314,7 @@ function App() {
           const edges = graph.getOutgoingEdges(node);
           const value = edges ? edges.map(e => e.getTargetCellId()) : [];
           ret[node.id] = {
-            edges: value,
+            dest: value,
             x: position.x,
             y: position.y,
           };
@@ -313,7 +322,7 @@ function App() {
         return ret;
       }()
     };
-    invoke('save_scene', { animation: scene }).then((scene) => {
+    invoke('save_scene', { scene }).then(() => {
       updateActiveScene(scene);
       updateScenes(prev => {
         const w = prev.findIndex(it => it.id === scene.id);
@@ -324,6 +333,7 @@ function App() {
         }
       });
       setEdited(false);
+      console.log("Saved Scene", scene);
     });
   }
 

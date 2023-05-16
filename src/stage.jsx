@@ -188,7 +188,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
         fixed_len: fixedLen || 0.0,
         nav_text: navText || '',
         is_orgasm,
-      }
+      },
     };
     // console.log(stage);
     invoke('stage_save_and_close', { stage });

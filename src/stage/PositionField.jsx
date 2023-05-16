@@ -24,7 +24,8 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
     z: undefined,
     rot: undefined,
   });
-  const [scale, setScale] = useState(position.scal);
+  const [scale, setScale] = useState(position.scale);
+  const [anim_obj, setAnimObj] = useState(position.anim_obj);
 
 
   useImperativeHandle(ref, () => {
@@ -34,12 +35,14 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
           event,
           race,
           sex,
+          scale,
           extra,
           offset,
+          anim_obj,
         };
       }
     };
-  }, [event, race, sex, extra, offset]);
+  });
 
   function CheckboxEx({ obj, label, disabled, attr, updateFunc }) {
     return (
@@ -184,6 +187,13 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
               value={scale} onChange={(e) => { setScale(e) }}
               placeholder="1.0"
             />
+          </Card>
+        </Col>
+        <Col span={8}>
+          {/* behavior file */}
+          <Card className="position-attribute-card" title={'Anim Object'}
+            extra={<Tooltip title={'The anim object(s) associated with this position. If multiple, separate with commas (,)'}><Button type="link">Info</Button></Tooltip>}>
+            <Input value={anim_obj} onChange={(e) => { setAnimObj(e.target.value) }} placeholder="Editor ID"/>
           </Card>
         </Col>
       </Row>
