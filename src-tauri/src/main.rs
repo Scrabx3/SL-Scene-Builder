@@ -6,16 +6,12 @@ mod define;
 
 use define::{position::Position, project::Project, scene::Scene, stage::Stage};
 use once_cell::sync::Lazy;
-use std::{collections::HashMap, sync::Mutex};
+use std::sync::Mutex;
 use tauri::{CustomMenuItem, Manager, Menu, MenuItem, Runtime, Submenu, WindowBuilder};
 use uuid::Uuid;
 
 pub static PROJECT: Lazy<Mutex<Project>> = Lazy::new(|| {
-    let prjct = Project {
-        pack_name: "".into(),
-        pack_author: "".into(),
-        scenes: HashMap::new(),
-    };
+    let prjct = Project::new();
     Mutex::new(prjct)
 });
 
@@ -41,14 +37,25 @@ fn main() {
             .menu(
                 tauri::Menu::new().add_submenu(tauri::Submenu::new(
                     "File",
-                    tauri::Menu::new().add_item(
-                        tauri::CustomMenuItem::new("new_prjct", "New Project")
-                            .accelerator("cmdOrControl+N"),
-                    ),
+                    tauri::Menu::new()
+                        .add_item(
+                            tauri::CustomMenuItem::new("new_prjct", "New Project")
+                                .accelerator("cmdOrControl+N"),
+                        )
+                        .add_item(
+                            tauri::CustomMenuItem::new("compile", "Compile")
+                                .accelerator("cmdOrControl+N"),
+                        ),
                 )),
             )
             .build()
             .expect("Failed to create main window");
+            window.on_menu_event(|event| match event.menu_item_id() {
+                "compile" => {
+                    PROJECT.lock().unwrap().write_binary_file().unwrap();
+                }
+                _ => {}
+            });
             window.on_window_event(|event| match event {
                 tauri::WindowEvent::CloseRequested { api, .. } => {
                     println!("on_window_event CloseRequest");
@@ -72,8 +79,8 @@ fn create_blank_scene() -> Scene {
 }
 
 #[tauri::command]
-fn save_scene(scene: Scene) -> Scene {
-    PROJECT.lock().unwrap().save_scene(scene).clone()
+fn save_scene(scene: Scene) -> () {
+    PROJECT.lock().unwrap().save_scene(scene);
 }
 
 #[tauri::command]
@@ -161,8 +168,9 @@ async fn stage_save_and_close<R: Runtime>(
     window: tauri::Window<R>,
     stage: Stage,
 ) -> () {
-    app.emit_to("main_window", "on_satage_saved", stage)
-        .unwrap();
+    // app.get_window("main_window").expect("Unable to get main window").emit(event, payload)
+
+    app.emit_to("main_window", "on_stage_saved", stage).unwrap();
 
     // IDEA: send some custom callback with window as label?
     // app.emit_all(window.label(), stage);

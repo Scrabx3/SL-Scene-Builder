@@ -9,3 +9,5 @@ pub mod stage;
 
 // A single position representing some actor to animate
 pub mod position;
+
+mod serialize;
