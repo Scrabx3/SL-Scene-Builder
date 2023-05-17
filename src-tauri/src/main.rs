@@ -7,13 +7,18 @@ mod define;
 use define::{position::Position, project::Project, scene::Scene, stage::Stage};
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
-use tauri::{CustomMenuItem, Manager, Menu, MenuItem, Runtime, Submenu, WindowBuilder};
+use tauri::{
+    api::dialog::blocking::MessageDialogBuilder, CustomMenuItem, Manager, Menu, MenuItem, Runtime,
+    Submenu, WindowBuilder,
+};
 use uuid::Uuid;
 
 pub static PROJECT: Lazy<Mutex<Project>> = Lazy::new(|| {
     let prjct = Project::new();
     Mutex::new(prjct)
 });
+
+// TODO: setup logger
 
 /// MAIN
 fn main() {
@@ -43,22 +48,77 @@ fn main() {
                                 .accelerator("cmdOrControl+N"),
                         )
                         .add_item(
-                            tauri::CustomMenuItem::new("compile", "Compile")
-                                .accelerator("cmdOrControl+N"),
-                        ),
+                            tauri::CustomMenuItem::new("open_prjct", "Open Project")
+                                .accelerator("cmdOrControl+O"),
+                        )
+                        .add_native_item(MenuItem::Separator)
+                        .add_item(
+                            tauri::CustomMenuItem::new("save", "Save")
+                                .accelerator("cmdOrControl+S"),
+                        )
+                        .add_item(
+                            tauri::CustomMenuItem::new("save_as", "Save As...")
+                                .accelerator("cmdOrControl+Shift+S"),
+                        )
+                        .add_item(
+                            tauri::CustomMenuItem::new("build", "Export")
+                                .accelerator("cmdOrControl+B"),
+                        )
+                        .add_native_item(MenuItem::Separator)
+                        .add_native_item(MenuItem::Quit),
                 )),
             )
             .build()
             .expect("Failed to create main window");
             window.on_menu_event(|event| match event.menu_item_id() {
-                "compile" => {
-                    PROJECT.lock().unwrap().write_binary_file().unwrap();
+                "new_prjct" => {
+                    let mut prjct = PROJECT.lock().unwrap();
+                    if prjct.unsaved_changes {
+                        let cntnue = MessageDialogBuilder::new(
+                            "New Project", 
+                            "There are unsaved changes. Loading a new project will cause these changes to be lost. Continue?")
+                            .show();
+                        if !cntnue {
+                            return;
+                        }
+                    }
+                    prjct.reset();
+                }
+                "open_prjct" => {
+                    let mut prjct = PROJECT.lock().unwrap();
+                    if prjct.unsaved_changes {
+                        let cntnue = MessageDialogBuilder::new(
+                            "Open Project", 
+                            "There are unsaved changes. Loading a new project will cause these changes to be lost. Continue?")
+                            .show();
+                        if !cntnue {
+                            return;
+                        }
+                    }
+                    let r = prjct.load_project();
+                    if let Err(e) = r {
+                        println!("{}", e);
+                    }
+                }
+                "save" | "save_as" => {
+                    let r = PROJECT
+                        .lock()
+                        .unwrap()
+                        .save_project(event.menu_item_id() == "save_as");
+                    if let Err(e) = r {
+                        println!("{}", e);
+                    }
+                }
+                "build" => {
+                    let r = PROJECT.lock().unwrap().build();
+                    if let Err(e) = r {
+                        println!("{}", e);
+                    }
                 }
                 _ => {}
             });
             window.on_window_event(|event| match event {
                 tauri::WindowEvent::CloseRequested { api, .. } => {
-                    println!("on_window_event CloseRequest");
                     std::process::exit(0);
                 }
                 _ => {}

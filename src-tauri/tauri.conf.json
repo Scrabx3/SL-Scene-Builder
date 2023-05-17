@@ -18,7 +18,12 @@
         "open": true
       },
       "dialog": {
-        "all": true
+        "all": true,
+        "ask": true,
+        "confirm": true,
+        "message": true,
+        "open": true,
+        "save": true
       }
     },
     "bundle": {
