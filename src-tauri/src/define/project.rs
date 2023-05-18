@@ -40,6 +40,7 @@ impl Project {
         Self {
             pack_path: Default::default(),
             unsaved_changes: false,
+
             pack_name: Default::default(),
             pack_author: "Unknown".into(),
             prefix_hash: nanoid!(PREFIX_HASH_LEN, &NANOID_ALPHABET),
@@ -54,14 +55,12 @@ impl Project {
     }
 
     pub fn save_scene(&mut self, scene: Scene) -> &Scene {
-        self.unsaved_changes = true;
         let id = scene.id;
         self.scenes.insert(id, scene);
         self.scenes.get(&id).unwrap()
     }
 
     pub fn discard_scene(&mut self, id: &Uuid) -> Option<Scene> {
-        self.unsaved_changes = true;
         self.scenes.remove(id)
     }
 
@@ -77,18 +76,28 @@ impl Project {
             return Err("User cancel".into());
         }
         let path = path.unwrap();
+        // let file = fs::read(&path).map_err(|e| e.to_string())?;
+        // let value = postcard::from_bytes(&file).map_err(|e| e.to_string())?;
         let file = fs::File::open(&path).map_err(|e| e.to_string())?;
         let value = serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
 
         *self = value;
+        self.pack_name = String::from(
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .and_then(|str| {
+                    let ret = &str[0..str.find('.').and_then(|w| Some(w + 1)).unwrap_or(str.len())];
+                    Some(ret)
+                })
+                .unwrap_or_default(),
+        );
         self.pack_path = path;
-        self.unsaved_changes = false;
 
         Ok(())
     }
 
     pub fn save_project(&mut self, save_as: bool) -> Result<(), String> {
-        let path = if save_as || !self.pack_path.exists() {
+        let path = if save_as || !self.pack_path.exists() || self.pack_path.is_dir() {
             let f = FileDialogBuilder::new()
                 .set_file_name(&self.pack_name)
                 .add_filter("SL Project File", vec!["slsb.json"].as_slice())
@@ -100,10 +109,14 @@ impl Project {
         } else {
             self.pack_path.clone()
         };
-        let file = fs::File::create(path).map_err(|e| e.to_string())?;
+        let file = fs::File::create(&path).map_err(|e| e.to_string())?;
         serde_json::to_writer(file, self).map_err(|e| e.to_string())?;
+        // let bin = postcard::to_vec(self);
 
-        self.unsaved_changes = false;
+        if self.pack_name.is_empty() {
+            let str = path.file_stem().and_then(|name| name.to_str());
+            self.pack_name = String::from(str.unwrap_or_default());
+        }
         Ok(())
     }
 
@@ -120,7 +133,14 @@ impl Project {
             buf.reserve(self.get_byte_size());
             self.write_byte(&mut buf);
             fs::create_dir_all(&target_dir)?;
-            let mut file = fs::File::create(target_dir.join(format!("{}.slr", self.pack_name)))?;
+            let mut file = fs::File::create(target_dir.join(format!(
+                "{}.slr",
+                if self.pack_name.is_empty() {
+                    &self.prefix_hash
+                } else {
+                    &self.pack_name
+                }
+            )))?;
             file.write_all(&buf)?;
         }
         // Write FNIS files
@@ -148,22 +168,33 @@ impl Project {
             for (racekey, anim_events) in &events {
                 let target_folder = map_race_to_folder(*racekey)
                     .expect(format!("Cannot find folder for RaceKey {}", racekey).as_str());
-                let crt = &target_folder[target_folder
-                    .find('\\')
-                    .and_then(|w| Some(w + 1))
-                    .unwrap_or(0)..];
                 let path = root_dir.join(format!(
                     "meshes\\actor\\{}\\animations\\{}",
                     target_folder, self.pack_name
                 ));
+                let crt = &target_folder[target_folder
+                    .find('\\')
+                    .and_then(|w| Some(w + 1))
+                    .unwrap_or(0)..];
                 fs::create_dir_all(&path)?;
-                let file = fs::File::create(
-                    path.join(format!("FNIS_{}_{}_List.txt", self.pack_name, crt)),
-                )?;
-                let mut file = BufWriter::new(file);
-                for anim_event in anim_events {
-                    writeln!(file, "{}", anim_event)?;
-                }
+
+                let create = |file_path| -> Result<(), std::io::Error> {
+                    let file = fs::File::create(file_path)?;
+                    let mut file = BufWriter::new(file);
+                    for anim_event in anim_events {
+                        writeln!(file, "{}", anim_event)?;
+                    }
+                    Ok(())
+                };
+                return match crt {
+                    "character" => create(format!("FNIS_{}_List.txt", self.pack_name)),
+                    "canine" => {
+                        create(format!("FNIS_{}_canine_List.txt", self.pack_name))?;
+                        create(format!("FNIS_{}_wolf_List.txt", self.pack_name))?;
+                        create(format!("FNIS_{}_dog_List.txt", self.pack_name))
+                    }
+                    _ => create(format!("FNIS_{}_{}_List.txt", self.pack_name, crt)),
+                };
             }
         }
 
