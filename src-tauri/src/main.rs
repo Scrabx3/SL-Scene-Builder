@@ -6,6 +6,7 @@ mod define;
 
 use define::{position::Position, project::Project, scene::Scene, stage::Stage};
 use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Mutex,
@@ -50,28 +51,28 @@ fn main() {
             )
             .title(DEFAULT_MAINWINDOW_TITLE)
             .menu(
-                tauri::Menu::new().add_submenu(tauri::Submenu::new(
+                Menu::new().add_submenu(Submenu::new(
                     "File",
-                    tauri::Menu::new()
+                    Menu::new()
                         .add_item(
-                            tauri::CustomMenuItem::new("new_prjct", "New Project")
+                            CustomMenuItem::new("new_prjct", "New Project")
                                 .accelerator("cmdOrControl+N"),
                         )
                         .add_item(
-                            tauri::CustomMenuItem::new("open_prjct", "Open Project")
+                            CustomMenuItem::new("open_prjct", "Open Project")
                                 .accelerator("cmdOrControl+O"),
                         )
                         .add_native_item(MenuItem::Separator)
                         .add_item(
-                            tauri::CustomMenuItem::new("save", "Save")
+                            CustomMenuItem::new("save", "Save")
                                 .accelerator("cmdOrControl+S"),
                         )
                         .add_item(
-                            tauri::CustomMenuItem::new("save_as", "Save As...")
+                            CustomMenuItem::new("save_as", "Save As...")
                                 .accelerator("cmdOrControl+Shift+S"),
                         )
                         .add_item(
-                            tauri::CustomMenuItem::new("build", "Export")
+                            CustomMenuItem::new("build", "Export")
                                 .accelerator("cmdOrControl+B"),
                         )
                         .add_native_item(MenuItem::Separator)
@@ -202,14 +203,21 @@ fn delete_scene<R: Runtime>(window: tauri::Window<R>, id: Uuid) -> Result<Scene,
 
 /* Stage */
 
-fn get_stage_label(id: &Uuid) -> String {
-    format!("stage_editor_{}", id.to_string())
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct StagePayload {
+    pub stage: Stage,
+    pub control: Option<Stage>,
+    pub tags: Vec<String>,
 }
 
-fn open_stage_window<R: Runtime>(app: &tauri::AppHandle<R>, stage: Stage) -> () {
+fn open_stage_window<R: Runtime>(
+    app: &tauri::AppHandle<R>,
+    stage: Stage,
+    scene: Option<&Scene>,
+) -> () {
     let window = tauri::WindowBuilder::new(
         app,
-        get_stage_label(&stage.id),
+        format!("stage_editor_{}", stage.id.to_string()),
         tauri::WindowUrl::App("./stage.html".into()),
     )
     .title(format!(
@@ -222,27 +230,68 @@ fn open_stage_window<R: Runtime>(app: &tauri::AppHandle<R>, stage: Stage) -> () 
     ))
     .build()
     .unwrap();
-    if let Err(e) = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+    let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
         width: 1024,
         height: 768,
-    })) {
-        println!("Failed to set window size: {}", e);
-        return;
-    }
-    if let Err(e) = window.set_resizable(false) {
-        println!("Failed to disable resize on window: {}", e);
-        return;
-    }
+    }));
+    let _ = window.set_resizable(false);
+    let control = scene.and_then(|s| {
+        for it in &s.stages {
+            if it != &stage {
+                return Some(it.clone());
+            }
+        }
+        None
+    });
+    let tags = scene
+        .and_then(|s| {
+            let ret = s.stages.first().and_then(|s| Some(s.tags.clone()));
+            if ret.is_none() {
+                return None;
+            }
+            let mut ret = ret.unwrap();
+            for it in &s.stages {
+                if it == s.stages.first().unwrap() {
+                    continue;
+                }
+                for tag in &it.tags {
+                    if let Some(i) = ret.iter().position(|it| it == tag) {
+                        ret.swap_remove(i);
+                        if ret.is_empty() {
+                            return None;
+                        }
+                    }
+                }
+            }
+            Some(ret)
+        })
+        .unwrap_or(vec![]);
     window.clone().once("on_request_data", move |_event| {
-        println!("Received request data event");
-        window.emit("on_data_received", stage).unwrap();
+        window
+            .emit(
+                "on_data_received",
+                StagePayload {
+                    stage,
+                    control,
+                    tags,
+                },
+            )
+            .unwrap();
     });
 }
 
 #[tauri::command]
-async fn open_stage_editor<R: Runtime>(app: tauri::AppHandle<R>, stage: Option<Stage>) -> () {
-    let arg = stage.unwrap_or_default();
-    open_stage_window(&app, arg);
+async fn open_stage_editor<R: Runtime>(
+    app: tauri::AppHandle<R>,
+    stage: Option<Stage>,
+    scene_id: Option<Uuid>,
+) -> () {
+    let prjct = PROJECT.lock().unwrap();
+    open_stage_window(
+        &app,
+        stage.unwrap_or_default(),
+        scene_id.and_then(|id| prjct.get_scene(&id)),
+    );
 }
 
 // #[tauri::command]

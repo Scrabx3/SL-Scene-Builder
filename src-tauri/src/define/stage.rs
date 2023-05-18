@@ -62,6 +62,12 @@ impl EncodeBinary for Stage {
     }
 }
 
+impl PartialEq for Stage {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
 impl Default for Stage {
     fn default() -> Self {
         Self {

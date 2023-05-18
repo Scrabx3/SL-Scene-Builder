@@ -61,7 +61,7 @@ impl Project {
         self.scenes.remove(id)
     }
 
-    pub fn get_scene(&mut self, id: &Uuid) -> Option<&Scene> {
+    pub fn get_scene(&self, id: &Uuid) -> Option<&Scene> {
         self.scenes.get(id)
     }
 
