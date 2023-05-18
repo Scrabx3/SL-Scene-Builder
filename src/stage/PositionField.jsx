@@ -4,7 +4,7 @@ import { raceKeys } from "../common/RaceKeys";
 import { useImmer } from "use-immer";
 import './PositionField.css'
 
-const PositionField = forwardRef(function PositionField({ position, constraints }, ref) {
+const PositionField = forwardRef(function PositionField({ position, _control }, ref) {
   const [event, setEvent] = useState(position.event);
   const [race, setRace] = useState(position.race);
   const [sex, updateSex] = useImmer(position.sex || {

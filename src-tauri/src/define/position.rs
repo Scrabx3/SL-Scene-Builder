@@ -15,6 +15,7 @@ pub struct Position {
     pub extra: Extra,
     pub offset: Offset,
     pub anim_obj: String,
+    // TODO: stripping
 }
 
 #[repr(C)]

@@ -259,18 +259,15 @@ async fn open_stage_editor<R: Runtime>(
     let prjct = PROJECT.lock().unwrap();
     let scene = scene_id.and_then(|id| prjct.get_scene(&id));
 
-    let control = if let Some(ref stage) = stage {
-        scene.and_then(|s| {
-            for it in &s.stages {
-                if it != stage {
-                    return Some(it.clone());
-                }
+    let control = scene.and_then(|s| {
+        let stage = stage.as_ref();
+        for it in &s.stages {
+            if stage.is_none() || it != stage.unwrap() {
+                return Some(it.clone());
             }
-            None
-        })
-    } else {
+        }
         None
-    };
+    });
 
     let tags = scene.and_then(|s| {
         let ret = s.stages.first().and_then(|s| Some(&s.tags));

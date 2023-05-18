@@ -60,7 +60,7 @@ function StageNode({ node, graph }) {
   ];
 
   const editStage = () => {
-    invoke('open_stage_editor', { stage: node.prop('stage'), scene_id: node.prop('scene') });
+    invoke('open_stage_editor', { stage: node.prop('stage'), sceneId: node.prop('scene') });
   }
 
   const cloneStage = () => {

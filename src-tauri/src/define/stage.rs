@@ -21,6 +21,7 @@ pub struct Stage {
 pub struct Extra {
     pub fixed_len: f32,
     pub nav_text: String,
+    // TODO: furniture definition
 }
 
 impl EncodeBinary for Stage {

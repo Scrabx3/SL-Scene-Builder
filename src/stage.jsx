@@ -50,11 +50,14 @@ function makePositionTab(p, i) {
   return { key: `PTab${i}`, position: p }
 }
 
-function Editor({ _id, _name, _positions, _tags, _extra, _control }) {  // TODO: implement _control
+function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
   // Name
   const [name, setName] = useState(_name);
   // Positions
-  const [positions, updatePositions] = useImmer(_positions.map((p, i) => { return makePositionTab(p, i) }));
+  const [positions, updatePositions] = useImmer(() => {
+    let p = _control ? _control.positions : _positions;
+    return p.map((p, i) => { return makePositionTab(p, i) });
+  });
   const [activePosition, setActivePosition] = useState(positions[0].key);
   const positionRefs = useRef([]);
   const positionIdx = useRef(_positions.length);
@@ -233,18 +236,18 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {  // TODO:
       <Tabs
         type="editable-card"
         activeKey={activePosition}
-        hideAdd={positions.length > 4}
+        hideAdd={positions.length > 4 || !!_control}
         onEdit={onPositionTabEdit}
         onChange={(e) => { setActivePosition(e) }}
         items={
           positions.map((p, i) => {
             return {
               label: `Position ${i + 1}`,
-              closable: positions.length > 1,
+              closable: (positions.length > 1 && !_control),
               key: p.key,
               children: (
                 <div className="position">
-                  <PositionField position={p.position} ref={(element) => { positionRefs.current[i] = element }} />
+                  <PositionField position={p.position} _control={_control && _control.positions[i] || null} ref={(element) => { positionRefs.current[i] = element }} />
                 </div>
               )
             }
