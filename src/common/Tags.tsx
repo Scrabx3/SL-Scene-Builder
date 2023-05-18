@@ -22,7 +22,6 @@ export const tagsNSFW: Array<String> = [
   "Gay",
   "Handjob",
   "Lesbian",
-  "Loving",
   "Masturbation",
   "Missionary",
   "Oral",
@@ -39,5 +38,6 @@ export const tagsSFW: Array<String> = [
   "Kissing",
   "Kneeling",
   "Standing",
+  "Loving",
   "Lying"
 ];

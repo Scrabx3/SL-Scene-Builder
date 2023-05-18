@@ -190,6 +190,13 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
           </Card>
         </Col>
         <Col span={8}>
+          <Card className="position-attribute-card" title={'Stripping'}
+            extra={<Tooltip title={'The items this position should strip in this stage'}><Button type="link">Info</Button></Tooltip>}
+          >
+            <p>PLACEHOLDER</p>
+          </Card>
+        </Col>
+        <Col span={8}>
           {/* behavior file */}
           <Card className="position-attribute-card" title={'Anim Object'}
             extra={<Tooltip title={'The anim object(s) associated with this position. If multiple, separate with commas (,)'}><Button type="link">Info</Button></Tooltip>}>

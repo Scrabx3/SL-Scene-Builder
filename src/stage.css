@@ -93,13 +93,14 @@ body {
 /* Tag Field */
 
 .tag-display-field {
-  border: 2px hsla(232, 18%, 16%, 0.1) solid;
-  border-radius: 16px;
+  /* border: 2px hsla(232, 18%, 16%, 0.1) solid; */
+  /* border-radius: 16px; */
   background-color: #FFF;
 
   margin: 24px;
-  padding: 18px;
-  min-height: 52px;
+  margin-top: 0px;
+  /* padding: 18px; */
+  /* min-height: 52px; */
 }
 
 .stage-tag {
