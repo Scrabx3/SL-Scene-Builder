@@ -156,6 +156,30 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const unlisten = listen('on_project_update', (event) => {
+      const stage_map = event.payload;
+      const scns = [];
+      for (const key in stage_map) {
+        if (Object.hasOwnProperty.call(stage_map, key)) {
+          const element = stage_map[key];
+          scns.push(element);
+        }
+      }
+      console.log("Opening new Project with Scenes: ", scns);
+      updateScenes(scns);
+      setEdited(false);
+      if (scns.length) {
+        setActiveScene(scns[0]);
+      } else {
+        updateActiveScene(null);
+      }
+    });
+    return () => {
+      unlisten.then(res => { res() });
+    }
+  })
+
+  useEffect(() => {
     // Callback after stage has been saved in other window
     const unlisten = listen('on_stage_saved', (event) => {
       const stage = event.payload;
@@ -225,6 +249,7 @@ function App() {
     }
     const nodes = graph.getNodes();
     for (const [sourceid, { edges }] of Object.entries(newscene.graph)) {
+      if (!edges) continue;
       const sourceNode = nodes.find(node => node.id === sourceid);
       if (!sourceNode) continue;
       const sourcePort = sourceNode.ports.items[0];
@@ -296,7 +321,7 @@ function App() {
       }
     }
 
-    if (!doSave) {
+    if (!doSave || !edited) {
       return;
     }
     // api['success']({
@@ -424,7 +449,7 @@ function App() {
               extra={
                 <Space.Compact block>
                   <Button onClick={() => { invoke('open_stage_editor', {}); }}>Add Stage</Button>
-                  <Button onClick={saveScene} type="primary">Save</Button>
+                  <Button onClick={saveScene} type="primary">Store</Button>
                 </Space.Compact>}
               bodyStyle={{ height: 'calc(100% - 55px)' }}
             >

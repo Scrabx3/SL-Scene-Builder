@@ -26,8 +26,6 @@ const PREFIX_HASH_LEN: usize = 4;
 pub struct Project {
     #[serde(skip)]
     pub pack_path: PathBuf,
-    #[serde(skip)]
-    pub unsaved_changes: bool,
 
     pub pack_name: String,
     pub pack_author: String,
@@ -39,7 +37,6 @@ impl Project {
     pub fn new() -> Self {
         Self {
             pack_path: Default::default(),
-            unsaved_changes: false,
 
             pack_name: Default::default(),
             pack_author: "Unknown".into(),
@@ -82,15 +79,7 @@ impl Project {
         let value = serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
 
         *self = value;
-        self.pack_name = String::from(
-            path.file_name()
-                .and_then(|name| name.to_str())
-                .and_then(|str| {
-                    let ret = &str[0..str.find('.').and_then(|w| Some(w + 1)).unwrap_or(str.len())];
-                    Some(ret)
-                })
-                .unwrap_or_default(),
-        );
+        self.set_project_name_from_path(&path);
         self.pack_path = path;
 
         Ok(())
@@ -113,10 +102,7 @@ impl Project {
         serde_json::to_writer(file, self).map_err(|e| e.to_string())?;
         // let bin = postcard::to_vec(self);
 
-        if self.pack_name.is_empty() {
-            let str = path.file_stem().and_then(|name| name.to_str());
-            self.pack_name = String::from(str.unwrap_or_default());
-        }
+        self.set_project_name_from_path(&path);
         Ok(())
     }
 
@@ -199,6 +185,18 @@ impl Project {
         }
 
         Ok(())
+    }
+
+    fn set_project_name_from_path(&mut self, path: &PathBuf) -> () {
+        self.pack_name = String::from(
+            path.file_name() // ...\\{project.slsb.json}
+                .and_then(|name| name.to_str())
+                .and_then(|str| {
+                    let ret = &str[0..str.find(".slsb.json").unwrap_or(str.len())];
+                    Some(ret)
+                })
+                .unwrap_or_default(),
+        );
     }
 }
 

@@ -6,17 +6,27 @@ mod define;
 
 use define::{position::Position, project::Project, scene::Scene, stage::Stage};
 use once_cell::sync::Lazy;
-use std::sync::Mutex;
-use tauri::{
-    api::dialog::blocking::MessageDialogBuilder, CustomMenuItem, Manager, Menu, MenuItem, Runtime,
-    Submenu, WindowBuilder,
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Mutex,
 };
+use tauri::{CustomMenuItem, Manager, Menu, MenuItem, Runtime, Submenu, WindowBuilder};
 use uuid::Uuid;
+
+const DEFAULT_MAINWINDOW_TITLE: &str = "SexLab Scene Builder";
 
 pub static PROJECT: Lazy<Mutex<Project>> = Lazy::new(|| {
     let prjct = Project::new();
     Mutex::new(prjct)
 });
+
+static EDITED: AtomicBool = AtomicBool::new(false);
+fn set_edited(val: bool) -> () {
+    EDITED.store(val, Ordering::Relaxed)
+}
+fn get_edited() -> bool {
+    EDITED.load(Ordering::Relaxed)
+}
 
 // TODO: setup logger
 
@@ -38,7 +48,7 @@ fn main() {
                 "main_window".to_string(),
                 tauri::WindowUrl::App("index.html".into()),
             )
-            .title("SexLab Scene Builder")
+            .title(DEFAULT_MAINWINDOW_TITLE)
             .menu(
                 tauri::Menu::new().add_submenu(tauri::Submenu::new(
                     "File",
@@ -70,44 +80,54 @@ fn main() {
             )
             .build()
             .expect("Failed to create main window");
-            window.on_menu_event(|event| match event.menu_item_id() {
-                "new_prjct" => {
+            let menu_handle = app.app_handle();
+            window.on_menu_event(move |event| match event.menu_item_id() {
+                "new_prjct" | "open_prjct" => {
+                    let window = menu_handle.get_window("main_window").unwrap();
                     let mut prjct = PROJECT.lock().unwrap();
-                    if prjct.unsaved_changes {
-                        let cntnue = MessageDialogBuilder::new(
-                            "New Project", 
-                            "There are unsaved changes. Loading a new project will cause these changes to be lost. Continue?")
-                            .show();
-                        if !cntnue {
-                            return;
-                        }
+                    if get_edited() {
+                        let ask_handle = menu_handle.app_handle();
+                        tauri::api::dialog::ask(
+                            Some(&window),
+                            if event.menu_item_id() == "new_prjct" {"New Project"} else {"Open Project"},
+                            "There are unsaved changes. Loading a new project will cause these changes to be lost.\nContinue?", {move |r| {
+                                if !r {
+                                    return;
+                                }
+                                let window = ask_handle.get_window("main_window").unwrap();
+                                let mut prjct = PROJECT.lock().unwrap();
+                                if event.menu_item_id() == "new_prjct" {
+                                    prjct.reset();
+                                    let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
+                                } else {
+                                    prjct.load_project().unwrap();
+                                    let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
+                                }
+                                window.emit("on_project_update", &prjct.scenes).unwrap();
+                                set_edited(false);
+                            }});
+                        return;
                     }
-                    prjct.reset();
-                }
-                "open_prjct" => {
-                    let mut prjct = PROJECT.lock().unwrap();
-                    if prjct.unsaved_changes {
-                        let cntnue = MessageDialogBuilder::new(
-                            "Open Project", 
-                            "There are unsaved changes. Loading a new project will cause these changes to be lost. Continue?")
-                            .show();
-                        if !cntnue {
-                            return;
-                        }
+                    if event.menu_item_id() == "new_prjct" {
+                        prjct.reset();
+                        let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
+                    } else {
+                        prjct.load_project().unwrap();
+                        let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
                     }
-                    let r = prjct.load_project();
-                    if let Err(e) = r {
-                        println!("{}", e);
-                    }
+                    window.emit("on_project_update", &prjct.scenes).unwrap();
                 }
                 "save" | "save_as" => {
-                    let r = PROJECT
-                        .lock()
-                        .unwrap()
+                    let mut prjct = PROJECT.lock().unwrap();
+                    let r = prjct
                         .save_project(event.menu_item_id() == "save_as");
                     if let Err(e) = r {
                         println!("{}", e);
+                        return;
                     }
+                    set_edited(false);
+                    let window = menu_handle.get_window("main_window").unwrap();
+                    let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
                 }
                 "build" => {
                     let r = PROJECT.lock().unwrap().build();
@@ -119,6 +139,18 @@ fn main() {
             });
             window.on_window_event(|event| match event {
                 tauri::WindowEvent::CloseRequested { api, .. } => {
+                    if get_edited() {
+                        let do_close = tauri::api::dialog::blocking::MessageDialogBuilder::new(
+                            "Close",
+                            "There are unsaved changes. Are you sure you want to close?")
+                        .buttons(tauri::api::dialog::MessageDialogButtons::YesNo)
+                        .kind(tauri::api::dialog::MessageDialogKind::Warning)
+                        .show();
+                        if !do_close {
+                            api.prevent_close();
+                            return;
+                        }
+                    }
                     std::process::exit(0);
                 }
                 _ => {}
@@ -139,16 +171,33 @@ fn create_blank_scene() -> Scene {
 }
 
 #[tauri::command]
-fn save_scene(scene: Scene) -> () {
+fn save_scene<R: Runtime>(window: tauri::Window<R>, scene: Scene) -> () {
+    set_edited(true);
+    if let Ok(title) = window.title() {
+        if !title.ends_with('*') {
+            window.set_title(format!("{}*", title).as_str()).unwrap();
+        }
+    }
     PROJECT.lock().unwrap().save_scene(scene);
 }
 
 #[tauri::command]
-fn delete_scene(id: Uuid) -> Result<Scene, String> {
-    PROJECT.lock().unwrap().discard_scene(&id).ok_or(format!(
+fn delete_scene<R: Runtime>(window: tauri::Window<R>, id: Uuid) -> Result<Scene, String> {
+    let ret = PROJECT.lock().unwrap().discard_scene(&id).ok_or(format!(
         "Given id [{}] does not represent an existing scene",
         id.to_string()
-    ))
+    ));
+
+    if ret.is_ok() {
+        set_edited(true);
+        if let Ok(title) = window.title() {
+            if !title.ends_with('*') {
+                window.set_title(format!("{}*", title).as_str()).unwrap();
+            }
+        }
+    }
+
+    ret
 }
 
 /* Stage */
