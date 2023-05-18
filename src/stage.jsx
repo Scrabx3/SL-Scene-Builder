@@ -16,33 +16,32 @@ const { TextArea } = Input;
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const load = (stage) => {
+  const load = (payload) => {
+    const { stage, tags, control } = payload;
+    console.log("Loading stage", payload);
     ReactDOM.createRoot(document.getElementById("root_s")).render(
       <React.StrictMode>
         <Editor
           _id={stage.id}
           _name={stage.name}
           _positions={stage.positions}
-          _tags={stage.tags}
+          _tags={stage.tags || tags}
           _extra={stage.extra}
-          _constraints={null} // TODO: constraints to ensure a new stage submits to scene parameters its made for
+          _control={control}
         />
       </React.StrictMode>
     );
   }
-  const stagestr = window.sessionStorage.getItem('stage_origin');
+  const stagestr = window.sessionStorage.getItem('origin_data');
   if (stagestr) {
-    const stage = await JSON.parse(stagestr);
-    console.log("Loading stage", stage);
-    load(stage);
+    const payload = await JSON.parse(stagestr);
+    load(payload);
     return;
   }
   // Send Event to backend that the dom is loaded and wait for it to send the window data
-  once('on_data_received', (event) => {
-    const stage = event.payload;
-    console.log("Storing stage", stage);
-    window.sessionStorage.setItem('stage_origin', JSON.stringify(stage));
-    load(stage);
+  once('on_data_received', ({ payload }) => {
+    window.sessionStorage.setItem('origin_data', JSON.stringify(payload));
+    load(payload);
   }).then(f => f());
   await emit('on_request_data');
 });
@@ -51,7 +50,7 @@ function makePositionTab(p, i) {
   return { key: `PTab${i}`, position: p }
 }
 
-function Editor({ _id, _name, _positions, _tags, _extra, _constraints }) {
+function Editor({ _id, _name, _positions, _tags, _extra, _control }) {  // TODO: implement _control
   // Name
   const [name, setName] = useState(_name);
   // Positions

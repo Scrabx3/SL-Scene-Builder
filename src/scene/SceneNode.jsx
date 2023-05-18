@@ -60,11 +60,11 @@ function StageNode({ node, graph }) {
   ];
 
   const editStage = () => {
-    invoke('open_stage_editor', { stage });
+    invoke('open_stage_editor', { stage: node.prop('stage'), scene_id: node.prop('scene') });
   }
 
   const cloneStage = () => {
-    invoke('stage_creator_from', { id: node.id });
+    invoke('open_stage_editor_from', { id: node.prop('stage') });
   }
 
   const onContextSelect = ({ key, keyPath, domEvent }) => {

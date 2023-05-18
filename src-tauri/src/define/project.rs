@@ -13,7 +13,7 @@ use uuid::Uuid;
 
 use crate::define::serialize::{make_fnis_line, map_race_to_folder};
 
-use super::{scene::Scene, serialize::EncodeBinary};
+use super::{scene::Scene, serialize::EncodeBinary, stage::Stage};
 
 const NANOID_ALPHABET: [char; 36] = [
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
@@ -63,6 +63,16 @@ impl Project {
 
     pub fn get_scene(&self, id: &Uuid) -> Option<&Scene> {
         self.scenes.get(id)
+    }
+
+    pub fn get_stage(&self, id: &Uuid) -> Option<&Stage> {
+        for (_, scene) in &self.scenes {
+            let stage = scene.get_stage(id);
+            if stage.is_some() {
+                return stage;
+            }
+        }
+        None
     }
 
     pub fn load_project(&mut self) -> Result<(), String> {

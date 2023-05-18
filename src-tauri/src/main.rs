@@ -39,7 +39,7 @@ fn main() {
             save_scene,
             delete_scene,
             open_stage_editor,
-            // stage_creator_from,
+            open_stage_editor_from,
             stage_save_and_close,
             make_position
         ])
@@ -207,13 +207,14 @@ fn delete_scene<R: Runtime>(window: tauri::Window<R>, id: Uuid) -> Result<Scene,
 struct StagePayload {
     pub stage: Stage,
     pub control: Option<Stage>,
-    pub tags: Vec<String>,
+    pub tags: Option<Vec<String>>,
 }
 
 fn open_stage_window<R: Runtime>(
     app: &tauri::AppHandle<R>,
     stage: Stage,
-    scene: Option<&Scene>,
+    tags: Option<Vec<String>>,
+    control: Option<Stage>,
 ) -> () {
     let window = tauri::WindowBuilder::new(
         app,
@@ -235,37 +236,6 @@ fn open_stage_window<R: Runtime>(
         height: 768,
     }));
     let _ = window.set_resizable(false);
-    let control = scene.and_then(|s| {
-        for it in &s.stages {
-            if it != &stage {
-                return Some(it.clone());
-            }
-        }
-        None
-    });
-    let tags = scene
-        .and_then(|s| {
-            let ret = s.stages.first().and_then(|s| Some(s.tags.clone()));
-            if ret.is_none() {
-                return None;
-            }
-            let mut ret = ret.unwrap();
-            for it in &s.stages {
-                if it == s.stages.first().unwrap() {
-                    continue;
-                }
-                for tag in &it.tags {
-                    if let Some(i) = ret.iter().position(|it| it == tag) {
-                        ret.swap_remove(i);
-                        if ret.is_empty() {
-                            return None;
-                        }
-                    }
-                }
-            }
-            Some(ret)
-        })
-        .unwrap_or(vec![]);
     window.clone().once("on_request_data", move |_event| {
         window
             .emit(
@@ -287,38 +257,55 @@ async fn open_stage_editor<R: Runtime>(
     scene_id: Option<Uuid>,
 ) -> () {
     let prjct = PROJECT.lock().unwrap();
-    open_stage_window(
-        &app,
-        stage.unwrap_or_default(),
-        scene_id.and_then(|id| prjct.get_scene(&id)),
-    );
+    let scene = scene_id.and_then(|id| prjct.get_scene(&id));
+
+    let control = if let Some(ref stage) = stage {
+        scene.and_then(|s| {
+            for it in &s.stages {
+                if it != stage {
+                    return Some(it.clone());
+                }
+            }
+            None
+        })
+    } else {
+        None
+    };
+
+    let tags = scene.and_then(|s| {
+        let ret = s.stages.first().and_then(|s| Some(&s.tags));
+        if ret.is_none() {
+            return None;
+        }
+        let mut ret = ret.unwrap().clone();
+        for it in &s.stages {
+            if it == s.stages.first().unwrap() {
+                continue;
+            }
+            for tag in &it.tags {
+                if let Some(i) = ret.iter().position(|it| it == tag) {
+                    ret.swap_remove(i);
+                    if ret.is_empty() {
+                        return None;
+                    }
+                }
+            }
+        }
+        Some(ret)
+    });
+
+    open_stage_window(&app, stage.unwrap_or_default(), tags, control)
 }
 
-// #[tauri::command]
-// async fn stage_creator_from<R: Runtime>(
-//     app: tauri::AppHandle<R>,
-//     _window: tauri::Window<R>,
-//     id: Uuid,
-// ) -> Result<(), String> {
-//     let mut data = data::DATA.lock().unwrap();
-//     let original = data.get_stage(&id);
-//     match original {
-//         None => {
-//             return Err("Invalid id".into());
-//         }
-//         Some(stage) => {
-//             let tmp = define::Stage::from(stage);
-//             let res = data.insert_stage(tmp);
-//             open_stage_window(
-//                 app,
-//                 &format!("{}{}", STAGE_EDITOR_LABEL, res.id),
-//                 &res.name,
-//                 res.clone(),
-//             );
-//         }
-//     }
-//     Ok(())
-// }
+#[tauri::command]
+async fn open_stage_editor_from<R: Runtime>(app: tauri::AppHandle<R>, stage: Stage) -> () {
+    open_stage_window(
+        &app,
+        Stage::default(),
+        Some(stage.tags.clone()),
+        Some(stage),
+    )
+}
 
 #[tauri::command]
 async fn stage_save_and_close<R: Runtime>(
@@ -326,12 +313,9 @@ async fn stage_save_and_close<R: Runtime>(
     window: tauri::Window<R>,
     stage: Stage,
 ) -> () {
-    // app.get_window("main_window").expect("Unable to get main window").emit(event, payload)
-
+    // IDEA: make give this event some unique id to allow
+    // front end distinguish the timings at which some stage editor has been opened
     app.emit_to("main_window", "on_stage_saved", stage).unwrap();
-
-    // IDEA: send some custom callback with window as label?
-    // app.emit_all(window.label(), stage);
 
     window
         .close()

@@ -127,7 +127,7 @@ function App() {
         setEdited(true);
       })
       .on('node:dblclick', ({ node }) => {
-        invoke('open_stage_editor', { stage: node.prop('stage') });
+        invoke('open_stage_editor', { stage: node.prop('stage'), scene_id: node.prop('scene') });
       })
       .on("edge:contextmenu", ({ e, x, y, edge, view }) => {
         e.stopPropagation();
@@ -282,6 +282,7 @@ function App() {
   }
 
   const updateNodeProps = (stage, node, belongingScene) => {
+    node.prop('scene', belongingScene);
     node.prop('stage', stage);
     node.prop('fixedLen', stage.extra.fixed_len);
     node.prop('isStart', belongingScene && belongingScene.root === stage.id);
@@ -448,7 +449,7 @@ function App() {
                 </Space.Compact> : <></>}
               extra={
                 <Space.Compact block>
-                  <Button onClick={() => { invoke('open_stage_editor', {}); }}>Add Stage</Button>
+                  <Button onClick={() => { invoke('open_stage_editor', { scene_id: activeScene.id }); }}>Add Stage</Button>
                   <Button onClick={saveScene} type="primary">Store</Button>
                 </Space.Compact>}
               bodyStyle={{ height: 'calc(100% - 55px)' }}
