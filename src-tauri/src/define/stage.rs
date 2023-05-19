@@ -24,6 +24,15 @@ pub struct Extra {
     // TODO: furniture definition
 }
 
+impl Stage {
+    pub fn new_from_tags(tags: Vec<String>) -> Self {
+        let mut ret = Self::default();
+        ret.tags = tags;
+
+        ret
+    }
+}
+
 impl EncodeBinary for Stage {
     fn get_byte_size(&self) -> usize {
         let mut ret = size_of::<u128>()

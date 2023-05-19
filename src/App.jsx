@@ -87,56 +87,6 @@ function App() {
       .use(new History({
         enabled: true,
       }));
-
-    newGraph.on("node:removed", ({ node }) => {
-      if (inEdit.current) {
-        return;
-      }
-      updateActiveScene(prev => {
-        if (prev.root === node.id) {
-          prev.root = null;
-        }
-        prev.stages = prev.stages.filter(it => it.id !== node.id);
-      })
-      setEdited(true);
-    })
-      .on("node:added", (evt) => {
-        if (inEdit.current) {
-          return;
-        }
-        setEdited(true);
-      })
-      .on("node:moved", ({ e, x, y, node, view }) => {
-        const box = node.getBBox();
-        const views = newGraph.findViewsInArea(box);
-        views.forEach(it => {
-          if (!it.isEdgeView()) {
-            return;
-          }
-          it.update();
-        });
-        setEdited(true);
-      })
-      .on('node:dblclick', ({ node }) => {
-        invoke('open_stage_editor', { stage: node.prop('stage'), sceneId: node.prop('scene') });
-      })
-      .on("edge:contextmenu", ({ e, x, y, edge, view }) => {
-        e.stopPropagation();
-        edge.remove();
-        setEdited(true);
-      })
-      .on("edge:connected", (e) => {
-        setEdited(true);
-      })
-      .on("node:doMarkRoot", ({ newRoot }) => {
-        updateActiveScene(prev => {
-          const cell = newGraph.getCellById(prev.root);
-          if (cell) { cell.prop('isStart', false); }
-          newRoot.prop('isStart', true);
-          prev.root = newRoot.id;
-        });
-        setEdited(true);
-      });
     setGraph(newGraph);
     return () => {
       newGraph.clearCells();
@@ -147,28 +97,72 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const unlisten = listen('on_project_update', (event) => {
-      const stage_map = event.payload;
-      const scns = [];
-      for (const key in stage_map) {
-        if (Object.hasOwnProperty.call(stage_map, key)) {
-          const element = stage_map[key];
-          scns.push(element);
-        }
-      }
-      console.log("Opening new Project with Scenes: ", scns);
-      updateScenes(scns);
-      setEdited(false);
-      if (scns.length) {
-        setActiveScene(scns[0]);
-      } else {
-        updateActiveScene(null);
-      }
-    });
-    return () => {
-      unlisten.then(res => { res() });
+    if (!graph) return;
+    const editStage = (node) => {
+      let stage = node.prop('stage');
+      let control = activeScene.stages.find(it => it.id !== stage.id);
+      invoke('open_stage_editor', { stage, control });
     }
-  })
+
+    graph
+      // Node Events
+      .on("node:removed", ({ node }) => {
+        if (inEdit.current) return;
+        updateActiveScene(prev => {
+          if (prev.root === node.id) {
+            prev.root = null;
+          }
+          prev.stages = prev.stages.filter(it => it.id !== node.id);
+        })
+        setEdited(true);
+      })
+      .on("node:added", (evt) => {
+        if (inEdit.current) return;
+        setEdited(true);
+      })
+      .on("node:moved", ({ e, x, y, node, view }) => {
+        const box = node.getBBox();
+        const views = graph.findViewsInArea(box);
+        views.forEach(it => {
+          if (!it.isEdgeView()) {
+            return;
+          }
+          it.update();
+        });
+        setEdited(true);
+      })
+      .on('node:dblclick', ({ node }) => {
+        editStage(node);
+      })
+      // Edge Events
+      .on("edge:contextmenu", ({ e, x, y, edge, view }) => {
+        e.stopPropagation();
+        edge.remove();
+        setEdited(true);
+      })
+      .on("edge:connected", (e) => {
+        setEdited(true);
+      })
+      // Custom Events
+      .on("node:doMarkRoot", ({ node }) => {
+        updateActiveScene(prev => {
+          const cell = graph.getCellById(prev.root);
+          if (cell) { cell.prop('isStart', false); }
+          node.prop('isStart', true);
+          prev.root = node.id;
+        });
+        setEdited(true);
+      })
+      .on("node:edit", ({ node }) => {
+        editStage(node);
+      })
+      .on("node:clone", ({ node }) => {
+        invoke('open_stage_editor_from', { control: node.prop('stage') });
+      });
+    return () => {
+      graph.off();
+    }
+  }, [graph, activeScene])
 
   useEffect(() => {
     // Callback after stage has been saved in other window
@@ -198,7 +192,31 @@ function App() {
     return () => {
       unlisten.then(res => { res() });
     }
-  }, [activeScene, graph])
+  }, [graph, activeScene])
+
+  useEffect(() => {
+    const unlisten = listen('on_project_update', (event) => {
+      const stage_map = event.payload;
+      const scns = [];
+      for (const key in stage_map) {
+        if (Object.hasOwnProperty.call(stage_map, key)) {
+          const element = stage_map[key];
+          scns.push(element);
+        }
+      }
+      console.log("Opening new Project with Scenes: ", scns);
+      updateScenes(scns);
+      setEdited(false);
+      if (scns.length) {
+        setActiveScene(scns[0]);
+      } else {
+        updateActiveScene(null);
+      }
+    });
+    return () => {
+      unlisten.then(res => { res() });
+    }
+  })
 
   const clearGraph = () => {
     if (graph.getCellCount() == 0)
@@ -440,7 +458,7 @@ function App() {
                 </Space.Compact> : <></>}
               extra={
                 <Space.Compact block>
-                  <Button onClick={() => { console.log(activeScene.id); invoke('open_stage_editor', { sceneId: activeScene.id }); }}>Add Stage</Button>
+                  <Button onClick={() => { invoke('open_stage_editor', { control: activeScene.stages[0] }); }}>Add Stage</Button>
                   <Button onClick={saveScene} type="primary">Store</Button>
                 </Space.Compact>}
               bodyStyle={{ height: 'calc(100% - 55px)' }}

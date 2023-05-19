@@ -17,7 +17,7 @@ const { TextArea } = Input;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const load = (payload) => {
-    const { stage, tags, control } = payload;
+    const { stage, control } = payload;
     console.log("Loading stage", payload);
     ReactDOM.createRoot(document.getElementById("root_s")).render(
       <React.StrictMode>
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           _id={stage.id}
           _name={stage.name}
           _positions={stage.positions}
-          _tags={stage.tags || tags}
+          _tags={stage.tags}
           _extra={stage.extra}
           _control={control}
         />
@@ -178,26 +178,26 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
       });
       return prev;
     });
-    updateTagTree(prev => {
-      const newchilds = add.map(tag => {
-        return {
-          label: tag,
-          value: tag,
-        }
-      });
-      let cst = prev.find(cat => cat.value === 'tagsCustom');
-      if (!cst) {
-        cst = {
-          value: "tagsCustom",
-          title: "Custom",
-          selectable: false,
-          children: newchilds,
-        }
-        prev.push(cst);
-      } else {
-        cst.children = cst.children.concat(newchilds);
-      }
-    })
+    // updateTagTree(prev => {
+    //   const newchilds = add.map(tag => {
+    //     return {
+    //       label: tag,
+    //       value: tag,
+    //     }
+    //   });
+    //   let cst = prev.find(cat => cat.value === 'tagsCustom');
+    //   if (!cst) {
+    //     cst = {
+    //       value: "tagsCustom",
+    //       title: "Custom",
+    //       selectable: false,
+    //       children: newchilds,
+    //     }
+    //     prev.push(cst);
+    //   } else {
+    //     cst.children = cst.children.concat(newchilds);
+    //   }
+    // })
     setCustomTag('');
   }
 
@@ -264,7 +264,9 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
         onClear={() => { updateTags([]) }}
         dropdownRender={(menu) => (
           <>
-            {menu}
+            <Space style={{width: '100%'}}>
+              {menu}
+            </Space>
             <Divider style={{ margin: '8px 0' }} />
             <Space.Compact style={{ width: '100%' }}>
               <Input value={customTag} onChange={(e) => setCustomTag(e.target.value)} placeholder="Custom Tag A, Custom Tag B" onPressEnter={addCustomTags} />

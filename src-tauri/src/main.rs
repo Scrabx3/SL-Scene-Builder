@@ -22,9 +22,11 @@ pub static PROJECT: Lazy<Mutex<Project>> = Lazy::new(|| {
 });
 
 static EDITED: AtomicBool = AtomicBool::new(false);
+#[inline]
 fn set_edited(val: bool) -> () {
     EDITED.store(val, Ordering::Relaxed)
 }
+#[inline]
 fn get_edited() -> bool {
     EDITED.load(Ordering::Relaxed)
 }
@@ -204,31 +206,23 @@ fn delete_scene<R: Runtime>(window: tauri::Window<R>, id: Uuid) -> Result<Scene,
 /* Stage */
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct StagePayload {
+struct EditorPayload {
     pub stage: Stage,
     pub control: Option<Stage>,
-    pub tags: Option<Vec<String>>,
 }
 
-fn open_stage_window<R: Runtime>(
-    app: &tauri::AppHandle<R>,
-    stage: Stage,
-    tags: Option<Vec<String>>,
-    control: Option<Stage>,
-) -> () {
+fn open_stage_editor_impl<R: Runtime>(app: &tauri::AppHandle<R>, payload: EditorPayload) -> () {
+    let ref stage = payload.stage;
     let window = tauri::WindowBuilder::new(
         app,
-        format!("stage_editor_{}", stage.id.to_string()),
+        format!("stage_editor_{}", stage.id),
         tauri::WindowUrl::App("./stage.html".into()),
     )
-    .title(format!(
-        "Stage Editor [{}]",
-        if stage.name.is_empty() {
-            "Untitled"
-        } else {
-            stage.name.as_str()
-        }
-    ))
+    .title(if stage.name.is_empty() {
+        "Stage Editor [Untitled]".into()
+    } else {
+        format!("Stage Editor [{}]", stage.name.as_str())
+    })
     .build()
     .unwrap();
     let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
@@ -237,16 +231,7 @@ fn open_stage_window<R: Runtime>(
     }));
     let _ = window.set_resizable(false);
     window.clone().once("on_request_data", move |_event| {
-        window
-            .emit(
-                "on_data_received",
-                StagePayload {
-                    stage,
-                    control,
-                    tags,
-                },
-            )
-            .unwrap();
+        window.emit("on_data_received", payload).unwrap();
     });
 }
 
@@ -254,54 +239,19 @@ fn open_stage_window<R: Runtime>(
 async fn open_stage_editor<R: Runtime>(
     app: tauri::AppHandle<R>,
     stage: Option<Stage>,
-    scene_id: Option<Uuid>,
+    control: Option<Stage>,
 ) -> () {
-    let prjct = PROJECT.lock().unwrap();
-    let scene = scene_id.and_then(|id| prjct.get_scene(&id));
-
-    let control = scene.and_then(|s| {
-        let stage = stage.as_ref();
-        for it in &s.stages {
-            if stage.is_none() || it != stage.unwrap() {
-                return Some(it.clone());
-            }
-        }
-        None
-    });
-
-    let tags = scene.and_then(|s| {
-        let ret = s.stages.first().and_then(|s| Some(&s.tags));
-        if ret.is_none() {
-            return None;
-        }
-        let mut ret = ret.unwrap().clone();
-        for it in &s.stages {
-            if it == s.stages.first().unwrap() {
-                continue;
-            }
-            for tag in &it.tags {
-                if let Some(i) = ret.iter().position(|it| it == tag) {
-                    ret.swap_remove(i);
-                    if ret.is_empty() {
-                        return None;
-                    }
-                }
-            }
-        }
-        Some(ret)
-    });
-
-    open_stage_window(&app, stage.unwrap_or_default(), tags, control)
+    let stage = stage.unwrap_or_default();
+    open_stage_editor_impl(&app, EditorPayload { stage, control });
 }
 
 #[tauri::command]
-async fn open_stage_editor_from<R: Runtime>(app: tauri::AppHandle<R>, stage: Stage) -> () {
-    open_stage_window(
-        &app,
-        Stage::default(),
-        Some(stage.tags.clone()),
-        Some(stage),
-    )
+async fn open_stage_editor_from<R: Runtime>(app: tauri::AppHandle<R>, control: Stage) -> () {
+    let payload = EditorPayload {
+        stage: Stage::new_from_tags(control.tags.clone()),
+        control: Some(control),
+    };
+    open_stage_editor_impl(&app, payload);
 }
 
 #[tauri::command]
@@ -313,10 +263,7 @@ async fn stage_save_and_close<R: Runtime>(
     // IDEA: make give this event some unique id to allow
     // front end distinguish the timings at which some stage editor has been opened
     app.emit_to("main_window", "on_stage_saved", stage).unwrap();
-
-    window
-        .close()
-        .expect("Failed to close stage builder window");
+    let _ = window.close();
 }
 
 /* Position related */

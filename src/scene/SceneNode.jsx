@@ -60,11 +60,11 @@ function StageNode({ node, graph }) {
   ];
 
   const editStage = () => {
-    invoke('open_stage_editor', { stage: node.prop('stage'), sceneId: node.prop('scene') });
+    graph.emit("node:edit", { node });
   }
 
   const cloneStage = () => {
-    invoke('open_stage_editor_from', { id: node.prop('stage') });
+    graph.emit("node:clone", { node });
   }
 
   const onContextSelect = ({ key, keyPath, domEvent }) => {
@@ -76,7 +76,7 @@ function StageNode({ node, graph }) {
         cloneStage();
         break;
       case 'makeroot':
-        graph.emit("node:doMarkRoot", { newRoot: node });
+        graph.emit("node:doMarkRoot", { node });
         break;
       case 'removeconnections':
         const edges = graph.getConnectedEdges(node);
