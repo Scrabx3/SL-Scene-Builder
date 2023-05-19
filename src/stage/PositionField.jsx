@@ -4,29 +4,15 @@ import { raceKeys } from "../common/RaceKeys";
 import { useImmer } from "use-immer";
 import './PositionField.css'
 
-const PositionField = forwardRef(function PositionField({ position, _control }, ref) {
-  const [event, setEvent] = useState(position.event);
-  const [race, setRace] = useState(position.race);
-  const [sex, updateSex] = useImmer(position.sex || {
-    male: true,
-    female: false,
-    futa: false
-  });
-  const [extra, updateExtra] = useImmer(position.extra || {
-    submissive: false,
-    optional: false,
-    vampire: false,
-    dead: false,
-  });
-  const [offset, updateOffset] = useImmer(position.offset || {
-    x: undefined,
-    y: undefined,
-    z: undefined,
-    rot: undefined,
-  });
-  const [scale, setScale] = useState(position.scale);
-  const [anim_obj, setAnimObj] = useState(position.anim_obj);
-
+const PositionField = forwardRef(function PositionField({ _position, _control }, ref) {
+  console.log(_control);
+  const [event, setEvent] = useState(_position.event);
+  const [race, setRace] = useState(_control && _control.race || _position.race);
+  const [sex, updateSex] = useImmer(_control && _control.sex || _position.sex);
+  const [extra, updateExtra] = useImmer(_control && _control.extra || _position.extra);
+  const [offset, updateOffset] = useImmer(_control && _control.offset || _position.offset);
+  const [scale, setScale] = useState(_control && _control.scale || _position.scale);
+  const [anim_obj, setAnimObj] = useState(_position.anim_obj);
 
   useImperativeHandle(ref, () => {
     return {
@@ -49,7 +35,7 @@ const PositionField = forwardRef(function PositionField({ position, _control }, 
       <Checkbox
         onChange={(e) => { updateFunc(prev => { prev[attr] = e.target.checked }) }}
         checked={obj[attr] && !disabled}
-        disabled={disabled || false}
+        disabled={!!_control || disabled || false}
       >
         {label}
       </Checkbox>
@@ -65,6 +51,7 @@ const PositionField = forwardRef(function PositionField({ position, _control }, 
             <Select
               className='position-race-select'
               defaultValue={race}
+              disabled={!!_control}
               showSearch
               placeholder="Position race"
               optionFilterProp="children"
@@ -186,6 +173,7 @@ const PositionField = forwardRef(function PositionField({ position, _control }, 
               precision={2} min={0.5} max={1.9} step={0.01}
               value={scale} onChange={(e) => { setScale(e) }}
               placeholder="1.0"
+              disabled={!!_control}
             />
           </Card>
         </Col>

@@ -247,7 +247,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
               key: p.key,
               children: (
                 <div className="position">
-                  <PositionField position={p.position} _control={_control && _control.positions[i] || null} ref={(element) => { positionRefs.current[i] = element }} />
+                  <PositionField _position={p.position} _control={_control && _control.positions[i] || null} ref={(element) => { positionRefs.current[i] = element }} />
                 </div>
               )
             }
