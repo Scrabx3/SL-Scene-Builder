@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const load = (payload) => {
     const { stage, control } = payload;
     console.log("Loading stage", payload);
-    ReactDOM.createRoot(document.getElementById("root_s")).render(
+    ReactDOM.createRoot(document.getElementById("root")).render(
       <React.StrictMode>
         <Editor
           _id={stage.id}

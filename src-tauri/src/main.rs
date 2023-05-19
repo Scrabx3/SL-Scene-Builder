@@ -49,7 +49,7 @@ fn main() {
             let window = WindowBuilder::new(
                 app,
                 "main_window".to_string(),
-                tauri::WindowUrl::App("index.html".into()),
+                tauri::WindowUrl::App("./index.html".into()),
             )
             .title(DEFAULT_MAINWINDOW_TITLE)
             .menu(
