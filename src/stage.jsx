@@ -62,46 +62,30 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
   const positionRefs = useRef([]);
   const positionIdx = useRef(_positions.length);
   // Tags
-  const [tagTree, updateTagTree] = useImmer(() => {
-    let ret = [
-      {
-        value: "tagsSFW",
-        title: "SFW",
-        selectable: false,
-        children: tagsSFW.map(tag => {
-          return {
-            value: tag,
-            title: tag,
-          }
-        }),
-      },
-      {
-        value: "tagsNSFW",
-        title: "NSFW",
-        selectable: false,
-        children: tagsNSFW.map(tag => {
-          return {
-            value: tag,
-            title: tag,
-          }
-        }),
-      },
-    ]
-    if (_tags && _tags.length) {
-      ret.push({
-        value: "tagsCustom",
-        title: "Custom",
-        selectable: false,
-        children: _tags.map(tag => {
-          return {
-            value: tag,
-            title: tag,
-          }
-        })
-      });
-    }
-    return ret;
-  });
+  const [tagTree, updateTagTree] = useImmer([
+    {
+      value: "tagsSFW",
+      title: "SFW",
+      selectable: false,
+      children: tagsSFW.map(tag => {
+        return {
+          value: tag,
+          title: tag,
+        }
+      }),
+    },
+    {
+      value: "tagsNSFW",
+      title: "NSFW",
+      selectable: false,
+      children: tagsNSFW.map(tag => {
+        return {
+          value: tag,
+          title: tag,
+        }
+      }),
+    },
+  ]);
   const [tags, updateTags] = useImmer(_tags || []);
   const [customTag, setCustomTag] = useState('');
   // Extra
@@ -171,8 +155,8 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
     updateTags(prev => {
       add.forEach(tag => {
         tag = tag.trim();
-        const s = tag.toLowerCase();
-        if (!tag || tags.indexOf(t => t.toLowerCase() === s))
+        const s = tag.toLowerCase().replace(/\s+/g, '');
+        if (!s || tags.find(t => t.toLowerCase().replace(/\s+/g, '') === s))
           return;
         prev.push(tag);
       });
@@ -264,9 +248,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
         onClear={() => { updateTags([]) }}
         dropdownRender={(menu) => (
           <>
-            <Space style={{width: '100%'}}>
-              {menu}
-            </Space>
+            {menu}
             <Divider style={{ margin: '8px 0' }} />
             <Space.Compact style={{ width: '100%' }}>
               <Input value={customTag} onChange={(e) => setCustomTag(e.target.value)} placeholder="Custom Tag A, Custom Tag B" onPressEnter={addCustomTags} />
