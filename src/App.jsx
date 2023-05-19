@@ -4,7 +4,6 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { History } from "@antv/x6-plugin-history";
-import { Selection } from "@antv/x6-plugin-selection";
 import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification, Divider, Switch } from 'antd'
 import {
   ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, DiffOutlined, ZoomInOutlined, ZoomOutOutlined,
@@ -87,14 +86,6 @@ function App() {
       .zoomTo(1.0)
       .use(new History({
         enabled: true,
-      }))
-      .use(new Selection({
-        enabled: true,
-        showNodeSelectionBox: true,
-        multiple: true,
-        movable: true,
-        rubberband: true,
-        modifiers: ['ctrl']
       }));
 
     newGraph.on("node:removed", ({ node }) => {
@@ -198,7 +189,7 @@ function App() {
       updateActiveScene(prev => {
         let idx = prev.stages ? prev.stages.findIndex(it => it.id === stage.id) : -1;
         if (idx === -1) {
-          prev.stages.push(stage) 
+          prev.stages.push(stage)
         } else {
           prev.stages[idx] = stage;
         }

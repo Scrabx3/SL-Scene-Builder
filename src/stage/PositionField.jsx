@@ -5,7 +5,6 @@ import { useImmer } from "use-immer";
 import './PositionField.css'
 
 const PositionField = forwardRef(function PositionField({ _position, _control }, ref) {
-  console.log(_control);
   const [event, setEvent] = useState(_position.event);
   const [race, setRace] = useState(_control && _control.race || _position.race);
   const [sex, updateSex] = useImmer(_control && _control.sex || _position.sex);
