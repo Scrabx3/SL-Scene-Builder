@@ -198,6 +198,7 @@ function App() {
           prev.stages[idx] = stage;
         }
       });
+      setEdited(true);
     });
     return () => {
       unlisten.then(res => { res() });
