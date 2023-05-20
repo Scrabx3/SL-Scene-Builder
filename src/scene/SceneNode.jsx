@@ -103,7 +103,7 @@ function StageNode({ node, graph }) {
         }}>
         <Row className='node-header'>
           <Space className='node-attribute-icons' size={10} wrap={false}>
-            {!navText ?
+            {!navText && !start ?
               <Tooltip title={'Missing navigation text'}>
                 <WarningOutlined style={{ fontSize: 20, color: makeColor(255, 155, 0) }} />
               </Tooltip> : <></>}

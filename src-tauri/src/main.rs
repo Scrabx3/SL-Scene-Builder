@@ -37,6 +37,7 @@ fn get_edited() -> bool {
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
+            request_project_update,
             create_blank_scene,
             save_scene,
             delete_scene,
@@ -165,6 +166,12 @@ fn main() {
 }
 
 /// COMMANDS
+
+#[tauri::command]
+async fn request_project_update<R: Runtime>(window: tauri::Window<R>) -> () {
+    let prjct = PROJECT.lock().unwrap();
+    window.emit("on_project_update", &prjct.scenes).unwrap();
+}
 
 /* Scene */
 

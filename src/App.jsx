@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useImmer } from "use-immer";
 import { invoke } from "@tauri-apps/api/tauri";
-import { listen } from "@tauri-apps/api/event";
+import { listen, emit } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { History } from "@antv/x6-plugin-history";
 import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification, Divider, Switch } from 'antd'
@@ -87,25 +87,8 @@ function App() {
       .use(new History({
         enabled: true,
       }));
-    setGraph(newGraph);
-    return () => {
-      newGraph.clearCells();
-      newGraph.clearGrid();
-      newGraph.clearBackground();
-      newGraph.disposePlugins();
-    }
-  }, []);
 
-  useEffect(() => {
-    if (!graph) return;
-    const editStage = (node) => {
-      let stage = node.prop('stage');
-      console.assert(activeScene.stages.findIndex(it => it.id === stage.id) > -1, "Editing stage that does not belong to active scene: ", stage, activeScene);
-      let control = activeScene.stages.length === 1 ? null : stage;
-      invoke('open_stage_editor', { stage, control });
-    }
-
-    graph
+    newGraph
       // Node Events
       .on("node:removed", ({ node }) => {
         if (inEdit.current) return;
@@ -123,7 +106,7 @@ function App() {
       })
       .on("node:moved", ({ e, x, y, node, view }) => {
         const box = node.getBBox();
-        const views = graph.findViewsInArea(box);
+        const views = newGraph.findViewsInArea(box);
         views.forEach(it => {
           if (!it.isEdgeView()) {
             return;
@@ -131,9 +114,6 @@ function App() {
           it.update();
         });
         setEdited(true);
-      })
-      .on('node:dblclick', ({ node }) => {
-        editStage(node);
       })
       // Edge Events
       .on("edge:contextmenu", ({ e, x, y, edge, view }) => {
@@ -147,21 +127,46 @@ function App() {
       // Custom Events
       .on("node:doMarkRoot", ({ node }) => {
         updateActiveScene(prev => {
-          const cell = graph.getCellById(prev.root);
+          const cell = newGraph.getCellById(prev.root);
           if (cell) { cell.prop('isStart', false); }
           node.prop('isStart', true);
           prev.root = node.id;
         });
         setEdited(true);
       })
+      .on("node:clone", ({ node }) => {
+        invoke('open_stage_editor_from', { control: node.prop('stage') });
+      })
+
+    setGraph(newGraph);
+    return () => {
+      newGraph.clearCells();
+      newGraph.clearGrid();
+      newGraph.clearBackground();
+      newGraph.disposePlugins();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!graph) return;
+
+    const editStage = (node) => {
+      let stage = node.prop('stage');
+      console.assert(activeScene.stages.findIndex(it => it.id === stage.id) > -1, "Editing stage that does not belong to active scene: ", stage, activeScene);
+      let control = activeScene.stages.length === 1 ? null : stage;
+      invoke('open_stage_editor', { stage, control });
+    }
+
+    graph
+      .on('node:dblclick', ({ node }) => {
+        editStage(node);
+      })
       .on("node:edit", ({ node }) => {
         editStage(node);
       })
-      .on("node:clone", ({ node }) => {
-        invoke('open_stage_editor_from', { control: node.prop('stage') });
-      });
     return () => {
-      graph.off();
+      graph.off('node:dblclick');
+      graph.off('node:edit');
     }
   }, [graph, activeScene])
 
@@ -185,6 +190,10 @@ function App() {
         let idx = prev.stages ? prev.stages.findIndex(it => it.id === stage.id) : -1;
         if (idx === -1) {
           prev.stages.push(stage)
+          if (prev.stages.length === 1) {
+            node.prop('isStart', true);
+            prev.root = stage;
+          }
         } else {
           prev.stages[idx] = stage;
         }
@@ -196,6 +205,7 @@ function App() {
   }, [graph, activeScene])
 
   useEffect(() => {
+    if (!graph) return;
     const unlisten = listen('on_project_update', (event) => {
       const stage_map = event.payload;
       const scns = [];
@@ -214,10 +224,11 @@ function App() {
         updateActiveScene(null);
       }
     });
+    invoke('request_project_update');
     return () => {
       unlisten.then(res => { res() });
     }
-  })
+  }, [graph])
 
   const clearGraph = () => {
     if (graph.getCellCount() == 0)
