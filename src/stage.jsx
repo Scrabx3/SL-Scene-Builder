@@ -1,12 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
-import { emit, listen, once } from '@tauri-apps/api/event'
+import React, { useState, useRef } from "react";
+import { emit, once } from '@tauri-apps/api/event'
 import { invoke } from "@tauri-apps/api/tauri";
 import ReactDOM from "react-dom/client";
 import { useImmer } from "use-immer";
-import { DeleteOutlined, DownOutlined, SaveOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { Input, Button, Tag, Space, Tooltip, Dropdown, Popconfirm, InputNumber, Card, Layout, Divider, Menu, Row, Col, Tabs, Select, TreeSelect } from 'antd';
+import { SaveOutlined } from '@ant-design/icons';
+import { Input, Button, Tag, Space, Tooltip, InputNumber, Card, Layout, Divider, Menu, Row, Col, Tabs, TreeSelect, notification } from 'antd';
 
-import { useStringListHandler } from "./util/useStringHandler";
 import { tagsSFW, tagsNSFW } from "./common/Tags"
 import PositionField from "./stage/PositionField";
 import "./stage.css";
@@ -51,13 +50,11 @@ function makePositionTab(p, i) {
 }
 
 function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
+  const [api, contextHolder] = notification.useNotification();
   // Name
   const [name, setName] = useState(_name);
   // Positions
-  const [positions, updatePositions] = useImmer(() => {
-    let p = _control ? _control.positions : _positions;
-    return p.map((p, i) => { return makePositionTab(p, i) });
-  });
+  const [positions, updatePositions] = useImmer(_positions.map((p, i) => { return makePositionTab(p, i) }));
   const [activePosition, setActivePosition] = useState(positions[0].key);
   const positionRefs = useRef([]);
   const positionIdx = useRef(_positions.length);
@@ -102,18 +99,31 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
   function saveAndReturn() {
     let errors = false;
     // TODO: do some checks to make sure the stage is valid
-    let is_orgasm = false;
     const positions = [];
-    for (const position of positionRefs.current) {
-      if (!position)
-        continue;
+    positionRefs.current.forEach((position, index) => {
+      if (!position) 
+        return;
 
       const data = position.getData();
-      if (data.extra.climax)
-        is_orgasm = true;
+      if (!data.event) {
+        api['error']({
+          message: 'Missing Event',
+          description: `Position ${index + 1} is missing its behavior file (.hkx)`,
+          placement: 'bottomLeft',
+        });
+        errors = true;
+      }
+      if (!data.sex.male && !data.sex.female && !data.sex.futa) {
+        api['error']({
+          message: 'Missing Sex',
+          description: `Position ${index + 1} has no sex assigned. Every position should be compatible with at least one sex.`,
+          placement: 'bottomLeft',
+        });
+        errors = true;
+      }
 
       positions.push(data);
-    }
+    });
 
     if (errors)
       return;
@@ -126,7 +136,6 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
       extra: {
         fixed_len: fixedLen || 0.0,
         nav_text: navText || '',
-        is_orgasm,
       },
     };
     // console.log(stage);
@@ -187,6 +196,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
 
   return (
     <Layout>
+      {contextHolder}
       <Header className="stage-header">
         <Row>
           <Col>

@@ -100,7 +100,8 @@ function App() {
     if (!graph) return;
     const editStage = (node) => {
       let stage = node.prop('stage');
-      let control = activeScene.stages.find(it => it.id !== stage.id);
+      console.assert(activeScene.stages.findIndex(it => it.id === stage.id) > -1, "Editing stage that does not belong to active scene: ", stage, activeScene);
+      let control = activeScene.stages.length === 1 ? null : stage;
       invoke('open_stage_editor', { stage, control });
     }
 
@@ -291,7 +292,6 @@ function App() {
   }
 
   const updateNodeProps = (stage, node, belongingScene) => {
-    node.prop('scene', belongingScene.id);
     node.prop('stage', stage);
     node.prop('fixedLen', stage.extra.fixed_len);
     node.prop('isStart', belongingScene && belongingScene.root === stage.id);

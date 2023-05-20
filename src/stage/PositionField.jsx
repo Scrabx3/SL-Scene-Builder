@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useImperativeHandle } from "react";
+import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import { Button, Card, Checkbox, Col, Input, Row, Select, Space, Tooltip, InputNumber } from "antd";
 import { raceKeys } from "../common/RaceKeys";
 import { useImmer } from "use-immer";
@@ -8,7 +8,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
   const [event, setEvent] = useState(_position.event);
   const [race, setRace] = useState(_control && _control.race || _position.race);
   const [sex, updateSex] = useImmer(_control && _control.sex || _position.sex);
-  const [extra, updateExtra] = useImmer(_control && _control.extra || _position.extra);
+  const [extra, updateExtra] = useImmer(_control ? { ..._control.extra, climax: false } : _position.extra);
   const [offset, updateOffset] = useImmer(_control && _control.offset || _position.offset);
   const [scale, setScale] = useState(_control && _control.scale || _position.scale);
   const [anim_obj, setAnimObj] = useState(_position.anim_obj);
@@ -103,7 +103,12 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
               <Col>
                 <Tooltip title={'If this actor climaxes in this stage.'}>
                   <div>
-                    <CheckboxEx obj={extra} label={'Climax'} attr={'climax'} updateFunc={updateExtra} />
+                    <Checkbox
+                      checked={extra.climax}
+                      onChange={(e) => { updateExtra(prev => { prev.climax = e.target.checked }) }}
+                    >
+                      Climax
+                    </Checkbox>
                   </div>
                 </Tooltip>
               </Col>
