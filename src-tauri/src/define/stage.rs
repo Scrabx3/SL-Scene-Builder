@@ -25,13 +25,6 @@ pub struct Extra {
 }
 
 impl Stage {
-    pub fn from_tags(tags: Vec<String>) -> Self {
-        let mut ret = Self::default();
-        ret.tags = tags;
-
-        ret
-    }
-
     pub fn from_count(count: usize) -> Self {
         let mut ret = Self::default();
         ret.positions = vec![Default::default(); count];

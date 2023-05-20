@@ -259,8 +259,10 @@ async fn open_stage_editor<R: Runtime>(
 
 #[tauri::command]
 async fn open_stage_editor_from<R: Runtime>(app: tauri::AppHandle<R>, control: Stage) -> () {
+    let mut stage = Stage::from_count(control.positions.len());
+    stage.tags = control.tags.clone();
     let payload = EditorPayload {
-        stage: Stage::from_tags(control.tags.clone()),
+        stage,
         control: Some(control),
     };
     open_stage_editor_impl(&app, payload);

@@ -86,8 +86,8 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
   const [tags, updateTags] = useImmer(_tags || []);
   const [customTag, setCustomTag] = useState('');
   // Extra
-  const [fixedLen, setFixedLen] = useState(_extra.fixed_len || undefined);
-  const [navText, setNavText] = useState(_extra.nav_text || undefined);
+  const [fixedLen, setFixedLen] = useState(_extra.fixed_len);
+  const [navText, setNavText] = useState(_extra.nav_text);
   // const [furniture, updateFurniture] = useState(_extra.furniture || {
   //   shapes: [],
   //   x: undefined,
