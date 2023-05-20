@@ -192,7 +192,7 @@ function App() {
           prev.stages.push(stage)
           if (prev.stages.length === 1) {
             node.prop('isStart', true);
-            prev.root = stage;
+            prev.root = stage.id;
           }
         } else {
           prev.stages[idx] = stage;
