@@ -98,31 +98,30 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
 
   function saveAndReturn() {
     let errors = false;
-    // TODO: do some checks to make sure the stage is valid
-    const positions = [];
-    positionRefs.current.forEach((position, index) => {
-      if (!position) 
-        return;
+    let position_arg = [];
+    positions.forEach((p, i) => {
+      let arg = positionRefs.current[i] ?
+        positionRefs.current[i].getData() :
+        p.position;
 
-      const data = position.getData();
-      if (!data.event) {
+      if (!arg.event) {
         api['error']({
           message: 'Missing Event',
-          description: `Position ${index + 1} is missing its behavior file (.hkx)`,
+          description: `Position ${i + 1} is missing its behavior file (.hkx)`,
           placement: 'bottomLeft',
         });
         errors = true;
       }
-      if (!data.sex.male && !data.sex.female && !data.sex.futa) {
+      if (!arg.sex.male && !arg.sex.female && !arg.sex.futa) {
         api['error']({
           message: 'Missing Sex',
-          description: `Position ${index + 1} has no sex assigned. Every position should be compatible with at least one sex.`,
+          description: `Position ${i + 1} has no sex assigned. Every position should be compatible with at least one sex.`,
           placement: 'bottomLeft',
         });
         errors = true;
       }
 
-      positions.push(data);
+      position_arg.push(arg);
     });
 
     if (errors)
@@ -131,7 +130,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
     const stage = {
       id: _id,
       name,
-      positions,
+      positions: position_arg,
       tags,
       extra: {
         fixed_len: fixedLen || 0.0,
@@ -156,6 +155,9 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
         setActivePosition(positions[newidx].key);
       }
       updatePositions(p => { p.splice(id, 1) });
+      if (positionRefs.current[id]) {
+        positionRefs.current.splice(id, 1);
+      }
     }
   };
 
