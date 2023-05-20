@@ -35,7 +35,12 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
+      "category": "DeveloperTool",
+      "copyright": "Copyright Scrab 2023. All rights reserved.",
       "identifier": "com.SexLabSceneBuilder.dev",
+      "appimage": {
+        "bundleMediaFramework": false
+      },
       "targets": "all"
     },
     "security": {
