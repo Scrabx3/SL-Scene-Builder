@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import ReactDOM from "react-dom/client";
 import { useImmer } from "use-immer";
 import { SaveOutlined } from '@ant-design/icons';
-import { Input, Button, Tag, Space, Tooltip, InputNumber, Card, Layout, Divider, Menu, Row, Col, Tabs, TreeSelect, notification } from 'antd';
+import { Input, Button, Tag, Space, Tooltip, InputNumber, Card, Layout, Divider, Menu, Row, Col, Tabs, TreeSelect, notification, Checkbox } from 'antd';
 
 import { tagsSFW, tagsNSFW } from "./common/Tags"
 import PositionField from "./stage/PositionField";
@@ -88,6 +88,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
   // Extra
   const [fixedLen, setFixedLen] = useState(_extra.fixed_len);
   const [navText, setNavText] = useState(_extra.nav_text);
+  const [allowBed, setAllowBed] = useState(_extra.allow_bed); // COMEBACK: TEMPORARY SETTING UNTIL FURNITURE IS IMPLEMENTED
   // const [furniture, updateFurniture] = useState(_extra.furniture || {
   //   shapes: [],
   //   x: undefined,
@@ -135,6 +136,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
       extra: {
         fixed_len: fixedLen || 0.0,
         nav_text: navText || '',
+        allow_bed: allowBed || false,
       },
     };
     // console.log(stage);
@@ -323,6 +325,18 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
               placeholder="0"
               addonAfter={'ms'}
             />
+          </Space>
+        </Card>
+        <Card title={"Allow Bed"}
+          extra={<Tooltip title={'If this scene is allowed to play on a bed (but doesnt have to)'}><Button type="link">Info</Button></Tooltip>}
+        >
+          <Space direction="vertical">
+            <Checkbox
+              onChange={(e) => { setAllowBed(e.target.checked) }}
+              checked={allowBed}
+            >
+              Allow Bed
+            </Checkbox>
           </Space>
         </Card>
         <Card title={'TODO: Furniture'}>

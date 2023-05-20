@@ -21,6 +21,7 @@ pub struct Stage {
 pub struct Extra {
     pub fixed_len: f32,
     pub nav_text: String,
+    pub allow_bed: bool,
     // TODO: furniture definition
 }
 
@@ -40,7 +41,7 @@ impl EncodeBinary for Stage {
             + size_of::<f32>()
             + self.extra.nav_text.len()
             + self.tags.len()
-            + 1;
+            + 2;
         for tag in &self.tags {
             ret += tag.len() + 1;
         }
@@ -58,6 +59,7 @@ impl EncodeBinary for Stage {
         buf.extend_from_slice(&self.extra.fixed_len.to_be_bytes());
         buf.extend_from_slice(self.extra.nav_text.as_bytes());
         buf.push(0);
+        buf.push(self.extra.allow_bed as u8);
         // tags
         buf.extend_from_slice(&self.tags.len().to_be_bytes());
         for tag in &self.tags {
