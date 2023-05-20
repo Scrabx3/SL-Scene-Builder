@@ -269,12 +269,12 @@ function App() {
       updateNodeProps(stage, node, newscene);
     }
     const nodes = graph.getNodes();
-    for (const [sourceid, { edges }] of Object.entries(newscene.graph)) {
-      if (!edges) continue;
+    for (const [sourceid, { dest }] of Object.entries(newscene.graph)) {
+      if (!dest.length) continue;
       const sourceNode = nodes.find(node => node.id === sourceid);
       if (!sourceNode) continue;
       const sourcePort = sourceNode.ports.items[0];
-      edges.forEach(targetid => {
+      dest.forEach(targetid => {
         const target = nodes.find(node => node.id === targetid);
         if (!target) return;
         graph.addEdge({
