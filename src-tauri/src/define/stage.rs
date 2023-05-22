@@ -5,7 +5,6 @@ use uuid::Uuid;
 
 use super::{position::Position, serialize::EncodeBinary};
 
-#[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Stage {
     pub id: Uuid,
@@ -16,7 +15,6 @@ pub struct Stage {
     pub extra: Extra,
 }
 
-#[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Extra {
     pub fixed_len: f32,

@@ -4,18 +4,18 @@ use uuid::Uuid;
 
 use super::{serialize::EncodeBinary, stage::Stage};
 
-#[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Scene {
     pub id: Uuid,
     pub name: String,
 
+    // #[serde(skip)]
+    // pub position_meta: Vec<PositionMeta>,
     pub stages: Vec<Stage>,
     pub root: Uuid,
     pub graph: HashMap<Uuid, Node>,
 }
 
-#[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Node {
     dest: Vec<Uuid>,
@@ -33,28 +33,6 @@ impl Scene {
 
         None
     }
-
-    // pub fn get_shared_tags(&self) -> Option<Vec<String>> {
-    //     self.stages
-    //         .first()
-    //         .and_then(|stage| Some(stage.tags.clone()))
-    //         .and_then(|mut tags| {
-    //             for it in &self.stages {
-    //                 if it == self.stages.first().unwrap() {
-    //                     continue;
-    //                 }
-    //                 let mut i = 0;
-    //                 while i < tags.len() {
-    //                     if !it.tags.contains(&tags[i]) {
-    //                         tags.swap_remove(i);
-    //                     } else {
-    //                         i += 1;
-    //                     }
-    //                 }
-    //             }
-    //             Some(tags)
-    //         })
-    // }
 }
 
 impl EncodeBinary for Scene {

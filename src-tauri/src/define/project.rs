@@ -21,7 +21,6 @@ const NANOID_ALPHABET: [char; 36] = [
 ];
 const PREFIX_HASH_LEN: usize = 4;
 
-#[repr(C)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Project {
     #[serde(skip)]
@@ -183,13 +182,13 @@ impl Project {
                     Ok(())
                 };
                 return match crt {
-                    "character" => create(format!("FNIS_{}_List.txt", self.pack_name)),
+                    "character" => create(path.join(format!("FNIS_{}_List.txt", self.pack_name))),
                     "canine" => {
-                        create(format!("FNIS_{}_canine_List.txt", self.pack_name))?;
-                        create(format!("FNIS_{}_wolf_List.txt", self.pack_name))?;
-                        create(format!("FNIS_{}_dog_List.txt", self.pack_name))
+                        create(path.join(format!("FNIS_{}_canine_List.txt", self.pack_name)))?;
+                        create(path.join(format!("FNIS_{}_wolf_List.txt", self.pack_name)))?;
+                        create(path.join(format!("FNIS_{}_dog_List.txt", self.pack_name)))
                     }
-                    _ => create(format!("FNIS_{}_{}_List.txt", self.pack_name, crt)),
+                    _ => create(path.join(format!("FNIS_{}_{}_List.txt", self.pack_name, crt))),
                 };
             }
         }

@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 
 use super::serialize::EncodeBinary;
 
-#[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Position {
     pub sex: Sex,
@@ -18,7 +17,6 @@ pub struct Position {
     // TODO: stripping
 }
 
-#[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Sex {
     male: bool,
@@ -26,7 +24,6 @@ pub struct Sex {
     futa: bool,
 }
 
-#[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Extra {
     submissive: bool,
@@ -36,7 +33,6 @@ pub struct Extra {
     dead: bool,
 }
 
-#[repr(C)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Offset {
     x: f32,

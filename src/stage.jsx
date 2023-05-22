@@ -88,7 +88,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
   // Extra
   const [fixedLen, setFixedLen] = useState(_extra.fixed_len);
   const [navText, setNavText] = useState(_extra.nav_text);
-  const [allowBed, setAllowBed] = useState(_extra.allow_bed); // COMEBACK: TEMPORARY SETTING UNTIL FURNITURE IS IMPLEMENTED
+  const [allowBed, setAllowBed] = useState(_control.allow_bed || _extra.allow_bed); // COMEBACK: TEMPORARY SETTING UNTIL FURNITURE IS IMPLEMENTED
   // const [furniture, updateFurniture] = useState(_extra.furniture || {
   //   shapes: [],
   //   x: undefined,
@@ -334,6 +334,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
             <Checkbox
               onChange={(e) => { setAllowBed(e.target.checked) }}
               checked={allowBed}
+              disabled={!!_control}
             >
               Allow Bed
             </Checkbox>
