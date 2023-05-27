@@ -1,0 +1,8 @@
+#stageNameInputField {
+    border-radius: 10px;
+    border: 2px solid white;
+    margin-left: 5px;
+}
+#stageNameInputField:hover {
+    border-color: hsla(232, 18%, 16%, 0.1);
+}
