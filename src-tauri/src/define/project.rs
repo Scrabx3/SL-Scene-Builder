@@ -233,7 +233,9 @@ impl EncodeBinary for Project {
         // scenes
         buf.extend_from_slice(&(self.scenes.len() as u64).to_le_bytes());
         for (_, scene) in &self.scenes {
-            scene.write_byte(buf);
+            if scene.stages.len() > 0 {
+                scene.write_byte(buf);
+            }
         }
     }
 }

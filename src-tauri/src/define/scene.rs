@@ -12,6 +12,8 @@ pub struct Scene {
     pub stages: Vec<Stage>,
     pub root: NanoID,
     pub graph: HashMap<NanoID, Node>,
+    #[serde(skip)]
+    pub allow_bed: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -36,7 +38,7 @@ impl Scene {
 impl EncodeBinary for Scene {
     fn get_byte_size(&self) -> usize {
         let mut ret = self.name.len()
-            + 1                     // name
+            + 4                     // name, id, root, allow bed
             + 2 * NANOID_LENGTH     // id + root
             + 4 * size_of::<u64>()  // container size
             + self.stages[0].positions[0].get_byte_size_meta()
@@ -62,13 +64,6 @@ impl EncodeBinary for Scene {
         for stage in &self.stages {
             stage.write_byte(buf);
         }
-        // name
-        buf.extend_from_slice(self.name.as_bytes());
-        buf.push(0);
-        // id
-        buf.extend_from_slice(self.id.as_bytes());
-        // root
-        buf.extend_from_slice(self.root.as_bytes());
         // graph
         buf.extend_from_slice(&(self.graph.len() as u64).to_le_bytes());
         for (key, value) in &self.graph {
@@ -78,6 +73,17 @@ impl EncodeBinary for Scene {
                 buf.extend_from_slice(node.as_bytes());
             }
         }
+        // root
+        buf.extend_from_slice(self.root.as_bytes());
+        buf.push(0);
+        // name
+        buf.extend_from_slice(self.name.as_bytes());
+        buf.push(0);
+        // id
+        buf.extend_from_slice(self.id.as_bytes());
+        buf.push(0);
+        // furniture
+        buf.push(self.stages[0].extra.allow_bed as u8);
     }
 }
 
@@ -89,6 +95,7 @@ impl Default for Scene {
             stages: Default::default(),
             root: Default::default(),
             graph: Default::default(),
+            allow_bed: Default::default(),
         }
     }
 }
