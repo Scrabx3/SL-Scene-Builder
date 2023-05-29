@@ -41,20 +41,12 @@ pub struct Offset {
     r: u8,
 }
 
-impl EncodeBinary for Position {
-    fn get_byte_size(&self) -> usize {
-        3 * size_of::<u8>() // 2 bitflag + offset
-            + 4 * size_of::<f32>()  // 3 Offset + Scale
-            + self.race.len()
-            + self.event.len()
-            + self.anim_obj.len()
-            + 3 // 3 strings
+impl Position {
+    pub fn get_byte_size_meta(&self) -> usize {
+        self.race.len() + size_of::<f32>() + 3
     }
 
-    fn write_byte(&self, buf: &mut Vec<u8>) -> () {
-        // event
-        buf.extend_from_slice(self.event.as_bytes());
-        buf.push(0);
+    pub fn write_byte_meta(&self, buf: &mut Vec<u8>) -> () {
         // race
         buf.extend_from_slice(self.race.as_bytes());
         buf.push(0);
@@ -67,17 +59,27 @@ impl EncodeBinary for Position {
             self.extra.submissive as u8
                 + 2 * self.extra.optional as u8
                 + 4 * self.extra.vampire as u8
-                + 8 * self.extra.climax as u8
-                + 16 * self.extra.dead as u8,
+                + 8 * self.extra.dead as u8,
         );
+    }
+}
+
+impl EncodeBinary for Position {
+    fn get_byte_size(&self) -> usize {
+        self.event.len() + 3 * size_of::<f32>() + 3
+    }
+
+    fn write_byte(&self, buf: &mut Vec<u8>) -> () {
+        // event
+        buf.extend_from_slice(self.event.as_bytes());
+        buf.push(0);
+        // climax
+        buf.push(self.extra.climax as u8);
         // offset
         buf.extend_from_slice(&self.offset.x.to_be_bytes());
         buf.extend_from_slice(&self.offset.y.to_be_bytes());
         buf.extend_from_slice(&self.offset.z.to_be_bytes());
         buf.push(self.offset.r);
-        // anim obj
-        buf.extend_from_slice(self.anim_obj.as_bytes());
-        buf.push(0);
     }
 }
 

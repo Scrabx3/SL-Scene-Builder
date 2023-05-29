@@ -51,6 +51,11 @@ impl EncodeBinary for Stage {
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
+        // positions
+        buf.extend_from_slice(&self.positions.len().to_be_bytes());
+        for position in &self.positions {
+            position.write_byte(buf);
+        }
         // id
         buf.extend_from_slice(self.id.as_bytes());
         // extra
@@ -63,11 +68,6 @@ impl EncodeBinary for Stage {
         for tag in &self.tags {
             buf.extend_from_slice(tag.as_bytes());
             buf.push(0);
-        }
-        // positions
-        buf.extend_from_slice(&self.positions.len().to_be_bytes());
-        for position in &self.positions {
-            position.write_byte(buf);
         }
     }
 }

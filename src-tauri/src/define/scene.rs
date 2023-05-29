@@ -9,8 +9,6 @@ pub struct Scene {
     pub id: Uuid,
     pub name: String,
 
-    // #[serde(skip)]
-    // pub position_meta: Vec<PositionMeta>,
     pub stages: Vec<Stage>,
     pub root: Uuid,
     pub graph: HashMap<Uuid, Node>,
@@ -41,6 +39,7 @@ impl EncodeBinary for Scene {
             + 1                         // name
             + 2 * size_of::<u128>()     // id + root
             + 3 * size_of::<usize>()    // container size
+            + self.stages[0].positions[0].get_byte_size_meta()
             + self.graph.len() * size_of::<u128>();
         for (_, node) in &self.graph {
             ret += node.dest.len() * size_of::<u128>();
@@ -53,6 +52,13 @@ impl EncodeBinary for Scene {
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
+        // Stage meta
+        self.stages[0].positions[0].write_byte_meta(buf);
+        // stages
+        buf.extend_from_slice(&self.stages.len().to_be_bytes());
+        for stage in &self.stages {
+            stage.write_byte(buf);
+        }
         // name
         buf.extend_from_slice(self.name.as_bytes());
         buf.push(0);
@@ -68,11 +74,6 @@ impl EncodeBinary for Scene {
             for node in &value.dest {
                 buf.extend_from_slice(node.as_bytes());
             }
-        }
-        // stages
-        buf.extend_from_slice(&self.stages.len().to_be_bytes());
-        for stage in &self.stages {
-            stage.write_byte(buf);
         }
     }
 }

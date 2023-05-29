@@ -211,10 +211,11 @@ impl Project {
 
 impl EncodeBinary for Project {
     fn get_byte_size(&self) -> usize {
-        let mut ret = self.pack_author.len() + 2 // name
+        let mut ret = self.pack_author.len()
             + self.pack_name.len()
             + size_of::<usize>() // num scenes
-            + PREFIX_HASH_LEN;
+            + PREFIX_HASH_LEN
+            + 3;
         for (_, value) in &self.scenes {
             ret += value.get_byte_size();
         }
@@ -223,6 +224,9 @@ impl EncodeBinary for Project {
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
+        // version
+        let version: u8 = 1;
+        buf.push(version);
         // name
         buf.extend_from_slice(self.pack_name.as_bytes());
         buf.push(0);
