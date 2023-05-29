@@ -1,4 +1,4 @@
-use std::{mem::size_of, u128, vec};
+use std::{mem::size_of, vec};
 
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
@@ -34,9 +34,9 @@ impl Stage {
 
 impl EncodeBinary for Stage {
     fn get_byte_size(&self) -> usize {
-        let mut ret = size_of::<u128>()
-            + 2 * size_of::<usize>()
-            + size_of::<f32>()
+        let mut ret = NANOID_LENGTH
+            + 2 * size_of::<u64>()
+            + size_of::<i32>()
             + self.extra.nav_text.len()
             + self.tags.len()
             + 2;
@@ -52,7 +52,7 @@ impl EncodeBinary for Stage {
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
         // positions
-        buf.extend_from_slice(&self.positions.len().to_le_bytes());
+        buf.extend_from_slice(&(self.positions.len() as u64).to_le_bytes());
         for position in &self.positions {
             position.write_byte(buf);
         }
@@ -65,7 +65,7 @@ impl EncodeBinary for Stage {
         buf.push(0);
         buf.push(self.extra.allow_bed as u8);
         // tags
-        buf.extend_from_slice(&self.tags.len().to_le_bytes());
+        buf.extend_from_slice(&(self.tags.len() as u64).to_le_bytes());
         for tag in &self.tags {
             buf.extend_from_slice(tag.as_bytes());
             buf.push(0);

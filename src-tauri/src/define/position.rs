@@ -43,7 +43,7 @@ pub struct Offset {
 
 impl Position {
     pub fn get_byte_size_meta(&self) -> usize {
-        self.race.len() + size_of::<f32>() + 3
+        size_of::<u64>() + size_of::<i32>() + 3
     }
 
     pub fn write_byte_meta(&self, buf: &mut Vec<u8>) -> () {
@@ -67,7 +67,7 @@ impl Position {
 
 impl EncodeBinary for Position {
     fn get_byte_size(&self) -> usize {
-        self.event.len() + 3 * size_of::<f32>() + 3
+        self.event.len() + 3 * size_of::<i32>() + 3
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {

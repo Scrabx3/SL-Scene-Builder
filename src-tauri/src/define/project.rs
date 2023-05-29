@@ -208,7 +208,7 @@ impl EncodeBinary for Project {
     fn get_byte_size(&self) -> usize {
         let mut ret = self.pack_author.len()
             + self.pack_name.len()
-            + size_of::<usize>() // num scenes
+            + size_of::<u64>() // num scenes
             + PREFIX_HASH_LEN
             + 3;
         for (_, value) in &self.scenes {
@@ -231,7 +231,7 @@ impl EncodeBinary for Project {
         // hash
         buf.extend_from_slice(self.prefix_hash.as_bytes());
         // scenes
-        buf.extend_from_slice(&self.scenes.len().to_le_bytes());
+        buf.extend_from_slice(&(self.scenes.len() as u64).to_le_bytes());
         for (_, scene) in &self.scenes {
             scene.write_byte(buf);
         }
