@@ -9,17 +9,12 @@ use std::{
     vec,
 };
 use tauri::api::dialog::blocking::FileDialogBuilder;
-use uuid::Uuid;
 
 use crate::define::serialize::{make_fnis_line, map_race_to_folder};
 
-use super::{scene::Scene, serialize::EncodeBinary, stage::Stage};
-
-const NANOID_ALPHABET: [char; 36] = [
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
-    't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-];
-const PREFIX_HASH_LEN: usize = 4;
+use super::{
+    scene::Scene, serialize::EncodeBinary, stage::Stage, NanoID, NANOID_ALPHABET, PREFIX_HASH_LEN,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Project {
@@ -29,7 +24,7 @@ pub struct Project {
     pub pack_name: String,
     pub pack_author: String,
     pub prefix_hash: String,
-    pub scenes: HashMap<Uuid, Scene>,
+    pub scenes: HashMap<NanoID, Scene>,
 }
 
 impl Project {
@@ -51,20 +46,20 @@ impl Project {
     }
 
     pub fn save_scene(&mut self, scene: Scene) -> &Scene {
-        let id = scene.id;
-        self.scenes.insert(id, scene);
+        let id = scene.id.clone();
+        self.scenes.insert(id.clone(), scene);
         self.scenes.get(&id).unwrap()
     }
 
-    pub fn discard_scene(&mut self, id: &Uuid) -> Option<Scene> {
+    pub fn discard_scene(&mut self, id: &NanoID) -> Option<Scene> {
         self.scenes.remove(id)
     }
 
-    pub fn get_scene(&self, id: &Uuid) -> Option<&Scene> {
+    pub fn get_scene(&self, id: &NanoID) -> Option<&Scene> {
         self.scenes.get(id)
     }
 
-    pub fn get_stage(&self, id: &Uuid) -> Option<&Stage> {
+    pub fn get_stage(&self, id: &NanoID) -> Option<&Stage> {
         for (_, scene) in &self.scenes {
             let stage = scene.get_stage(id);
             if stage.is_some() {

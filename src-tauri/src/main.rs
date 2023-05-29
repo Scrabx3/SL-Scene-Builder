@@ -4,7 +4,7 @@
 )]
 mod define;
 
-use define::{position::Position, project::Project, scene::Scene, stage::Stage};
+use define::{position::Position, project::Project, scene::Scene, stage::Stage, NanoID};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::sync::{
@@ -12,7 +12,6 @@ use std::sync::{
     Mutex,
 };
 use tauri::{CustomMenuItem, Manager, Menu, MenuItem, Runtime, Submenu, WindowBuilder};
-use uuid::Uuid;
 
 const DEFAULT_MAINWINDOW_TITLE: &str = "SexLab Scene Builder";
 
@@ -192,7 +191,7 @@ fn save_scene<R: Runtime>(window: tauri::Window<R>, scene: Scene) -> () {
 }
 
 #[tauri::command]
-fn delete_scene<R: Runtime>(window: tauri::Window<R>, id: Uuid) -> Result<Scene, String> {
+fn delete_scene<R: Runtime>(window: tauri::Window<R>, id: NanoID) -> Result<Scene, String> {
     let ret = PROJECT.lock().unwrap().discard_scene(&id).ok_or(format!(
         "Given id [{}] does not represent an existing scene",
         id.to_string()

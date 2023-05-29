@@ -22,15 +22,6 @@ rand = "0.8.5"
 once_cell = "1.17.1"
 nanoid = "0.4.0"
 
-[dependencies.uuid]
-version = "1.3.1"
-features = [
-    "v4",                # Lets you generate random UUIDs
-    "fast-rng",          # Use a faster (but still sufficiently random) RNG
-    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
-	"serde",			 # Enable serialization and deserailisation
-]
-
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!

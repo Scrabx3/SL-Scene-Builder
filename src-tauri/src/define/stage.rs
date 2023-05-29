@@ -1,13 +1,13 @@
 use std::{mem::size_of, u128, vec};
 
+use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-use super::{position::Position, serialize::EncodeBinary};
+use super::{position::Position, serialize::EncodeBinary, NanoID, NANOID_ALPHABET, NANOID_LENGTH};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Stage {
-    pub id: Uuid,
+    pub id: NanoID,
     pub name: String,
 
     pub positions: Vec<Position>,
@@ -81,7 +81,7 @@ impl PartialEq for Stage {
 impl Default for Stage {
     fn default() -> Self {
         Self {
-            id: Uuid::new_v4(),
+            id: nanoid!(NANOID_LENGTH, &NANOID_ALPHABET),
             name: Default::default(),
             positions: vec![Position::default()],
             tags: Default::default(),

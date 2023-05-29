@@ -1,28 +1,28 @@
+use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, mem::size_of};
-use uuid::Uuid;
 
-use super::{serialize::EncodeBinary, stage::Stage};
+use super::{serialize::EncodeBinary, stage::Stage, NanoID, NANOID_ALPHABET, NANOID_LENGTH};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Scene {
-    pub id: Uuid,
+    pub id: NanoID,
     pub name: String,
 
     pub stages: Vec<Stage>,
-    pub root: Uuid,
-    pub graph: HashMap<Uuid, Node>,
+    pub root: NanoID,
+    pub graph: HashMap<NanoID, Node>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Node {
-    dest: Vec<Uuid>,
+    dest: Vec<NanoID>,
     x: f32,
     y: f32,
 }
 
 impl Scene {
-    pub fn get_stage(&self, id: &Uuid) -> Option<&Stage> {
+    pub fn get_stage(&self, id: &NanoID) -> Option<&Stage> {
         for it in &self.stages {
             if &it.id == id {
                 return Some(it);
@@ -38,7 +38,7 @@ impl EncodeBinary for Scene {
         let mut ret = self.name.len()
             + 1                         // name
             + 2 * size_of::<u128>()     // id + root
-            + 3 * size_of::<usize>()    // container size
+            + 4 * size_of::<usize>()    // container size
             + self.stages[0].positions[0].get_byte_size_meta()
             + self.graph.len() * size_of::<u128>();
         for (_, node) in &self.graph {
@@ -53,7 +53,10 @@ impl EncodeBinary for Scene {
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
         // Stage meta
-        self.stages[0].positions[0].write_byte_meta(buf);
+        buf.extend_from_slice(&self.stages[0].positions.len().to_be_bytes());
+        for position in &self.stages[0].positions {
+            position.write_byte_meta(buf);
+        }
         // stages
         buf.extend_from_slice(&self.stages.len().to_be_bytes());
         for stage in &self.stages {
@@ -81,7 +84,7 @@ impl EncodeBinary for Scene {
 impl Default for Scene {
     fn default() -> Self {
         Self {
-            id: Uuid::new_v4(),
+            id: nanoid!(NANOID_LENGTH, &NANOID_ALPHABET),
             name: Default::default(),
             stages: Default::default(),
             root: Default::default(),
