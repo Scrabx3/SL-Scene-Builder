@@ -53,7 +53,8 @@ impl Position {
         // sex
         buf.push(self.sex.male as u8 + 2 * self.sex.female as u8 + 4 * self.sex.futa as u8);
         // scale
-        buf.extend_from_slice(&self.scale.to_be_bytes());
+        let s_ = (self.scale * 1000.0).round() as u32;
+        buf.extend_from_slice(&s_.to_le_bytes());
         // extra
         buf.push(
             self.extra.submissive as u8
@@ -76,9 +77,12 @@ impl EncodeBinary for Position {
         // climax
         buf.push(self.extra.climax as u8);
         // offset
-        buf.extend_from_slice(&self.offset.x.to_be_bytes());
-        buf.extend_from_slice(&self.offset.y.to_be_bytes());
-        buf.extend_from_slice(&self.offset.z.to_be_bytes());
+        let x_ = (self.offset.x * 1000.0).round() as i32;
+        buf.extend_from_slice(&x_.to_le_bytes());
+        let y_ = (self.offset.y * 1000.0).round() as i32;
+        buf.extend_from_slice(&y_.to_le_bytes());
+        let z_ = (self.offset.z * 1000.0).round() as i32;
+        buf.extend_from_slice(&z_.to_le_bytes());
         buf.push(self.offset.r);
     }
 }

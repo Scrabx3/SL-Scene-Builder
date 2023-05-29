@@ -53,12 +53,12 @@ impl EncodeBinary for Scene {
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
         // Stage meta
-        buf.extend_from_slice(&self.stages[0].positions.len().to_be_bytes());
+        buf.extend_from_slice(&self.stages[0].positions.len().to_le_bytes());
         for position in &self.stages[0].positions {
             position.write_byte_meta(buf);
         }
         // stages
-        buf.extend_from_slice(&self.stages.len().to_be_bytes());
+        buf.extend_from_slice(&self.stages.len().to_le_bytes());
         for stage in &self.stages {
             stage.write_byte(buf);
         }
@@ -70,10 +70,10 @@ impl EncodeBinary for Scene {
         // root
         buf.extend_from_slice(self.root.as_bytes());
         // graph
-        buf.extend_from_slice(&self.graph.len().to_be_bytes());
+        buf.extend_from_slice(&self.graph.len().to_le_bytes());
         for (key, value) in &self.graph {
             buf.extend_from_slice(key.as_bytes());
-            buf.extend_from_slice(&value.dest.len().to_be_bytes());
+            buf.extend_from_slice(&value.dest.len().to_le_bytes());
             for node in &value.dest {
                 buf.extend_from_slice(node.as_bytes());
             }
