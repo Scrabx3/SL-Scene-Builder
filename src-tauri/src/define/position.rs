@@ -53,7 +53,7 @@ impl Position {
         // sex
         buf.push(self.sex.male as u8 + 2 * self.sex.female as u8 + 4 * self.sex.futa as u8);
         // scale
-        let s_ = (self.scale * 1000.0).round() as u32;
+        let s_ = (self.scale * 1000.0).round() as i32;
         buf.extend_from_slice(&s_.to_le_bytes());
         // extra
         buf.push(

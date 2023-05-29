@@ -59,7 +59,7 @@ impl EncodeBinary for Stage {
         // id
         buf.extend_from_slice(self.id.as_bytes());
         // extra
-        let l_ = (self.extra.fixed_len * 1000.0).round() as u32;
+        let l_ = (self.extra.fixed_len * 1000.0).round() as i32;
         buf.extend_from_slice(&l_.to_le_bytes());
         buf.extend_from_slice(self.extra.nav_text.as_bytes());
         buf.push(0);
