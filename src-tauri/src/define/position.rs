@@ -2,6 +2,8 @@ use std::mem::size_of;
 
 use serde::{Deserialize, Serialize};
 
+use crate::racekeys::get_race_key_bytes;
+
 use super::serialize::EncodeBinary;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -48,13 +50,13 @@ impl Position {
 
     pub fn write_byte_meta(&self, buf: &mut Vec<u8>) -> () {
         // race
-        buf.extend_from_slice(self.race.as_bytes());
-        buf.push(0);
+        let racebytes = get_race_key_bytes(&self.race).unwrap();
+        buf.extend_from_slice(&racebytes);
         // sex
         buf.push(self.sex.male as u8 + 2 * self.sex.female as u8 + 4 * self.sex.futa as u8);
         // scale
         let s_ = (self.scale * 1000.0).round() as i32;
-        buf.extend_from_slice(&s_.to_le_bytes());
+        buf.extend_from_slice(&s_.to_be_bytes());
         // extra
         buf.push(
             self.extra.submissive as u8
@@ -67,22 +69,22 @@ impl Position {
 
 impl EncodeBinary for Position {
     fn get_byte_size(&self) -> usize {
-        self.event.len() + 3 * size_of::<i32>() + 3
+        self.event.len() + size_of::<u64>() + 3 * size_of::<i32>() + 2
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
         // event
+        buf.extend_from_slice(&(self.event.len() as u64).to_be_bytes());
         buf.extend_from_slice(self.event.as_bytes());
-        buf.push(0);
         // climax
         buf.push(self.extra.climax as u8);
         // offset
         let x_ = (self.offset.x * 1000.0).round() as i32;
-        buf.extend_from_slice(&x_.to_le_bytes());
+        buf.extend_from_slice(&x_.to_be_bytes());
         let y_ = (self.offset.y * 1000.0).round() as i32;
-        buf.extend_from_slice(&y_.to_le_bytes());
+        buf.extend_from_slice(&y_.to_be_bytes());
         let z_ = (self.offset.z * 1000.0).round() as i32;
-        buf.extend_from_slice(&z_.to_le_bytes());
+        buf.extend_from_slice(&z_.to_be_bytes());
         buf.push(self.offset.r);
     }
 }

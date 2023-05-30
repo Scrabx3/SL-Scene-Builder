@@ -35,11 +35,10 @@ impl Stage {
 impl EncodeBinary for Stage {
     fn get_byte_size(&self) -> usize {
         let mut ret = NANOID_LENGTH
-            + 2 * size_of::<u64>()
+            + 3 * size_of::<u64>()
+            + self.tags.len() * size_of::<u64>()
             + size_of::<i32>()
-            + self.extra.nav_text.len()
-            + self.tags.len()
-            + 2;
+            + self.extra.nav_text.len();
         for tag in &self.tags {
             ret += tag.len() + 1;
         }
@@ -52,23 +51,22 @@ impl EncodeBinary for Stage {
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
         // positions
-        buf.extend_from_slice(&(self.positions.len() as u64).to_le_bytes());
+        buf.extend_from_slice(&(self.positions.len() as u64).to_be_bytes());
         for position in &self.positions {
             position.write_byte(buf);
         }
         // id
         buf.extend_from_slice(self.id.as_bytes());
-        buf.push(0);
         // extra
         let l_ = (self.extra.fixed_len * 1000.0).round() as i32;
-        buf.extend_from_slice(&l_.to_le_bytes());
+        buf.extend_from_slice(&l_.to_be_bytes());
+        buf.extend_from_slice(&(self.extra.nav_text.len() as u64).to_be_bytes());
         buf.extend_from_slice(self.extra.nav_text.as_bytes());
-        buf.push(0);
         // tags
-        buf.extend_from_slice(&(self.tags.len() as u64).to_le_bytes());
+        buf.extend_from_slice(&(self.tags.len() as u64).to_be_bytes());
         for tag in &self.tags {
+            buf.extend_from_slice(&(tag.len() as u64).to_be_bytes());
             buf.extend_from_slice(tag.as_bytes());
-            buf.push(0);
         }
     }
 }
