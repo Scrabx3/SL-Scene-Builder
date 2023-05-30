@@ -69,7 +69,7 @@ impl Position {
 
 impl EncodeBinary for Position {
     fn get_byte_size(&self) -> usize {
-        self.event.len() + size_of::<u64>() + 3 * size_of::<i32>() + 2
+        self.event.len() + size_of::<u64>() + 4 * size_of::<i32>() + 1
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
