@@ -64,6 +64,8 @@ impl EncodeBinary for Scene {
         for position in &self.stages[0].positions {
             position.write_byte_meta(buf);
         }
+        // root
+        buf.extend_from_slice(self.root.as_bytes());
         // stages
         buf.extend_from_slice(&(self.stages.len() as u64).to_be_bytes());
         for stage in &self.stages {
@@ -78,8 +80,6 @@ impl EncodeBinary for Scene {
                 buf.extend_from_slice(node.as_bytes());
             }
         }
-        // root
-        buf.extend_from_slice(self.root.as_bytes());
         // furniture
         buf.push(self.stages[0].extra.allow_bed as u8);
     }
