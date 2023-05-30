@@ -1,6 +1,6 @@
-import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
+import React, { useState, forwardRef, useImperativeHandle } from "react";
 import { Button, Card, Checkbox, Col, Input, Row, Select, Space, Tooltip, InputNumber } from "antd";
-import { raceKeys } from "../common/RaceKeys";
+import { invoke } from "@tauri-apps/api";
 import { useImmer } from "use-immer";
 import './PositionField.css'
 
@@ -12,6 +12,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
   const [offset, updateOffset] = useImmer(_control && _control.offset || _position.offset);
   const [scale, setScale] = useState(_control && _control.scale || _position.scale);
   const [anim_obj, setAnimObj] = useState(_position.anim_obj);
+  const [raceKeys, _setRaceKeys] = useState(invoke('get_race_keys'));
 
   useImperativeHandle(ref, () => {
     return {

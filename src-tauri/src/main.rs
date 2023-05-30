@@ -3,6 +3,7 @@
     windows_subsystem = "windows"
 )]
 mod define;
+mod racekeys;
 
 use define::{position::Position, project::Project, scene::Scene, stage::Stage, NanoID};
 use once_cell::sync::Lazy;
@@ -37,13 +38,14 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             request_project_update,
+            get_race_keys,
             create_blank_scene,
             save_scene,
             delete_scene,
             open_stage_editor,
             open_stage_editor_from,
             stage_save_and_close,
-            make_position
+            make_position,
         ])
         .setup(|app| {
             let window = WindowBuilder::new(
@@ -170,6 +172,11 @@ fn main() {
 async fn request_project_update<R: Runtime>(window: tauri::Window<R>) -> () {
     let prjct = PROJECT.lock().unwrap();
     window.emit("on_project_update", &prjct.scenes).unwrap();
+}
+
+#[tauri::command]
+async fn get_race_keys() -> Vec<String> {
+    racekeys::get_race_keys_string()
 }
 
 /* Scene */
