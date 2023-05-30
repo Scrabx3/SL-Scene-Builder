@@ -40,7 +40,8 @@ impl EncodeBinary for Scene {
         let mut ret = self.name.len()
             + 5 * size_of::<u64>()
             + 2 * NANOID_LENGTH
-            + self.graph.len() * NANOID_LENGTH;
+            + self.graph.len() * NANOID_LENGTH
+            + 1;
         ret += self.stages[0].positions[0].get_byte_size_meta();
         for (_, node) in &self.graph {
             ret += node.dest.len() * NANOID_LENGTH;
