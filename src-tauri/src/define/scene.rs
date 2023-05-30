@@ -54,6 +54,11 @@ impl EncodeBinary for Scene {
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
+        // id
+        buf.extend_from_slice(self.id.as_bytes());
+        // name
+        buf.extend_from_slice(&(self.name.len() as u64).to_be_bytes());
+        buf.extend_from_slice(self.name.as_bytes());
         // Stage meta
         buf.extend_from_slice(&(self.stages[0].positions.len() as u64).to_be_bytes());
         for position in &self.stages[0].positions {
@@ -75,11 +80,6 @@ impl EncodeBinary for Scene {
         }
         // root
         buf.extend_from_slice(self.root.as_bytes());
-        // name
-        buf.extend_from_slice(&(self.name.len() as u64).to_be_bytes());
-        buf.extend_from_slice(self.name.as_bytes());
-        // id
-        buf.extend_from_slice(self.id.as_bytes());
         // furniture
         buf.push(self.stages[0].extra.allow_bed as u8);
     }

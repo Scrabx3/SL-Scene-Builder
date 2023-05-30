@@ -50,13 +50,13 @@ impl EncodeBinary for Stage {
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
+        // id
+        buf.extend_from_slice(self.id.as_bytes());
         // positions
         buf.extend_from_slice(&(self.positions.len() as u64).to_be_bytes());
         for position in &self.positions {
             position.write_byte(buf);
         }
-        // id
-        buf.extend_from_slice(self.id.as_bytes());
         // extra
         let l_ = (self.extra.fixed_len * 1000.0).round() as i32;
         buf.extend_from_slice(&l_.to_be_bytes());
@@ -65,8 +65,10 @@ impl EncodeBinary for Stage {
         // tags
         buf.extend_from_slice(&(self.tags.len() as u64).to_be_bytes());
         for tag in &self.tags {
-            buf.extend_from_slice(&(tag.len() as u64).to_be_bytes());
-            buf.extend_from_slice(tag.as_bytes());
+            let tmp: String = tag.chars().filter(|c| !c.is_whitespace()).collect();
+            let tmp = tmp.to_lowercase();
+            buf.extend_from_slice(&(tmp.len() as u64).to_be_bytes());
+            buf.extend_from_slice(tmp.as_bytes());
         }
     }
 }

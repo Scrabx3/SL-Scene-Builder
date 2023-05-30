@@ -40,7 +40,7 @@ pub struct Offset {
     x: f32,
     y: f32,
     z: f32,
-    r: u8,
+    r: f32,
 }
 
 impl Position {
@@ -85,7 +85,8 @@ impl EncodeBinary for Position {
         buf.extend_from_slice(&y_.to_be_bytes());
         let z_ = (self.offset.z * 1000.0).round() as i32;
         buf.extend_from_slice(&z_.to_be_bytes());
-        buf.push(self.offset.r);
+        let r_ = (self.offset.r * 1000.0).round() as i32;
+        buf.extend_from_slice(&r_.to_be_bytes());
     }
 }
 
