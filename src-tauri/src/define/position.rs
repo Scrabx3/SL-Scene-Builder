@@ -50,8 +50,8 @@ impl Position {
 
     pub fn write_byte_meta(&self, buf: &mut Vec<u8>) -> () {
         // race
-        let racebytes = get_race_key_bytes(&self.race).unwrap();
-        buf.extend_from_slice(&racebytes);
+        let racebyte = get_race_key_bytes(&self.race).unwrap();
+        buf.push(racebyte);
         // sex
         buf.push(self.sex.male as u8 + 2 * self.sex.female as u8 + 4 * self.sex.futa as u8);
         // scale

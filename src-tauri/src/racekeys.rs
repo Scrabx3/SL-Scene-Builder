@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
-pub type RaceKey = (RaceType, ExtraRace);
-
 #[derive(Debug, Clone, Copy)]
-pub enum RaceType {
+pub enum RaceKey {
     Human = 0,
+
     AshHopper,
     Bear,
     Boar,
+    BoarMounted,
+    BoarSingle,
     Canine,
     Chaurus,
     ChaurusHunter,
@@ -15,8 +16,9 @@ pub enum RaceType {
     Chicken,
     Cow,
     Deer,
-    DragonPriest,
+    Dog,
     Dragon,
+    DragonPriest,
     Draugr,
     DwarvenBallista,
     DwarvenCenturion,
@@ -28,144 +30,89 @@ pub enum RaceType {
     FrostAtronach,
     Gargoyle,
     Giant,
+    GiantSpider,
     Goat,
     Hagraven,
+    Hare,
     Horker,
     Horse,
     IceWraith,
+    LargeSpider,
     Lurker,
     Mammoth,
     Mudcrab,
     Netch,
-    Rabbit,
     Riekling,
     Sabrecat,
     Seeker,
     Skeever,
     Slaughterfish,
-    StormAtronach,
     Spider,
-    LargeSpider,
-    GiantSpider,
     Spriggan,
+    StormAtronach,
     Troll,
     VampireLord,
     Werewolf,
-    Wispmother,
     Wisp,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum ExtraRace {
-    None,
-    // base = canine
+    Wispmother,
     Wolf,
-    Dog,
-    // base = boar
-    BoarSingle,
-    BoarMounted,
 }
 
 fn get_race_map() -> HashMap<String, RaceKey> {
     HashMap::from([
-        ("Human".into(), (RaceType::Human, ExtraRace::None)),
-        ("Ash Hopper".into(), (RaceType::AshHopper, ExtraRace::None)),
-        ("Bear".into(), (RaceType::Bear, ExtraRace::None)),
-        ("Boar".into(), (RaceType::Boar, ExtraRace::BoarSingle)),
-        ("Boar (Any)".into(), (RaceType::Boar, ExtraRace::None)),
-        (
-            "Boar (Mounted)".into(),
-            (RaceType::Boar, ExtraRace::BoarMounted),
-        ),
-        ("Canine".into(), (RaceType::Canine, ExtraRace::None)),
-        ("Chaurus".into(), (RaceType::Chaurus, ExtraRace::None)),
-        (
-            "Chaurus Hunter".into(),
-            (RaceType::ChaurusHunter, ExtraRace::None),
-        ),
-        (
-            "Chaurus Reaper".into(),
-            (RaceType::ChaurusReaper, ExtraRace::None),
-        ),
-        ("Chicken".into(), (RaceType::Chicken, ExtraRace::None)),
-        ("Cow".into(), (RaceType::Cow, ExtraRace::None)),
-        ("Deer".into(), (RaceType::Deer, ExtraRace::None)),
-        ("Dog".into(), (RaceType::Canine, ExtraRace::Dog)),
-        (
-            "Dragon Priest".into(),
-            (RaceType::DragonPriest, ExtraRace::None),
-        ),
-        ("Dragon".into(), (RaceType::Dragon, ExtraRace::None)),
-        ("Draugr".into(), (RaceType::Draugr, ExtraRace::None)),
-        (
-            "Dwarven Ballista".into(),
-            (RaceType::DwarvenBallista, ExtraRace::None),
-        ),
-        (
-            "Dwarven Centurion".into(),
-            (RaceType::DwarvenCenturion, ExtraRace::None),
-        ),
-        (
-            "Dwarven Sphere".into(),
-            (RaceType::DwarvenSphere, ExtraRace::None),
-        ),
-        (
-            "Dwarven Spider".into(),
-            (RaceType::DwarvenSpider, ExtraRace::None),
-        ),
-        ("Falmer".into(), (RaceType::Falmer, ExtraRace::None)),
-        (
-            "Flame Atronach".into(),
-            (RaceType::FlameAtronach, ExtraRace::None),
-        ),
-        ("Fox".into(), (RaceType::Fox, ExtraRace::None)),
-        (
-            "Frost Atronach".into(),
-            (RaceType::FrostAtronach, ExtraRace::None),
-        ),
-        ("Gargoyle".into(), (RaceType::Gargoyle, ExtraRace::None)),
-        ("Giant".into(), (RaceType::Giant, ExtraRace::None)),
-        ("Goat".into(), (RaceType::Goat, ExtraRace::None)),
-        ("Hagraven".into(), (RaceType::Hagraven, ExtraRace::None)),
-        ("Horker".into(), (RaceType::Horker, ExtraRace::None)),
-        ("Horse".into(), (RaceType::Horse, ExtraRace::None)),
-        ("Ice Wraith".into(), (RaceType::IceWraith, ExtraRace::None)),
-        ("Lurker".into(), (RaceType::Lurker, ExtraRace::None)),
-        ("Mammoth".into(), (RaceType::Mammoth, ExtraRace::None)),
-        ("Mudcrab".into(), (RaceType::Mudcrab, ExtraRace::None)),
-        ("Netch".into(), (RaceType::Netch, ExtraRace::None)),
-        ("Rabbit".into(), (RaceType::Rabbit, ExtraRace::None)),
-        ("Riekling".into(), (RaceType::Riekling, ExtraRace::None)),
-        ("Sabrecat".into(), (RaceType::Sabrecat, ExtraRace::None)),
-        ("Seeker".into(), (RaceType::Seeker, ExtraRace::None)),
-        ("Skeever".into(), (RaceType::Skeever, ExtraRace::None)),
-        (
-            "Slaughterfish".into(),
-            (RaceType::Slaughterfish, ExtraRace::None),
-        ),
-        (
-            "Storm Atronach".into(),
-            (RaceType::StormAtronach, ExtraRace::None),
-        ),
-        ("Spider".into(), (RaceType::Spider, ExtraRace::None)),
-        (
-            "Large Spider".into(),
-            (RaceType::LargeSpider, ExtraRace::None),
-        ),
-        (
-            "Giant Spider".into(),
-            (RaceType::GiantSpider, ExtraRace::None),
-        ),
-        ("Spriggan".into(), (RaceType::Spriggan, ExtraRace::None)),
-        ("Troll".into(), (RaceType::Troll, ExtraRace::None)),
-        (
-            "Vampire Lord".into(),
-            (RaceType::VampireLord, ExtraRace::None),
-        ),
-        ("Werewolf".into(), (RaceType::Werewolf, ExtraRace::None)),
-        ("Wispmother".into(), (RaceType::Wispmother, ExtraRace::None)),
-        ("Wisp".into(), (RaceType::Wisp, ExtraRace::None)),
-        ("Wolf".into(), (RaceType::Canine, ExtraRace::Wolf)),
+        ("Human".into(), RaceKey::Human),
+        ("Ash Hopper".into(), RaceKey::AshHopper),
+        ("Bear".into(), RaceKey::Bear),
+        ("Boar".into(), RaceKey::BoarSingle),
+        ("Boar (Any)".into(), RaceKey::Boar),
+        ("Boar (Mounted)".into(), RaceKey::BoarMounted),
+        ("Canine".into(), RaceKey::Canine),
+        ("Chaurus".into(), RaceKey::Chaurus),
+        ("Chaurus Hunter".into(), RaceKey::ChaurusHunter),
+        ("Chaurus Reaper".into(), RaceKey::ChaurusReaper),
+        ("Chicken".into(), RaceKey::Chicken),
+        ("Cow".into(), RaceKey::Cow),
+        ("Deer".into(), RaceKey::Deer),
+        ("Dog".into(), RaceKey::Dog),
+        ("Dragon Priest".into(), RaceKey::DragonPriest),
+        ("Dragon".into(), RaceKey::Dragon),
+        ("Draugr".into(), RaceKey::Draugr),
+        ("Dwarven Ballista".into(), RaceKey::DwarvenBallista),
+        ("Dwarven Centurion".into(), RaceKey::DwarvenCenturion),
+        ("Dwarven Sphere".into(), RaceKey::DwarvenSphere),
+        ("Dwarven Spider".into(), RaceKey::DwarvenSpider),
+        ("Falmer".into(), RaceKey::Falmer),
+        ("Flame Atronach".into(), RaceKey::FlameAtronach),
+        ("Fox".into(), RaceKey::Fox),
+        ("Frost Atronach".into(), RaceKey::FrostAtronach),
+        ("Gargoyle".into(), RaceKey::Gargoyle),
+        ("Giant".into(), RaceKey::Giant),
+        ("Goat".into(), RaceKey::Goat),
+        ("Hagraven".into(), RaceKey::Hagraven),
+        ("Horker".into(), RaceKey::Horker),
+        ("Horse".into(), RaceKey::Horse),
+        ("Ice Wraith".into(), RaceKey::IceWraith),
+        ("Lurker".into(), RaceKey::Lurker),
+        ("Mammoth".into(), RaceKey::Mammoth),
+        ("Mudcrab".into(), RaceKey::Mudcrab),
+        ("Netch".into(), RaceKey::Netch),
+        ("Rabbit".into(), RaceKey::Hare),
+        ("Riekling".into(), RaceKey::Riekling),
+        ("Sabrecat".into(), RaceKey::Sabrecat),
+        ("Seeker".into(), RaceKey::Seeker),
+        ("Skeever".into(), RaceKey::Skeever),
+        ("Slaughterfish".into(), RaceKey::Slaughterfish),
+        ("Storm Atronach".into(), RaceKey::StormAtronach),
+        ("Spider".into(), RaceKey::Spider),
+        ("Large Spider".into(), RaceKey::LargeSpider),
+        ("Giant Spider".into(), RaceKey::GiantSpider),
+        ("Spriggan".into(), RaceKey::Spriggan),
+        ("Troll".into(), RaceKey::Troll),
+        ("Vampire Lord".into(), RaceKey::VampireLord),
+        ("Werewolf".into(), RaceKey::Werewolf),
+        ("Wispmother".into(), RaceKey::Wispmother),
+        ("Wisp".into(), RaceKey::Wisp),
+        ("Wolf".into(), RaceKey::Wolf),
     ])
 }
 
@@ -178,10 +125,10 @@ pub fn get_race_keys_string() -> Vec<String> {
     ret
 }
 
-pub fn get_race_key_bytes(race: &str) -> Option<[u8; 2]> {
+pub fn get_race_key_bytes(race: &str) -> Option<u8> {
     let map = get_race_map();
     if let Some(entry) = map.get(race) {
-        return Some([entry.0 as u8, entry.1 as u8]);
+        return Some(*entry as u8);
     }
     None
 }
