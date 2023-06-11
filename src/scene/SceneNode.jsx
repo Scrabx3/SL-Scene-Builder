@@ -7,9 +7,9 @@ import './SceneNode.css'
 
 const NODE_HEIGHT = 100;
 const NODE_WIDTH = 180;
-const START_COLOR = 'rgb(0, 255, 0, 0.8)';
+const START_COLOR = 'rgb(0, 88, 0)';
 const PORT_DEFAULTS = {
-  fill: 'rgb(240, 248, 255, 0.3)',
+  fill: 'rgb(201, 225, 195, 0.3)',
   stroke: 'black',
 }
 
@@ -105,11 +105,11 @@ function StageNode({ node, graph }) {
           <Space className='node-attribute-icons' size={10} wrap={false}>
             {!navText && !start ?
               <Tooltip title={'Missing navigation text'}>
-                <WarningOutlined style={{ fontSize: 20, color: makeColor(255, 155, 0) }} />
+                <WarningOutlined style={{ fontSize: 20, color: makeColor(255, 0, 0) }} />
               </Tooltip> : <></>}
             {start ?
               <Tooltip title={'Start Animation'}>
-                <ArrowRightOutlined style={{ fontSize: 20, color: makeColor(0, 255, 0) }} />
+                <ArrowRightOutlined style={{ fontSize: 20, color: makeColor(17, 175, 17) }} />
               </Tooltip> : <></>}
             {orgasm ?
               <Tooltip title={'Orgasm Stage'}>

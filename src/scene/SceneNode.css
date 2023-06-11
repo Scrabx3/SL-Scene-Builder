@@ -3,7 +3,7 @@
   width: 100%;
   color: black;
   border: rgba(33, 35, 48, 0.90);
-  background-color: rgb(240, 248, 255, 1);
+  background-color: rgb(221, 235, 217, 1);
   border-radius: 5px;
   border-style: double;
   border-width: 6px;
@@ -15,11 +15,9 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-
   margin: 5.25px;
   margin-left: 12px;
   margin-right: 12px;
-
   overflow: hidden;
 }
 
@@ -38,9 +36,10 @@
 
 .node-controll-button-holder {
   position: absolute;
+  display: block;
   margin-top: 4px;
   margin-right: 3px;
-  top: 0px;
-  right: 0px;
+  top: 5px;
+  right: 5px;
   z-index: 20;
 }
