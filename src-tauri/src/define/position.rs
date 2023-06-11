@@ -33,7 +33,6 @@ pub struct Extra {
     vampire: bool,
     climax: bool,
     dead: bool,
-    strapon: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -63,8 +62,7 @@ impl Position {
             self.extra.submissive as u8
                 + 2 * self.extra.optional as u8
                 + 4 * self.extra.vampire as u8
-                + 8 * self.extra.dead as u8
-                + 16 * self.extra.strapon as u8,
+                + 8 * self.extra.dead as u8,
         );
     }
 }

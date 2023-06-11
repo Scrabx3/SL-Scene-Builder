@@ -124,13 +124,6 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                   </div>
                 </Tooltip>
               </Col>
-              {/* <Col>
-                <Tooltip title={'The actor wears a strapon during the animation (female only). NOT INTENDET TO ALLOW FEMALES IN MALE POSITIONS'}>
-                  <div>
-                    <CheckboxEx obj={extra} label={'Strapon'} attr={'strapon'} disabled={!sex.female} updateFunc={updateExtra} />
-                  </div>
-                </Tooltip>
-              </Col> */}
               <Col>
                 <Tooltip title={'The actor animated in this position is unconscious/dead.'}>
                   <div>
