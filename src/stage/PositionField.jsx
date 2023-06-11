@@ -99,14 +99,14 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             {/* div here is necessary to avoid 'findDOMNode is depreciated' error */}
             <Row gutter={[8, 16]} justify={'space-between'}>
               <Col>
-                <Tooltip title={'Taker/Bottom position of the animation, if any.'}>
+                <Tooltip title={'Taker/Bottom position of the animation.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Submissive'} attr={'submissive'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'If this actor climaxes in this stage.'}>
+                <Tooltip title={'This actor climaxes in this stage.'}>
                   <div>
                     <Checkbox
                       checked={extra.climax}
@@ -118,12 +118,19 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'The animation assumes the actor to be a vampire.'}>
+                <Tooltip title={'This position must be a vampire.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Vampire'} attr={'vampire'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
+              {/* <Col>
+                <Tooltip title={'The actor wears a strapon during the animation (female only). NOT INTENDET TO ALLOW FEMALES IN MALE POSITIONS'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Strapon'} attr={'strapon'} disabled={!sex.female} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col> */}
               <Col>
                 <Tooltip title={'The actor animated in this position is unconscious/dead.'}>
                   <div>

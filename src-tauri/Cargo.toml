@@ -2,7 +2,7 @@
 name = "scene_builder"
 version = "0.1.0"
 description = "Tool to aid creating and maintaing SL animations"
-authors = ["Scrab Joséline"]
+authors = ["Scrab Joséline, I unpause"]
 license = ""
 repository = ""
 edition = "2021"
