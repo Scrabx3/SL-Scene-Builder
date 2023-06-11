@@ -7,8 +7,8 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "Scene-Builder",
-    "version": "0.0.0"
+    "productName": "SexLab Scene Builder",
+    "version": "0.9.0"
   },
   "tauri": {
     "allowlist": {
@@ -18,7 +18,12 @@
         "open": true
       },
       "dialog": {
-        "all": true
+        "all": true,
+        "ask": true,
+        "confirm": true,
+        "message": true,
+        "open": true,
+        "save": true
       }
     },
     "bundle": {
@@ -30,7 +35,12 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "category": "DeveloperTool",
+      "copyright": "Copyright Scrab 2023. All rights reserved.",
+      "identifier": "com.SexLabSceneBuilder.dev",
+      "appimage": {
+        "bundleMediaFramework": false
+      },
       "targets": "all"
     },
     "security": {

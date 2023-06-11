@@ -1,210 +1,294 @@
 #![cfg_attr(
-  all(not(debug_assertions), target_os = "windows"),
-  windows_subsystem = "windows"
+    all(not(debug_assertions), target_os = "windows"),
+    windows_subsystem = "windows"
 )]
-
-use substring::Substring;
-use tauri::{CustomMenuItem, Menu, MenuItem, Submenu, WindowBuilder, Manager, Runtime};
-use uuid::Uuid;
-
 mod define;
-mod data;
+mod racekeys;
+
+use define::{position::Position, project::Project, scene::Scene, stage::Stage, NanoID};
+use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Mutex,
+};
+use tauri::{CustomMenuItem, Manager, Menu, MenuItem, Runtime, Submenu, WindowBuilder};
+
+const DEFAULT_MAINWINDOW_TITLE: &str = "SexLab Scene Builder";
+
+pub static PROJECT: Lazy<Mutex<Project>> = Lazy::new(|| {
+    let prjct = Project::new();
+    Mutex::new(prjct)
+});
+
+static EDITED: AtomicBool = AtomicBool::new(false);
+#[inline]
+fn set_edited(val: bool) -> () {
+    EDITED.store(val, Ordering::Relaxed)
+}
+#[inline]
+fn get_edited() -> bool {
+    EDITED.load(Ordering::Relaxed)
+}
+
+// TODO: setup logger
 
 /// MAIN
-fn main()
-{
-  tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![
-      blank_animation,
-      save_animation,
-      delete_animation,
-      get_stage_by_id,
-      delete_stage,
-      stage_creator,
-      stage_creator_from,
-      get_stage,
-      save_stage,
-      make_position])
-    .setup(|app| {
-      let window = WindowBuilder::new(
-          app,
-          "main_window".to_string(),
-          tauri::WindowUrl::App("index.html".into()),
-        )
-        .title("SexLab Scene Builder")
-        .menu(tauri::Menu::new()
-          .add_submenu(tauri::Submenu::new("File", tauri::Menu::new()
-              .add_item(tauri::CustomMenuItem::new("new_prjct", "New Project").accelerator("cmdOrControl+N"))
-          ))
-        )
-        .build()
-        .expect("Failed to create main window");
-      window.on_window_event(|event| match event {
-        tauri::WindowEvent::CloseRequested {
-          api, ..
-        } => {
-          println!("on_window_event CloseRequest");
-          std::process::exit(0);
-        }
-        _ => {}
-      });
-      Ok(())
-    })
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+fn main() {
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            request_project_update,
+            get_race_keys,
+            create_blank_scene,
+            save_scene,
+            delete_scene,
+            open_stage_editor,
+            open_stage_editor_from,
+            stage_save_and_close,
+            make_position,
+        ])
+        .setup(|app| {
+            let window = WindowBuilder::new(
+                app,
+                "main_window".to_string(),
+                tauri::WindowUrl::App("./index.html".into()),
+            )
+            .title(DEFAULT_MAINWINDOW_TITLE)
+            .menu(
+                Menu::new().add_submenu(Submenu::new(
+                    "File",
+                    Menu::new()
+                        .add_item(
+                            CustomMenuItem::new("new_prjct", "New Project")
+                                .accelerator("cmdOrControl+N"),
+                        )
+                        .add_item(
+                            CustomMenuItem::new("open_prjct", "Open Project")
+                                .accelerator("cmdOrControl+O"),
+                        )
+                        .add_native_item(MenuItem::Separator)
+                        .add_item(
+                            CustomMenuItem::new("save", "Save")
+                                .accelerator("cmdOrControl+S"),
+                        )
+                        .add_item(
+                            CustomMenuItem::new("save_as", "Save As...")
+                                .accelerator("cmdOrControl+Shift+S"),
+                        )
+                        .add_item(
+                            CustomMenuItem::new("build", "Export")
+                                .accelerator("cmdOrControl+B"),
+                        )
+                        .add_native_item(MenuItem::Separator)
+                        .add_native_item(MenuItem::Quit),
+                )),
+            )
+            .build()
+            .expect("Failed to create main window");
+            let menu_handle = app.app_handle();
+            window.on_menu_event(move |event| match event.menu_item_id() {
+                "new_prjct" | "open_prjct" => {
+                    let window = menu_handle.get_window("main_window").unwrap();
+                    let mut prjct = PROJECT.lock().unwrap();
+                    if get_edited() {
+                        let ask_handle = menu_handle.app_handle();
+                        tauri::api::dialog::ask(
+                            Some(&window),
+                            if event.menu_item_id() == "new_prjct" {"New Project"} else {"Open Project"},
+                            "There are unsaved changes. Loading a new project will cause these changes to be lost.\nContinue?", {move |r| {
+                                if !r {
+                                    return;
+                                }
+                                let window = ask_handle.get_window("main_window").unwrap();
+                                let mut prjct = PROJECT.lock().unwrap();
+                                if event.menu_item_id() == "new_prjct" {
+                                    prjct.reset();
+                                    let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
+                                } else {
+                                    prjct.load_project().unwrap();
+                                    let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
+                                }
+                                window.emit("on_project_update", &prjct.scenes).unwrap();
+                                set_edited(false);
+                            }});
+                        return;
+                    }
+                    if event.menu_item_id() == "new_prjct" {
+                        prjct.reset();
+                        let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
+                    } else {
+                        prjct.load_project().unwrap();
+                        let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
+                    }
+                    window.emit("on_project_update", &prjct.scenes).unwrap();
+                }
+                "save" | "save_as" => {
+                    let mut prjct = PROJECT.lock().unwrap();
+                    let r = prjct
+                        .save_project(event.menu_item_id() == "save_as");
+                    if let Err(e) = r {
+                        println!("{}", e);
+                        return;
+                    }
+                    set_edited(false);
+                    let window = menu_handle.get_window("main_window").unwrap();
+                    let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
+                }
+                "build" => {
+                    let r = PROJECT.lock().unwrap().build();
+                    if let Err(e) = r {
+                        println!("{}", e);
+                    }
+                }
+                _ => {}
+            });
+            window.on_window_event(|event| match event {
+                tauri::WindowEvent::CloseRequested { api, .. } => {
+                    if get_edited() {
+                        let do_close = tauri::api::dialog::blocking::MessageDialogBuilder::new(
+                            "Close",
+                            "There are unsaved changes. Are you sure you want to close?")
+                        .buttons(tauri::api::dialog::MessageDialogButtons::YesNo)
+                        .kind(tauri::api::dialog::MessageDialogKind::Warning)
+                        .show();
+                        if !do_close {
+                            api.prevent_close();
+                            return;
+                        }
+                    }
+                    std::process::exit(0);
+                }
+                _ => {}
+            });
+            Ok(())
+        })
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
 
 /// COMMANDS
 
-const STAGE_EDITOR_LABEL: &str = "stage_editor";
+#[tauri::command]
+async fn request_project_update<R: Runtime>(window: tauri::Window<R>) -> () {
+    let prjct = PROJECT.lock().unwrap();
+    window.emit("on_project_update", &prjct.scenes).unwrap();
+}
+
+#[tauri::command]
+async fn get_race_keys() -> Vec<String> {
+    racekeys::get_race_keys_string()
+}
 
 /* Scene */
 
 #[tauri::command]
-async fn blank_animation<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>) -> define::Animation {
-  define::Animation::default()
+fn create_blank_scene() -> Scene {
+    Scene::default()
 }
 
 #[tauri::command]
-async fn save_animation<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>, animation: define::Animation) -> define::Animation {
-  data::DATA.lock().unwrap()
-    .insert_animation(animation)
-    .clone()
+fn save_scene<R: Runtime>(window: tauri::Window<R>, scene: Scene) -> () {
+    set_edited(true);
+    if let Ok(title) = window.title() {
+        if !title.ends_with('*') {
+            window.set_title(format!("{}*", title).as_str()).unwrap();
+        }
+    }
+    PROJECT.lock().unwrap().save_scene(scene);
 }
 
 #[tauri::command]
-async fn delete_animation<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>, id: Uuid) -> Result<define::Animation, String> {
-  data::DATA.lock().unwrap()
-    .remove_animation(&id)
-    .ok_or("Given id does not represent a valid stage".into())
+fn delete_scene<R: Runtime>(window: tauri::Window<R>, id: NanoID) -> Result<Scene, String> {
+    let ret = PROJECT.lock().unwrap().discard_scene(&id).ok_or(format!(
+        "Given id [{}] does not represent an existing scene",
+        id.to_string()
+    ));
+
+    if ret.is_ok() {
+        set_edited(true);
+        if let Ok(title) = window.title() {
+            if !title.ends_with('*') {
+                window.set_title(format!("{}*", title).as_str()).unwrap();
+            }
+        }
+    }
+
+    ret
 }
 
 /* Stage */
 
-fn open_stage_window<R: Runtime>(app: tauri::AppHandle<R>, label: &String, name: &String) -> ()
-{
-  // 1024×768
-  let window = tauri::WindowBuilder::new(
-      &app,
-      label,
-      tauri::WindowUrl::App("./stage.html".into())
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct EditorPayload {
+    pub stage: Stage,
+    pub control: Option<Stage>,
+}
+
+fn open_stage_editor_impl<R: Runtime>(app: &tauri::AppHandle<R>, payload: EditorPayload) -> () {
+    let ref stage = payload.stage;
+    let window = tauri::WindowBuilder::new(
+        app,
+        format!("stage_editor_{}", stage.id),
+        tauri::WindowUrl::App("./stage.html".into()),
     )
-    .title(format!("Stage Editor [{}]", name))
+    .title(if stage.name.is_empty() {
+        "Stage Editor [Untitled]".into()
+    } else {
+        format!("Stage Editor [{}]", stage.name.as_str())
+    })
     .build()
     .unwrap();
-  if let Err(e) = window.set_size(tauri::Size::Physical(tauri::PhysicalSize{width: 1024, height: 768})) {
-    println!("Failed to set window size: {}", e);
-    return;
-  }
-  if let Err(e) = window.set_resizable(false) {
-    println!("Failed to disable resize on window: {}", e);
-    return;
-  }
+    let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+        width: 1024,
+        height: 768,
+    }));
+    let _ = window.set_resizable(false);
+    window.clone().once("on_request_data", move |_event| {
+        window.emit("on_data_received", payload).unwrap();
+    });
 }
 
 #[tauri::command]
-async fn get_stage_by_id<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>, id: Uuid) -> Result<define::Stage, String> {
-  data::DATA.lock()
-    .unwrap()
-    .get_stage(&id)
-    .ok_or(format!("No stage with given ID: {}", id.to_string()))
-    .and_then(|stage| { Ok(stage.clone()) })
+async fn open_stage_editor<R: Runtime>(
+    app: tauri::AppHandle<R>,
+    stage: Option<Stage>,
+    control: Option<Stage>,
+) -> () {
+    let stage = stage.unwrap_or(Stage::from_count(
+        control
+            .as_ref()
+            .and_then(|stage| Some(stage.positions.len()))
+            .unwrap_or(1),
+    ));
+    open_stage_editor_impl(&app, EditorPayload { stage, control });
 }
 
 #[tauri::command]
-async fn stage_creator<R: Runtime>(app: tauri::AppHandle<R>, id: Option<Uuid>)
-{
-  let id = id.unwrap_or(Uuid::nil());
-  let label = format!("{}{}", STAGE_EDITOR_LABEL, id);
-  if let Some(window) = app.get_window(&label) {
-    if window.unminimize().is_ok() && window.set_focus().is_ok() {
-      return;
-    }
-    window.close().expect(format!("Stage editor window {} does not react", label).as_str());
-  }
-  let name = data::DATA.lock().unwrap()
-    .get_stage(&id)
-    .and_then(|stage| { Some(stage.name.clone()) })
-    .unwrap_or(String::from("UNTITLED"));
-
-  open_stage_window(app, &label, &name);
+async fn open_stage_editor_from<R: Runtime>(app: tauri::AppHandle<R>, control: Stage) -> () {
+    let mut stage = Stage::from_count(control.positions.len());
+    stage.tags = control.tags.clone();
+    let payload = EditorPayload {
+        stage,
+        control: Some(control),
+    };
+    open_stage_editor_impl(&app, payload);
 }
 
 #[tauri::command]
-async fn stage_creator_from<R: Runtime>(app: tauri::AppHandle<R>, _window: tauri::Window<R>, id: Uuid) -> Result<(), String> {
-  let mut data = data::DATA.lock().unwrap();
-  let original = data.get_stage(&id);
-  match original {
-    None => { return Err("Invalid id".into()); }
-    Some(stage) => {
-      let tmp = define::Stage::from(stage);
-      let res = data.insert_stage(tmp);
-      open_stage_window(app, &format!("{}{}", STAGE_EDITOR_LABEL, res.id), &res.name);
-    }
-  }
-  Ok(())
-}
-
-#[tauri::command]
-fn get_stage<R: Runtime>(_app: tauri::AppHandle<R>, window: tauri::Window<R>) -> define::Stage {
-  let label = window.label();
-  Uuid::parse_str(label.substring(STAGE_EDITOR_LABEL.len(), label.len()))
-    .and_then(|id| {
-      if !id.is_nil() {
-        let data = data::DATA.lock().unwrap();
-        let somestage = data.get_stage(&id);
-        match somestage {
-          Some(it) => {return Ok(it.clone());},
-          None => {println!("Invalid Stage ID: {}", id)},
-        }
-      }
-      Ok(define::Stage::default())
-    })
-    .unwrap_or_else(|e| {print!("{}", e); define::Stage::default()})
-}
-
-#[tauri::command]
-async fn save_stage<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, stage: define::Stage) -> () {
-  let mut data = data::DATA.lock().unwrap();
-  let stage_ref = data.insert_stage(stage);
-
-  app.get_window("main_window")
-    .expect("Unable to get main window")
-    .emit("save_stage", stage_ref)
-    .expect("Failed to send callback event to main window");
-
-  window.close().expect("Failed to close stage builder window");
-}
-
-#[tauri::command]
-async fn delete_stage<R: Runtime>(_app: tauri::AppHandle<R>, window: tauri::Window<R>, id: Uuid) -> Result<bool, String> {
-  let mut data = data::DATA.lock().unwrap();
-  let count = data.get_stage_usage_count(&id);
-  if count > 0 {
-    let res = tauri::api::dialog::blocking::confirm(
-      Some(&window),
-      "Delete Stage", 
-      format!("This stage is referenced by {} scenes. Are you sure you want to delete it?", count)
-    );
-    if !res {
-      return Ok(false);
-    }
-  }
-  if data.remove_stage(&id).is_none() {
-    return Err(format!("Invalid stage id {}", id.to_string()));
-  }
-  Ok(true)
+async fn stage_save_and_close<R: Runtime>(
+    app: tauri::AppHandle<R>,
+    window: tauri::Window<R>,
+    stage: Stage,
+) -> () {
+    // IDEA: make give this event some unique id to allow
+    // front end distinguish the timings at which some stage editor has been opened
+    app.emit_to("main_window", "on_stage_saved", stage).unwrap();
+    let _ = window.close();
 }
 
 /* Position related */
 
-// IDEA: allow copy initialize a new position on front end?
-// #[tauri::command]
-// async fn make_position_from<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, from: define::Position) -> Result<(), String> {
-//   Ok(())
-// }
-
 #[tauri::command]
-fn make_position<R: Runtime>(_app: tauri::AppHandle<R>, _window: tauri::Window<R>) -> define::Position {
-  define::Position::default()
+fn make_position() -> Position {
+    Position::default()
 }

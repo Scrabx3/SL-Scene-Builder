@@ -12,7 +12,6 @@
   "dependencies": {
     "@antv/x6": "^2.9.7",
     "@antv/x6-plugin-history": "^2.2.2",
-    "@antv/x6-plugin-selection": "^2.1.7",
     "@antv/x6-react-shape": "^2.1.2",
     "@tauri-apps/api": "^1.2.0",
     "antd": "^5.4.4",

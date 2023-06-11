@@ -1,30 +1,22 @@
-import React, { useState, forwardRef, useImperativeHandle } from "react";
+import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import { Button, Card, Checkbox, Col, Input, Row, Select, Space, Tooltip, InputNumber } from "antd";
-import { raceKeys } from "../common/RaceKeys";
+import { invoke } from "@tauri-apps/api";
 import { useImmer } from "use-immer";
 import './PositionField.css'
 
-const PositionField = forwardRef(function PositionField({ position, constraints }, ref) {
-  const [event, setEvent] = useState(position.event);
-  const [race, setRace] = useState(position.race);
-  const [sex, updateSex] = useImmer(position.sex || {
-    male: true,
-    female: false,
-    futa: false
-  });
-  const [extra, updateExtra] = useImmer(position.extra || {
-    submissive: false,
-    optional: false,
-    vampire: false,
-    dead: false,
-  });
-  const [offset, updateOffset] = useImmer(position.offset || {
-    x: undefined,
-    y: undefined,
-    z: undefined,
-    rot: undefined,
-  });
+const PositionField = forwardRef(function PositionField({ _position, _control }, ref) {
+  const [event, setEvent] = useState(_position.event);
+  const [race, setRace] = useState(_control && _control.race || _position.race);
+  const [sex, updateSex] = useImmer(_control && _control.sex || _position.sex);
+  const [extra, updateExtra] = useImmer(_control && _control.id !== _position.id ? { ..._control.extra, climax: false } : _position.extra);
+  const [offset, updateOffset] = useImmer(_control && _control.offset || _position.offset);
+  const [scale, setScale] = useState(_control && _control.scale || _position.scale);
+  const [anim_obj, setAnimObj] = useState(_position.anim_obj);
+  const [raceKeys, setRaceKeys] = useState([]);
 
+  useEffect(() => {
+    invoke('get_race_keys').then(result => setRaceKeys(result));
+  }, []);
 
   useImperativeHandle(ref, () => {
     return {
@@ -33,19 +25,21 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
           event,
           race,
           sex,
+          scale,
           extra,
           offset,
+          anim_obj,
         };
       }
     };
-  }, [event, race, sex, extra, offset]);
+  });
 
   function CheckboxEx({ obj, label, disabled, attr, updateFunc }) {
     return (
       <Checkbox
         onChange={(e) => { updateFunc(prev => { prev[attr] = e.target.checked }) }}
         checked={obj[attr] && !disabled}
-        disabled={disabled || false}
+        disabled={!!_control || disabled || false}
       >
         {label}
       </Checkbox>
@@ -61,6 +55,7 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
             <Select
               className='position-race-select'
               defaultValue={race}
+              disabled={!!_control}
               showSearch
               placeholder="Position race"
               optionFilterProp="children"
@@ -79,25 +74,9 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
             extra={<Tooltip title={'The sexes compatible with this position. Tick all that apply.'}><Button type="link">Info</Button></Tooltip>}
           >
             <Space size={'large'}>
-              <CheckboxEx
-                obj={sex}
-                label={'Male'}
-                attr={'male'}
-                updateFunc={updateSex}
-              />
-              <CheckboxEx
-                obj={sex}
-                label={'Female'}
-                attr={'female'}
-                updateFunc={updateSex}
-              />
-              <CheckboxEx
-                obj={sex}
-                label={'Futa'}
-                disabled={race !== 'Human'}
-                attr={'futa'}
-                updateFunc={updateSex}
-              />
+              <CheckboxEx obj={sex} label={'Male'} attr={'male'} updateFunc={updateSex} />
+              <CheckboxEx obj={sex} label={'Female'} attr={'female'} updateFunc={updateSex} />
+              <CheckboxEx obj={sex} label={'Futa'} disabled={race !== 'Human'} attr={'futa'} updateFunc={updateSex} />
             </Space>
           </Card>
         </Col>
@@ -113,37 +92,56 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
         </Col>
 
         <Col span={12}>
-          {/* Meta */}
-          <Card className="position-attribute-card" title={'Meta Data'}
-            extra={<Tooltip title={'Meta data describing this position. Hover options for more info.'}><Button type="link">Info</Button></Tooltip>}
+          {/* Data */}
+          <Card className="position-attribute-card" title={'Data'}
+            extra={<Tooltip title={'Data describing this position. Hover options for more info.'}><Button type="link">Info</Button></Tooltip>}
           >
             {/* div here is necessary to avoid 'findDOMNode is depreciated' error */}
-            <Row gutter={[12, 12]}>
-              <Col span={12}>
-                <Tooltip title={'Taker/Bottom position of the animation, if any. There may only be 1 submissive position per scene.'}>
+            <Row gutter={[8, 16]} justify={'space-between'}>
+              <Col>
+                <Tooltip title={'Taker/Bottom position of the animation.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Submissive'} attr={'submissive'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
-              <Col span={12}>
-                <Tooltip title={'A position that is not mandatory for the scene to play out correctly.'}>
+              <Col>
+                <Tooltip title={'This actor climaxes in this stage.'}>
                   <div>
-                    <CheckboxEx obj={extra} label={'Optional'} attr={'optional'} updateFunc={updateExtra} />
+                    <Checkbox
+                      checked={extra.climax}
+                      onChange={(e) => { updateExtra(prev => { prev.climax = e.target.checked }) }}
+                    >
+                      Climax
+                    </Checkbox>
                   </div>
                 </Tooltip>
               </Col>
-              <Col span={12}>
-                <Tooltip title={'The animation assumes the actor to be a vampire.'}>
+              <Col>
+                <Tooltip title={'This position must be a vampire.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Vampire'} attr={'vampire'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
-              <Col span={12}>
+              {/* <Col>
+                <Tooltip title={'The actor wears a strapon during the animation (female only). NOT INTENDET TO ALLOW FEMALES IN MALE POSITIONS'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Strapon'} attr={'strapon'} disabled={!sex.female} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col> */}
+              <Col>
                 <Tooltip title={'The actor animated in this position is unconscious/dead.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Unconscious'} attr={'dead'} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col>
+              <Col>
+                <Tooltip title={'A position that is not mandatory for the scene to play out correctly.'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Optional'} attr={'optional'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
@@ -181,6 +179,32 @@ const PositionField = forwardRef(function PositionField({ position, constraints 
                 />
               </Col>
             </Row>
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card className="position-attribute-card" title={'Scale'}
+            extra={<Tooltip title={'This positions scale info'}><Button type="link">Info</Button></Tooltip>}
+          >
+            <InputNumber addonBefore={'Factor'} controls decimalSeparator=","
+              precision={2} min={0.5} max={1.9} step={0.01}
+              value={scale} onChange={(e) => { setScale(e) }}
+              placeholder="1.0"
+              disabled={!!_control}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card className="position-attribute-card" title={'Stripping'}
+            extra={<Tooltip title={'The items this position should strip in this stage'}><Button type="link">Info</Button></Tooltip>}
+          >
+            <p>PLACEHOLDER</p>
+          </Card>
+        </Col>
+        <Col span={8}>
+          {/* behavior file */}
+          <Card className="position-attribute-card" title={'Anim Object'}
+            extra={<Tooltip title={'The anim object(s) associated with this position. If multiple, separate with commas (,)'}><Button type="link">Info</Button></Tooltip>}>
+            <Input value={anim_obj} onChange={(e) => { setAnimObj(e.target.value) }} placeholder="Editor ID"/>
           </Card>
         </Col>
       </Row>

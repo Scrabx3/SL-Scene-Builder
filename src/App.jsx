@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useImmer } from "use-immer";
 import { invoke } from "@tauri-apps/api/tauri";
-import { listen } from "@tauri-apps/api/event";
+import { listen, emit } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { History } from "@antv/x6-plugin-history";
-import { Selection } from "@antv/x6-plugin-selection";
 import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification, Divider, Switch } from 'antd'
 import {
   ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, DiffOutlined, ZoomInOutlined, ZoomOutOutlined,
@@ -87,31 +86,22 @@ function App() {
       .zoomTo(1.0)
       .use(new History({
         enabled: true,
-      }))
-      .use(new Selection({
-        enabled: true,
-        showNodeSelectionBox: true,
-        multiple: true,
-        movable: true,
-        rubberband: true,
-        modifiers: ['ctrl']
       }));
 
-    newGraph.on("node:removed", ({ node }) => {
-      if (inEdit.current) {
-        return;
-      }
-      updateActiveScene(prev => {
-        if (prev.start_animation === node.id) {
-          prev.start_animation = null;
-        }
+    newGraph
+      // Node Events
+      .on("node:removed", ({ node }) => {
+        if (inEdit.current) return;
+        updateActiveScene(prev => {
+          if (prev.root === node.id) {
+            prev.root = null;
+          }
+          prev.stages = prev.stages.filter(it => it.id !== node.id);
+        })
+        setEdited(true);
       })
-      setEdited(true);
-    })
       .on("node:added", (evt) => {
-        if (inEdit.current) {
-          return;
-        }
+        if (inEdit.current) return;
         setEdited(true);
       })
       .on("node:moved", ({ e, x, y, node, view }) => {
@@ -125,9 +115,7 @@ function App() {
         });
         setEdited(true);
       })
-      .on('node:dblclick', ({ node }) => {
-        invoke('stage_creator', { id: node.id });
-      })
+      // Edge Events
       .on("edge:contextmenu", ({ e, x, y, edge, view }) => {
         e.stopPropagation();
         edge.remove();
@@ -136,15 +124,20 @@ function App() {
       .on("edge:connected", (e) => {
         setEdited(true);
       })
-      .on("node:doMarkRoot", ({ newRoot }) => {
+      // Custom Events
+      .on("node:doMarkRoot", ({ node }) => {
         updateActiveScene(prev => {
-          const cell = newGraph.getCellById(prev.start_animation);
+          const cell = newGraph.getCellById(prev.root);
           if (cell) { cell.prop('isStart', false); }
-          newRoot.prop('isStart', true);
-          prev.start_animation = newRoot.id;
+          node.prop('isStart', true);
+          prev.root = node.id;
         });
         setEdited(true);
-      });
+      })
+      .on("node:clone", ({ node }) => {
+        invoke('open_stage_editor_from', { control: node.prop('stage') });
+      })
+
     setGraph(newGraph);
     return () => {
       newGraph.clearCells();
@@ -155,9 +148,33 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!graph) return;
+
+    const editStage = (node) => {
+      let stage = node.prop('stage');
+      console.assert(activeScene.stages.findIndex(it => it.id === stage.id) > -1, "Editing stage that does not belong to active scene: ", stage, activeScene);
+      let control = activeScene.stages.length === 1 ? null : stage;
+      invoke('open_stage_editor', { stage, control });
+    }
+
+    graph
+      .on('node:dblclick', ({ node }) => {
+        editStage(node);
+      })
+      .on("node:edit", ({ node }) => {
+        editStage(node);
+      })
+    return () => {
+      graph.off('node:dblclick');
+      graph.off('node:edit');
+    }
+  }, [graph, activeScene])
+
+  useEffect(() => {
     // Callback after stage has been saved in other window
-    const unlisten = listen('save_stage', (event) => {
+    const unlisten = listen('on_stage_saved', (event) => {
       const stage = event.payload;
+      console.log("Saving new stage", stage);
       const nodes = graph.getNodes();
       let node = nodes.find(node => node.id === stage.id);
       if (!node) node = addStageToGraph(stage);
@@ -169,11 +186,50 @@ function App() {
           element.remove();
         }
       }
+      updateActiveScene(prev => {
+        let idx = prev.stages ? prev.stages.findIndex(it => it.id === stage.id) : -1;
+        if (idx === -1) {
+          prev.stages.push(stage)
+          if (prev.stages.length === 1) {
+            node.prop('isStart', true);
+            prev.root = stage.id;
+          }
+        } else {
+          prev.stages[idx] = stage;
+        }
+      });
+      setEdited(true);
     });
     return () => {
       unlisten.then(res => { res() });
     }
-  }, [activeScene, graph])
+  }, [graph, activeScene])
+
+  useEffect(() => {
+    if (!graph) return;
+    const unlisten = listen('on_project_update', (event) => {
+      const stage_map = event.payload;
+      const scns = [];
+      for (const key in stage_map) {
+        if (Object.hasOwnProperty.call(stage_map, key)) {
+          const element = stage_map[key];
+          scns.push(element);
+        }
+      }
+      console.log("Opening new Project with Scenes: ", scns);
+      updateScenes(scns);
+      setEdited(false);
+      if (scns.length) {
+        setActiveScene(scns[0]);
+      } else {
+        updateActiveScene(null);
+      }
+    });
+    invoke('request_project_update');
+    return () => {
+      unlisten.then(res => { res() });
+    }
+  }, [graph])
 
   const clearGraph = () => {
     if (graph.getCellCount() == 0)
@@ -209,20 +265,17 @@ function App() {
     graph.clearCells();
     updateActiveScene(newscene);
     for (const [key, { x, y }] of Object.entries(newscene.graph)) {
-      try {
-        const stage = await invoke('get_stage_by_id', { id: key })
-        const node = addStageToGraph(stage, x, y);
-        updateNodeProps(stage, node, newscene);
-      } catch (error) {
-        console.log(error);
-      }
+      const stage = newscene.stages.find(stage => stage.id === key);
+      const node = addStageToGraph(stage, x, y);
+      updateNodeProps(stage, node, newscene);
     }
     const nodes = graph.getNodes();
-    for (const [sourceid, { edges }] of Object.entries(newscene.graph)) {
+    for (const [sourceid, { dest }] of Object.entries(newscene.graph)) {
+      if (!dest.length) continue;
       const sourceNode = nodes.find(node => node.id === sourceid);
       if (!sourceNode) continue;
       const sourcePort = sourceNode.ports.items[0];
-      edges.forEach(targetid => {
+      dest.forEach(targetid => {
         const target = nodes.find(node => node.id === targetid);
         if (!target) return;
         graph.addEdge({
@@ -251,11 +304,9 @@ function App() {
   }
 
   const updateNodeProps = (stage, node, belongingScene) => {
-    node.prop('name', stage.name);
-    node.prop('isOrgasm', stage.extra.is_orgasm);
+    node.prop('stage', stage);
     node.prop('fixedLen', stage.extra.fixed_len);
-    node.prop('navText', stage.extra.nav_text);
-    node.prop('isStart', belongingScene && belongingScene.start_animation === stage.id);
+    node.prop('isStart', belongingScene && belongingScene.root === stage.id);
   }
 
   const saveScene = () => {
@@ -273,7 +324,7 @@ function App() {
       doSave = false;
     }
     const nodes = graph.getNodes();
-    const startNode = nodes.find(node => node.id === activeScene.start_animation);
+    const startNode = nodes.find(node => node.id === activeScene.root);
     if (!startNode) {
       api['error']({
         message: 'Missing Start Animation',
@@ -292,7 +343,7 @@ function App() {
       }
     }
 
-    if (!doSave) {
+    if (!doSave || !edited) {
       return;
     }
     // api['success']({
@@ -310,7 +361,7 @@ function App() {
           const edges = graph.getOutgoingEdges(node);
           const value = edges ? edges.map(e => e.getTargetCellId()) : [];
           ret[node.id] = {
-            edges: value,
+            dest: value,
             x: position.x,
             y: position.y,
           };
@@ -318,7 +369,7 @@ function App() {
         return ret;
       }()
     };
-    invoke('save_animation', { animation: scene }).then((scene) => {
+    invoke('save_scene', { scene }).then(() => {
       updateActiveScene(scene);
       updateScenes(prev => {
         const w = prev.findIndex(it => it.id === scene.id);
@@ -329,6 +380,7 @@ function App() {
         }
       });
       setEdited(false);
+      console.log("Saved Scene", scene);
     });
   }
 
@@ -355,7 +407,7 @@ function App() {
     const scene = scenes.find(scene => scene.id === id);
     switch (option) {
       case 'add':
-        const new_anim = await invoke('blank_animation');
+        const new_anim = await invoke('create_blank_scene');
         setActiveScene(new_anim);
         break;
       case 'editanim':
@@ -369,7 +421,7 @@ function App() {
             content: `Are you sure you want to delete the scene '${scene.name}'?\n\nThis action cannot be undone.`,
             onOk() {
               try {
-                invoke('delete_animation', { id });
+                invoke('delete_scene', { id });
                 updateScenes(prev => prev.filter(scene => scene.id !== id));
                 if (activeScene && activeScene.id === id) {
                   updateActiveScene(null);
@@ -418,8 +470,8 @@ function App() {
                 </Space.Compact> : <></>}
               extra={
                 <Space.Compact block>
-                  <Button onClick={() => { invoke('stage_creator', {}); }}>Add Stage</Button>
-                  <Button onClick={saveScene} type="primary">Save</Button>
+                  <Button onClick={() => { invoke('open_stage_editor', { control: activeScene.stages[0] }); }}>Add Stage</Button>
+                  <Button onClick={saveScene} type="primary">Store</Button>
                 </Space.Compact>}
               bodyStyle={{ height: 'calc(100% - 55px)' }}
             >

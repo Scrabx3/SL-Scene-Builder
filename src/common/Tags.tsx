@@ -1,9 +1,3 @@
-export const tagsExclusive: Array<String> = [
-  "DisallowBed",
-  "BedOnly",
-  "Furniture"
-];
-
 export const tagsNSFW: Array<String> = [
   "69",
   "Aggressive",
@@ -12,32 +6,38 @@ export const tagsNSFW: Array<String> = [
   "Blowjob",
   "Boobjob",
   "Cowgirl",
+  "Cunnilingius",
   "Deepthroat",
   "Doggy",
+  "Dominant",
   "Double Penetration",
+  "Face Sitting",
   "Feet",
   "Femdom",
   "Footjob",
   "Forced",
   "Gay",
   "Handjob",
+  "Lead In",
   "Lesbian",
-  "Loving",
+  "Maledom",
   "Masturbation",
   "Missionary",
   "Oral",
   "Penetration",
   "Reverse Cowgirl",
   "Spitroast",
-  "Threesome",
   "Triple Penetration",
   "Vaginal"
 ];
 
 export const tagsSFW: Array<String> = [
+  "Behind",
+  "Facing",
   "Hugging",
   "Kissing",
   "Kneeling",
-  "Standing",
-  "Lying"
+  "Loving",
+  "Lying",
+  "Standing"
 ];

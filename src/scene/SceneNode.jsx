@@ -37,16 +37,14 @@ function StageNode({ node, graph }) {
   const [hovered, setHover] = useState(false);
   // const ports = graph.findViewByCell(node).container.querySelectorAll('.x6-port-body');
 
-  const label = node.prop('name');
+  const stage = node.prop('stage');
   const start = node.prop('isStart');
-  const navText = node.prop('navText');
-  const orgasm = node.prop('isOrgasm');
   const fixedLen = node.prop('fixedLen');
 
-  const color =
-    orgasm ? makeColor(233, 192, 233, 1) :
-      fixedLen ? makeColor(175, 235, 255, 1) :
-        undefined;
+  const label = stage.name;
+  const navText = stage.extra.nav_text;
+  const orgasm = stage.positions.find(pos => pos.extra.climax) !== undefined;
+  const color = fixedLen ? makeColor(175, 235, 255, 1) : undefined;
 
   node.prop('ports/groups/default/attrs/path/stroke', start ? START_COLOR : PORT_DEFAULTS.stroke);
   node.prop('ports/groups/default/attrs/path/fill', color ? color : PORT_DEFAULTS.fill);
@@ -62,11 +60,11 @@ function StageNode({ node, graph }) {
   ];
 
   const editStage = () => {
-    invoke('stage_creator', { id: node.id });
+    graph.emit("node:edit", { node });
   }
 
   const cloneStage = () => {
-    invoke('stage_creator_from', { id: node.id });
+    graph.emit("node:clone", { node });
   }
 
   const onContextSelect = ({ key, keyPath, domEvent }) => {
@@ -78,7 +76,7 @@ function StageNode({ node, graph }) {
         cloneStage();
         break;
       case 'makeroot':
-        graph.emit("node:doMarkRoot", { newRoot: node });
+        graph.emit("node:doMarkRoot", { node });
         break;
       case 'removeconnections':
         const edges = graph.getConnectedEdges(node);
@@ -105,7 +103,7 @@ function StageNode({ node, graph }) {
         }}>
         <Row className='node-header'>
           <Space className='node-attribute-icons' size={10} wrap={false}>
-            {!navText ?
+            {!navText && !start ?
               <Tooltip title={'Missing navigation text'}>
                 <WarningOutlined style={{ fontSize: 20, color: makeColor(255, 0, 0) }} />
               </Tooltip> : <></>}
@@ -113,13 +111,13 @@ function StageNode({ node, graph }) {
               <Tooltip title={'Start Animation'}>
                 <ArrowRightOutlined style={{ fontSize: 20, color: makeColor(17, 175, 17) }} />
               </Tooltip> : <></>}
-            {fixedLen && !orgasm ?
-              <Tooltip title={'Fixed Length'}>
-                <FixedLength style={{ fontSize: 20, color: makeColor(0, 191, 255) }} />
-              </Tooltip> : <></>}
             {orgasm ?
               <Tooltip title={'Orgasm Stage'}>
                 <HeartFilled style={{ fontSize: 20, color: makeColor(255, 20, 147) }} />
+              </Tooltip> : <></>}
+            {fixedLen ?
+              <Tooltip title={'Fixed Length'}>
+                <FixedLength style={{ fontSize: 20, color: makeColor(0, 191, 255) }} />
               </Tooltip> : <></>}
           </Space>
           <div style={hovered ? {} : { display: 'none' }}>
