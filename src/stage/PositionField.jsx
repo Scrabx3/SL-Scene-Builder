@@ -41,6 +41,16 @@ const getStrips = (list) => {
   }
   return ret;
 };
+const makeStrips = (list) => {
+  return {
+    default: list.includes(StripOptions[0]),
+    everything: list.includes(StripOptions[1]),
+    nothing: list.includes(StripOptions[2]),
+    helmet: list.includes(StripOptions[3]),
+    gloves: list.includes(StripOptions[4]),
+    boots: list.includes(StripOptions[5]),
+  }
+};
 
 const PositionField = forwardRef(function PositionField({ _position, _control }, ref) {
   const [event, setEvent] = useState(_position.event);
@@ -68,6 +78,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
           extra,
           offset,
           anim_obj,
+          strip_data: makeStrips(strips),
         };
       }
     };
