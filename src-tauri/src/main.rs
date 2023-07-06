@@ -3,6 +3,7 @@
     windows_subsystem = "windows"
 )]
 mod define;
+mod furniture;
 mod racekeys;
 
 use define::{position::Position, project::Project, scene::Scene, stage::Stage, NanoID};

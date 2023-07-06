@@ -1,122 +1,67 @@
 export const Furnitures = [
+  { label: "None", value: "None" },
   {
-    label: 'Bed',
-    value: 'bed',
-    key: 'bed',
-    children: [
-      {
-        label: 'Single',
-        value: 'bed_single',
-        key: 'bed_single',
-      },
-      {
-        label: 'Double',
-        value: 'bed_double',
-        key: 'bed_double',
-      },
-    ]
+    label: 'Beds',
+    options: [
+      { label: "Bed Roll", value: "BedRoll" },
+      { label: "Bed (Single)", value: "BedSingle" },
+      { label: "Bed (Double)", value: "BedDouble" },
+    ],
   },
   {
-    label: 'Chair',
-    value: 'chair',
-    key: 'chair',
-    children: [
-      {
-        label: 'Common (No arm, high back)',
-        value: 'chair_common',
-        key: 'chair_common',
-      },
-      {
-        label: 'Simple (No arm, no back)',
-        value: 'chair_simple',
-        key: 'chair_simple',
-      },
-      {
-        label: 'Generic 1 (Arm, High Back)',
-        value: 'chair_generic1',
-        key: 'chair_generic1',
-      },
-      {
-        label: 'Generic 2 (Arm, Low Back)',
-        value: 'chair_generic2',
-        key: 'chair_generic2',
-      },
-      {
-        label: 'Noble',
-        value: 'chair_noble',
-        key: 'chair_noble',
-      },
-    ]
+    label: 'Walls',
+    options: [
+      { label: "Wall", value: "Wall" },
+      { label: "Railing", value: "Railing" },
+    ],
   },
   {
-    label: 'Bench',
-    value: 'bench',
-    key: 'bench',
-    children: [
-      {
-        label: 'Common',
-        value: 'bench_common',
-        key: 'bench_common',
-      },
-      {
-        label: 'Noble',
-        value: 'bench_noble',
-        key: 'bench_noble',
-      },
-    ]
+    label: 'Crafting',
+    options: [
+      { label: "Cooking Pot", value: "CraftCookingPot" },
+      { label: "Alchemy Table", value: "CraftAlchemy" },
+      { label: "Enchanting Table", value: "CraftEnchanting" },
+      { label: "Forge", value: "CraftSmithing" },
+      { label: "Workbench", value: "CraftWorkbench" },
+    ],
   },
   {
-    label: 'Throne',
-    value: 'throne',
-    key: 'throne',
-    children: [
-      {
-        label: 'Common',
-        value: 'throne_common',
-        key: 'throne_common',
-      },
-      {
-        label: 'Riften',
-        value: 'throne_riften',
-        key: 'throne_riften',
-      },
-      {
-        label: 'Nordic',
-        value: 'throne_nordic',
-        key: 'throne_nordic',
-      },
-    ]
+    label: 'Tables',
+    options: [
+      { label: "Common Table", value: "Table" },
+      { label: "Bar Counter", value: "TableCounter" },
+    ],
   },
   {
-    label: 'Table',
-    value: 'table',
-    key: 'table',
-    children: [
-      {
-        label: 'Common',
-        value: 'table_common',
-        key: 'table_common',
-      },
-      {
-        label: 'Counter',
-        value: 'table_counter',
-        key: 'table_counter',
-      },
-      {
-        label: 'Workbench',
-        value: 'table_workbench',
-        key: 'table_workbench',
-      },
-      {
-        label: 'Alchemy',
-        value: 'table_alchemy',
-        key: 'table_alchemy',
-      },
-      {
-        label: 'Enchanting',
-        value: 'table_enchanting',
-        key: 'table_enchanting',
-      },
-    ]
+    label: 'Chairs',
+    options: [
+      { label: "Common Chair", value: "Chair" },      // No arm, high back (Common Wooden chair)
+      { label: "Bar Chair", value: "ChairBar" },      // No Arm, no back
+      { label: "Arm Chair", value: "ChairArm" },      // Arm, low back
+      { label: "Wing Chair", value: "ChairWing" },    // Arm, high back
+      { label: "Noble Chair", value: "ChairNoble" },  // Noble Chair
+    ],
   },
-]
+  {
+    label: 'Benches',
+    options: [
+      { label: "Common Bench", value: "Bench" },
+      { label: "Noble Bench", value: "BenchNoble" },
+    ],
+  },
+  {
+    label: 'Benches',
+    options: [
+      { label: "Throne", value: "Throne" },
+      { label: "Riften Throne", value: "ThroneRiften" },
+      { label: "Nordic Throne", value: "ThroneNordic" },
+    ],
+  },
+  {
+    label: 'Contraptions',
+    options: [
+      { label: "XCross", value: "XCross" },
+      { label: "Pillory", value: "Pillory" },
+    ],
+  },
+];
