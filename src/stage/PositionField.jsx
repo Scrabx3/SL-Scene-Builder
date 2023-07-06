@@ -4,6 +4,44 @@ import { invoke } from "@tauri-apps/api";
 import { useImmer } from "use-immer";
 import './PositionField.css'
 
+const StripOptions = [
+  "Default",
+  "Everything",
+  "Nothing",
+  "Helmet",
+  "Gloves",
+  "Boots",
+];
+const getStrips = (list) => {
+  let ret = [];
+  for (const [key, value] of Object.entries(list)) {
+    if (!value)
+      continue;
+
+    switch (key) {
+      case 'default':
+        ret.push(StripOptions[0]);
+        break;
+      case 'everything':
+        ret.push(StripOptions[1]);
+        break;
+      case 'nothing':
+        ret.push(StripOptions[2]);
+        break;
+      case 'helmet':
+        ret.push(StripOptions[3]);
+        break;
+      case 'gloves':
+        ret.push(StripOptions[4]);
+        break;
+      case 'boots:':
+        ret.push(StripOptions[5]);
+        break;
+    }
+  }
+  return ret;
+};
+
 const PositionField = forwardRef(function PositionField({ _position, _control }, ref) {
   const [event, setEvent] = useState(_position.event);
   const [race, setRace] = useState(_control && _control.race || _position.race);
@@ -12,6 +50,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
   const [offset, updateOffset] = useImmer(_control && _control.offset || _position.offset);
   const [scale, setScale] = useState(_control && _control.scale || _position.scale);
   const [anim_obj, setAnimObj] = useState(_position.anim_obj);
+  const [strips, updateStrips] = useImmer(getStrips(_control && _control.strip_data || _position.strip_data))
   const [raceKeys, setRaceKeys] = useState([]);
 
   useEffect(() => {
@@ -106,7 +145,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'This actor climaxes in this stage.'}>
+                <Tooltip title={'The position climaxes during this stage.'}>
                   <div>
                     <Checkbox
                       checked={extra.climax}
@@ -118,16 +157,37 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'This position must be a vampire.'}>
+                <Tooltip title={'The position must be a vampire.'}>
                   <div>
-                    <CheckboxEx obj={extra} label={'Vampire'} attr={'vampire'} updateFunc={updateExtra} />
+                    <CheckboxEx obj={extra} label={'Vampire'} attr={'vampire'} disabled={race !== "Human"} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'The actor animated in this position is unconscious/dead.'}>
+                <Tooltip title={'The position is unconscious/dead.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Unconscious'} attr={'dead'} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col>
+              <Col>
+                <Tooltip title={'The is wearing a yoke (not anim object).'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Yoke'} attr={'yoke'} disabled={race !== "Human"} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col>
+              <Col>
+                <Tooltip title={'The is wearing an armbinder (not anim object).'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Armbinder'} attr={'armbinder'} disabled={race !== "Human"} updateFunc={updateExtra} />
+                  </div>
+                </Tooltip>
+              </Col>
+              <Col>
+                <Tooltip title={'The is locked in a legbinder.'}>
+                  <div>
+                    <CheckboxEx obj={extra} label={'Legbinder'} attr={'legbinder'} disabled={race !== "Human"} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
@@ -179,7 +239,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             extra={<Tooltip title={'This positions scale info'}><Button type="link">Info</Button></Tooltip>}
           >
             <InputNumber addonBefore={'Factor'} controls decimalSeparator=","
-              precision={2} min={0.5} max={1.9} step={0.01}
+              precision={2} min={0.01} max={2} step={0.01}
               value={scale} onChange={(e) => { setScale(e) }}
               placeholder="1.0"
               disabled={!!_control}
@@ -190,7 +250,56 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
           <Card className="position-attribute-card" title={'Stripping'}
             extra={<Tooltip title={'The items this position should strip in this stage'}><Button type="link">Info</Button></Tooltip>}
           >
-            <p>PLACEHOLDER</p>
+            <Select 
+              className="position-strip-tree"
+              mode="multiple"
+              value={strips.length ? strips : "Default"}
+              options={[
+                {
+                  label: 'Unique',
+                  options: [
+                    { label: StripOptions[0], value: StripOptions[0] },
+                    { label: StripOptions[1], value: StripOptions[1] },
+                    { label: StripOptions[2], value: StripOptions[2] },
+                  ],
+                },
+                {
+                  label: 'Multiple',
+                  options: [
+                    { label: StripOptions[3], value: StripOptions[3] },
+                    { label: StripOptions[4], value: StripOptions[4] },
+                    { label: StripOptions[5], value: StripOptions[5] },
+                  ],
+                },
+              ]}
+              maxTagTextLength={7}
+              maxTagCount={2}
+              onSelect={(value) => {
+                if (StripOptions.indexOf(value) < 3) {
+                  updateStrips([value]);
+                } else {
+                  updateStrips(prev => {
+                    let where = -1
+                    for (let i = 0; i < 3 && where === -1; i++) {
+                      where = prev.indexOf(StripOptions[i])
+                    }
+                    if (where === -1)
+                      prev.push(value)
+                    else
+                      prev[where] = value
+                  }); 
+                }
+              }}
+              onDeselect={(value) => {
+                updateStrips(prev => {
+                  prev = prev.filter(it => it !== value);
+                  if (prev.length === 0) {
+                    prev = [StripOptions[0]]
+                  }
+                  return prev;
+                })
+              }}
+            />
           </Card>
         </Col>
         <Col span={8}>
