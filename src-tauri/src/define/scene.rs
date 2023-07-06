@@ -35,10 +35,12 @@ pub struct Node {
 
 impl EncodeBinary for FurnitureData {
     fn get_byte_size(&self) -> usize {
-        1 + self.offset.get_byte_size()
+        1 + self.offset.get_byte_size() + size_of::<u32>()
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
+        let furni_bytes = crate::furniture::as_furnitre(&self.furni_types);
+        buf.extend_from_slice(&furni_bytes.bits().to_be_bytes());
         buf.push(self.allow_bed as u8);
         self.offset.write_byte(buf);
     }

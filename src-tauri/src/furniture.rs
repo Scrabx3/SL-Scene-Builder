@@ -2,7 +2,7 @@ use bitflags::bitflags;
 
 bitflags! {
     #[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
-    pub struct Furnitures: u32 {
+    pub struct Furniture: u32 {
         const None = 0;
 
         const BedRoll = 1 << 0;
@@ -37,4 +37,39 @@ bitflags! {
         const XCross = 1 << 22;
         const Pillory = 1 << 23;
     }
+}
+
+pub fn as_furnitre(list: &Vec<String>) -> Furniture {
+    let mut ret = Furniture::default();
+    for furnistr in list {
+        match furnistr.as_str() {
+            "None" => return Furniture::default(),
+            "BedRoll" => ret |= Furniture::BedRoll,
+            "BedSingle" => ret |= Furniture::BedSingle,
+            "BedDouble" => ret |= Furniture::BedDouble,
+            "Wall" => ret |= Furniture::Wall,
+            "Railing" => ret |= Furniture::Railing,
+            "CraftCookingPot" => ret |= Furniture::CraftCookingPot,
+            "CraftAlchemy" => ret |= Furniture::CraftAlchemy,
+            "CraftEnchanting" => ret |= Furniture::CraftEnchanting,
+            "CraftSmithing" => ret |= Furniture::CraftSmithing,
+            "CraftWorkbench" => ret |= Furniture::CraftWorkbench,
+            "Table" => ret |= Furniture::Table,
+            "TableCounter" => ret |= Furniture::TableCounter,
+            "Chair" => ret |= Furniture::Chair,
+            "ChairBar" => ret |= Furniture::ChairBar,
+            "ChairArm" => ret |= Furniture::ChairArm,
+            "ChairWing" => ret |= Furniture::ChairWing,
+            "ChairNoble" => ret |= Furniture::ChairNoble,
+            "Bench" => ret |= Furniture::Bench,
+            "BenchNoble" => ret |= Furniture::BenchNoble,
+            "Throne" => ret |= Furniture::Throne,
+            "ThroneRiften" => ret |= Furniture::ThroneRiften,
+            "ThroneNordic" => ret |= Furniture::ThroneNordic,
+            "XCross" => ret |= Furniture::XCross,
+            "Pillory" => ret |= Furniture::Pillory,
+            _ => {}
+        }
+    }
+    ret
 }

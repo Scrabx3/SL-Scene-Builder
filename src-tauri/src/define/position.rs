@@ -1,10 +1,8 @@
+use serde::{Deserialize, Serialize};
 use std::mem::size_of;
 
-use serde::{Deserialize, Serialize};
-
-use crate::racekeys::get_race_key_bytes;
-
 use super::serialize::{EncodeBinary, Offset};
+use crate::racekeys::get_race_key_bytes;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Position {
@@ -33,6 +31,11 @@ pub struct Extra {
     vampire: bool,
     climax: bool,
     dead: bool,
+
+    yoke: bool,
+    armbinder: bool,
+    legbinder: bool,
+    petsuit: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -65,14 +68,22 @@ impl Position {
             self.extra.submissive as u8
                 + 2 * self.extra.optional as u8
                 + 4 * self.extra.vampire as u8
-                + 8 * self.extra.dead as u8,
+                + 8 * self.extra.dead as u8
+                + 16 * self.extra.yoke as u8
+                + 32 * self.extra.armbinder as u8
+                + 64 * self.extra.legbinder as u8
+                + 128 * self.extra.petsuit as u8,
         );
     }
 }
 
 impl EncodeBinary for Position {
     fn get_byte_size(&self) -> usize {
-        self.event.len() + size_of::<u64>() + 1 + self.offset.get_byte_size()
+        self.event.len()
+            + size_of::<u64>()
+            + self.offset.get_byte_size()
+            + self.strip_data.get_byte_size()
+            + 1 // climax
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
@@ -83,6 +94,8 @@ impl EncodeBinary for Position {
         buf.push(self.extra.climax as u8);
         // offset
         self.offset.write_byte(buf);
+        // stripping
+        self.strip_data.write_byte(buf);
     }
 }
 
@@ -97,6 +110,24 @@ impl Default for Position {
             offset: Default::default(),
             anim_obj: Default::default(),
             strip_data: Default::default(),
+        }
+    }
+}
+
+impl EncodeBinary for Stripping {
+    fn get_byte_size(&self) -> usize {
+        size_of::<u8>()
+    }
+
+    fn write_byte(&self, buf: &mut Vec<u8>) -> () {
+        if self.default {
+            buf.push(1 << 7);
+        } else if self.everything {
+            buf.push(u8::MAX);
+        } else if self.nothing {
+            buf.push(u8::MIN);
+        } else {
+            buf.push(self.helmet as u8 + 2 * self.gloves as u8 + 4 * self.boots as u8);
         }
     }
 }
