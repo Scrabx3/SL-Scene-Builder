@@ -19,8 +19,6 @@ pub struct Stage {
 pub struct Extra {
     pub fixed_len: f32,
     pub nav_text: String,
-    pub allow_bed: bool,
-    // TODO: furniture definition
 }
 
 impl Stage {

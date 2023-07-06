@@ -2,7 +2,11 @@ use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, mem::size_of};
 
-use super::{serialize::EncodeBinary, stage::Stage, NanoID, NANOID_ALPHABET, NANOID_LENGTH};
+use super::{
+    serialize::{EncodeBinary, Offset},
+    stage::Stage,
+    NanoID, NANOID_ALPHABET, NANOID_LENGTH,
+};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Scene {
@@ -12,8 +16,13 @@ pub struct Scene {
     pub stages: Vec<Stage>,
     pub root: NanoID,
     pub graph: HashMap<NanoID, Node>,
-    #[serde(skip)]
+    pub furniture: FurnitureData,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct FurnitureData {
     pub allow_bed: bool,
+    pub offset: Offset,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -21,6 +30,17 @@ pub struct Node {
     dest: Vec<NanoID>,
     x: f32,
     y: f32,
+}
+
+impl EncodeBinary for FurnitureData {
+    fn get_byte_size(&self) -> usize {
+        1 + self.offset.get_byte_size()
+    }
+
+    fn write_byte(&self, buf: &mut Vec<u8>) -> () {
+        buf.push(self.allow_bed as u8);
+        self.offset.write_byte(buf);
+    }
 }
 
 impl Scene {
@@ -41,7 +61,7 @@ impl EncodeBinary for Scene {
             + 5 * size_of::<u64>()
             + 2 * NANOID_LENGTH
             + self.graph.len() * NANOID_LENGTH
-            + 1;
+            + self.furniture.get_byte_size();
         ret += self.stages[0].positions[0].get_byte_size_meta();
         for (_, node) in &self.graph {
             ret += node.dest.len() * NANOID_LENGTH;
@@ -81,7 +101,7 @@ impl EncodeBinary for Scene {
             }
         }
         // furniture
-        buf.push(self.stages[0].extra.allow_bed as u8);
+        self.furniture.write_byte(buf);
     }
 }
 
@@ -93,7 +113,7 @@ impl Default for Scene {
             stages: Default::default(),
             root: Default::default(),
             graph: Default::default(),
-            allow_bed: Default::default(),
+            furniture: Default::default(),
         }
     }
 }

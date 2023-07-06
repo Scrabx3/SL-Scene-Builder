@@ -1,6 +1,35 @@
+use std::mem::size_of;
+
+use serde::{Deserialize, Serialize};
+
 pub trait EncodeBinary {
     fn get_byte_size(&self) -> usize;
     fn write_byte(&self, buf: &mut Vec<u8>) -> ();
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct Offset {
+    x: f32,
+    y: f32,
+    z: f32,
+    r: f32,
+}
+
+impl EncodeBinary for Offset {
+    fn get_byte_size(&self) -> usize {
+        4 * size_of::<f32>()
+    }
+
+    fn write_byte(&self, buf: &mut Vec<u8>) -> () {
+        let x_ = (self.x * 100000.0).round() as i32;
+        buf.extend_from_slice(&x_.to_be_bytes());
+        let y_ = (self.y * 100000.0).round() as i32;
+        buf.extend_from_slice(&y_.to_be_bytes());
+        let z_ = (self.z * 100000.0).round() as i32;
+        buf.extend_from_slice(&z_.to_be_bytes());
+        let r_ = (self.r * 100000.0).round() as i32;
+        buf.extend_from_slice(&r_.to_be_bytes());
+    }
 }
 
 pub fn map_race_to_folder(race: &str) -> Result<String, ()> {

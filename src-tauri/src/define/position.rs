@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::racekeys::get_race_key_bytes;
 
-use super::serialize::EncodeBinary;
+use super::serialize::{EncodeBinary, Offset};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Position {
@@ -16,7 +16,7 @@ pub struct Position {
     pub extra: Extra,
     pub offset: Offset,
     pub anim_obj: String,
-    // TODO: stripping
+    pub strip_data: Stripping,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -36,11 +36,14 @@ pub struct Extra {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct Offset {
-    x: f32,
-    y: f32,
-    z: f32,
-    r: f32,
+pub struct Stripping {
+    default: bool,
+
+    everything: bool,
+    nothing: bool,
+    helmet: bool,
+    gloves: bool,
+    boots: bool,
 }
 
 impl Position {
@@ -69,7 +72,7 @@ impl Position {
 
 impl EncodeBinary for Position {
     fn get_byte_size(&self) -> usize {
-        self.event.len() + size_of::<u64>() + 4 * size_of::<i32>() + 1
+        self.event.len() + size_of::<u64>() + 1 + self.offset.get_byte_size()
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
@@ -79,14 +82,7 @@ impl EncodeBinary for Position {
         // climax
         buf.push(self.extra.climax as u8);
         // offset
-        let x_ = (self.offset.x * 1000.0).round() as i32;
-        buf.extend_from_slice(&x_.to_be_bytes());
-        let y_ = (self.offset.y * 1000.0).round() as i32;
-        buf.extend_from_slice(&y_.to_be_bytes());
-        let z_ = (self.offset.z * 1000.0).round() as i32;
-        buf.extend_from_slice(&z_.to_be_bytes());
-        let r_ = (self.offset.r * 1000.0).round() as i32;
-        buf.extend_from_slice(&r_.to_be_bytes());
+        self.offset.write_byte(buf);
     }
 }
 
@@ -100,6 +96,7 @@ impl Default for Position {
             extra: Default::default(),
             offset: Default::default(),
             anim_obj: Default::default(),
+            strip_data: Default::default(),
         }
     }
 }
