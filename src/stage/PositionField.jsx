@@ -39,7 +39,7 @@ const getStrips = (list) => {
         break;
     }
   }
-  return ret;
+  return ret.length ? ret : [StripOptions[0]];
 };
 const makeStrips = (list) => {
   return {
@@ -264,7 +264,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             <Select 
               className="position-strip-tree"
               mode="multiple"
-              value={strips.length ? strips : "Default"}
+              value={strips}
               options={[
                 {
                   label: 'Unique',

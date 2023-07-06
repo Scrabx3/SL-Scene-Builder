@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useImmer } from "use-immer";
 import { invoke } from "@tauri-apps/api/tauri";
-import { listen, emit } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import { Graph, Shape } from '@antv/x6'
 import { History } from "@antv/x6-plugin-history";
-import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification, Divider, Switch } from 'antd'
+import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification, Divider, Switch, Checkbox, Row, Col, InputNumber, Select } from 'antd'
 import {
   ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, DiffOutlined, ZoomInOutlined, ZoomOutOutlined,
   DeleteOutlined, DoubleLeftOutlined, DoubleRightOutlined, PicCenterOutlined, CompressOutlined, PushpinOutlined, DragOutlined
@@ -13,6 +13,7 @@ const { Header, Content, Footer, Sider } = Layout;
 const { confirm } = Modal;
 
 import { STAGE_EDGE, STAGE_EDGE_SHAPEID } from "./scene/SceneEdge"
+import { Furnitures } from "./common/Furniture";
 import "./scene/SceneNode"
 import "./App.css";
 
@@ -370,6 +371,7 @@ function App() {
       }()
     };
     invoke('save_scene', { scene }).then(() => {
+      console.log("Saved scene", scene);
       updateActiveScene(scene);
       updateScenes(prev => {
         const w = prev.findIndex(it => it.id === scene.id);
@@ -450,7 +452,7 @@ function App() {
       </Sider>
       <Layout className="site-layout">
         <Content>
-          {/* Hyper hacky workaround because graph doesnt render nodes if I put the graph interface into a child component zzz */}
+          {/* hacky workaround because graph doesnt render nodes if I put the graph interface into a child component zzz */}
           {/* if (activeScene) ... */}
           <div style={{ display: !activeScene ? 'none' : undefined, height: '100%', width: '100%' }}>
             <Card
@@ -508,6 +510,83 @@ function App() {
               </div>
               <div className="graph-container">
                 <div id="graph" ref={graphcontainer_ref} />
+              </div>
+              <div className="graph-data-field">
+                <Space size={"large"}>
+                  <Space direction="vertical" size={"large"}>
+                    <Select
+                      className="graph-furniture-selection"
+                      value={activeScene ? activeScene.furniture.furni_types : []}
+                      options={Furnitures}
+                      mode="multiple"
+                      onSelect={(value) => {
+                        if (value === "None") {
+                          updateActiveScene(prev => { prev.furniture.furni_types = [value]; return prev });
+                        } else {
+                          updateActiveScene(prev => {
+                            let where = prev.furniture.furni_types.indexOf("None")
+                            console.log(prev.furniture.furni_types)
+                            if (where === -1)
+                              prev.furniture.furni_types.push(value)
+                            else
+                              prev.furniture.furni_types[where] = value
+                            
+                            return prev;
+                          });
+                        }
+                        setEdited(true);
+                      }}
+                      onDeselect={(value) => {
+                        updateActiveScene(prev => {
+                          prev.furniture.furni_types = prev.furniture.furni_types.filter(it => it !== value);
+                          if (prev.furniture.furni_types.length === 0) {
+                            prev.furniture.furni_types = ["None"]
+                          }
+                          return prev;
+                        });
+                        setEdited(true);
+                      }}
+                    />
+                    <Checkbox
+                      onChange={(e) => { updateActiveScene(prev => { prev.furniture.allow_bed = e.target.checked }); setEdited(true); }}
+                      checked={activeScene ? activeScene.furniture.allow_bed : false}
+                    >
+                      Allow Bed
+                    </Checkbox>
+                  </Space>
+                  <Space>
+                    <Row gutter={[12, 12]} justify={"space-evenly"}>
+                      <Col>
+                        <InputNumber addonBefore={'X'} controls decimalSeparator="," precision={1} step={0.1}
+                          value={activeScene ? activeScene.furniture.offset.x ? activeScene.furniture.offset.x : undefined : undefined}
+                          onChange={(e) => { updateActiveScene(prev => { prev.furniture.offset.x = e }); setEdited(true); }}
+                          placeholder="0.0"
+                        />
+                      </Col>
+                      <Col>
+                        <InputNumber addonBefore={'Y'} controls decimalSeparator="," precision={1} step={0.1}
+                          value={activeScene ? activeScene.furniture.offset.y ? activeScene.furniture.offset.y : undefined : undefined}
+                          onChange={(e) => { updateActiveScene(prev => { prev.furniture.offset.y = e }); setEdited(true); }}
+                          placeholder="0.0"
+                        />
+                      </Col>
+                      <Col>
+                        <InputNumber addonBefore={'Z'} controls decimalSeparator="," precision={1} step={0.1}
+                          value={activeScene ? activeScene.furniture.offset.z ? activeScene.furniture.offset.z : undefined : undefined}
+                          onChange={(e) => { updateActiveScene(prev => { prev.furniture.offset.z = e }); setEdited(true); }}
+                          placeholder="0.0"
+                        />
+                      </Col>
+                      <Col>
+                        <InputNumber addonBefore={'°'} controls decimalSeparator="," precision={1} step={0.1} min={0.0} max={359.9}
+                          value={activeScene ? activeScene.furniture.offset.rot ? activeScene.furniture.offset.rot : undefined : undefined}
+                          onChange={(e) => { updateActiveScene(prev => { prev.furniture.offset.rot = e }); setEdited(true); }}
+                          placeholder="0.0"
+                        />
+                      </Col>
+                    </Row>
+                  </Space>
+                </Space>
               </div>
             </Card>
           </div>

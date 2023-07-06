@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import ReactDOM from "react-dom/client";
 import { useImmer } from "use-immer";
 import { SaveOutlined } from '@ant-design/icons';
-import { Input, Button, Tag, Space, Tooltip, InputNumber, Card, Layout, Divider, Menu, Row, Col, Tabs, TreeSelect, notification, Checkbox } from 'antd';
+import { Input, Button, Tag, Space, Tooltip, InputNumber, Card, Layout, Divider, Menu, Row, Col, Tabs, TreeSelect, notification } from 'antd';
 
 import { tagsSFW, tagsNSFW } from "./common/Tags"
 import PositionField from "./stage/PositionField";
@@ -88,14 +88,6 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
   // Extra
   const [fixedLen, setFixedLen] = useState(_extra.fixed_len);
   const [navText, setNavText] = useState(_extra.nav_text);
-  const [allowBed, setAllowBed] = useState(_control && _control.allow_bed || _extra.allow_bed); // COMEBACK: TEMPORARY SETTING UNTIL FURNITURE IS IMPLEMENTED
-  // const [furniture, updateFurniture] = useState(_extra.furniture || {
-  //   shapes: [],
-  //   x: undefined,
-  //   y: undefined,
-  //   z: undefined,
-  //   rot: undefined
-  // });
 
   function saveAndReturn() {
     let errors = false;
@@ -136,7 +128,6 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
       extra: {
         fixed_len: fixedLen || 0.0,
         nav_text: navText || '',
-        allow_bed: allowBed || false,
       },
     };
     // console.log(stage);
@@ -175,26 +166,6 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
       });
       return prev;
     });
-    // updateTagTree(prev => {
-    //   const newchilds = add.map(tag => {
-    //     return {
-    //       label: tag,
-    //       value: tag,
-    //     }
-    //   });
-    //   let cst = prev.find(cat => cat.value === 'tagsCustom');
-    //   if (!cst) {
-    //     cst = {
-    //       value: "tagsCustom",
-    //       title: "Custom",
-    //       selectable: false,
-    //       children: newchilds,
-    //     }
-    //     prev.push(cst);
-    //   } else {
-    //     cst.children = cst.children.concat(newchilds);
-    //   }
-    // })
     setCustomTag('');
   }
 
@@ -326,44 +297,6 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
               addonAfter={'ms'}
             />
           </Space>
-        </Card>
-        <Card title={"Allow Bed"}
-          extra={<Tooltip title={'If this scene is allowed to play on a bed (but doesnt have to)'}><Button type="link">Info</Button></Tooltip>}
-        >
-          <Space direction="vertical">
-            <Checkbox
-              onChange={(e) => { setAllowBed(e.target.checked) }}
-              checked={allowBed}
-              disabled={!!_control}
-            >
-              Allow Bed
-            </Checkbox>
-          </Space>
-        </Card>
-        <Card title={'TODO: Furniture'}>
-          <TreeSelect placeholder={'Furniture Type'} treeData={[]} />
-          <Row gutter={[12, 12]}>
-            <Col span={12}>
-              <InputNumber addonBefore={'X'} controls decimalSeparator="," precision={1} step={0.1}
-                placeholder="0.0"
-              />
-            </Col>
-            <Col span={12}>
-              <InputNumber addonBefore={'Y'} controls decimalSeparator="," precision={1} step={0.1}
-                placeholder="0.0"
-              />
-            </Col>
-            <Col span={12}>
-              <InputNumber addonBefore={'Z'} controls decimalSeparator="," precision={1} step={0.1}
-                placeholder="0.0"
-              />
-            </Col>
-            <Col span={12}>
-              <InputNumber addonBefore={'°'} controls decimalSeparator="," precision={1} step={0.1} min={0.0} max={359.9}
-                placeholder="0.0"
-              />
-            </Col>
-          </Row>
         </Card>
       </Space>
     </Layout>

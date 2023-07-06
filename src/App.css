@@ -125,8 +125,8 @@ h5 {
   display: flex;
   overflow: hidden;
   margin-top: 14px;
-  /* margin-bottom: 7px; */
-  height: calc(100% - 31px - 21px);
+  margin-bottom: 14px;
+  height: calc(100% - 31px - 21px - 50px);
   width: 100%;
 }
 
@@ -138,9 +138,20 @@ h5 {
   border-style: solid;
 }
 
+.graph-data-field {
+  background-color: #F9F9F9;
+  border-radius: 5px;
+  border-color: hsla(232, 18%, 16%, 0.1);
+  border-style: solid;
+}
+
 .graph-no-scene-placeholder {
   margin: 8px;
   margin-top: 64px;
   margin-bottom: 64px;
   height: calc(100% - 2 * 64px);
+}
+
+.graph-furniture-selection {
+  width: 256px;
 }

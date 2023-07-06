@@ -1,6 +1,6 @@
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, mem::size_of};
+use std::{collections::HashMap, mem::size_of, vec};
 
 use super::{
     serialize::{EncodeBinary, Offset},
@@ -19,8 +19,9 @@ pub struct Scene {
     pub furniture: FurnitureData,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FurnitureData {
+    pub furni_types: Vec<String>,
     pub allow_bed: bool,
     pub offset: Offset,
 }
@@ -114,6 +115,16 @@ impl Default for Scene {
             root: Default::default(),
             graph: Default::default(),
             furniture: Default::default(),
+        }
+    }
+}
+
+impl Default for FurnitureData {
+    fn default() -> Self {
+        Self {
+            furni_types: vec!["None".into()],
+            allow_bed: Default::default(),
+            offset: Default::default(),
         }
     }
 }
