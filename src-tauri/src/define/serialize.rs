@@ -21,13 +21,13 @@ impl EncodeBinary for Offset {
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
-        let x_ = (self.x * 100000.0).round() as i32;
+        let x_ = (self.x * 1000.0).round() as i32;
         buf.extend_from_slice(&x_.to_be_bytes());
-        let y_ = (self.y * 100000.0).round() as i32;
+        let y_ = (self.y * 1000.0).round() as i32;
         buf.extend_from_slice(&y_.to_be_bytes());
-        let z_ = (self.z * 100000.0).round() as i32;
+        let z_ = (self.z * 1000.0).round() as i32;
         buf.extend_from_slice(&z_.to_be_bytes());
-        let r_ = (self.r * 100000.0).round() as i32;
+        let r_ = (self.r * 1000.0).round() as i32;
         buf.extend_from_slice(&r_.to_be_bytes());
     }
 }
