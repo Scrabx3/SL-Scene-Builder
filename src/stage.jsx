@@ -248,9 +248,10 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
         )}
         maxTagTextLength={20}
         tagRender={({ label, value, closable, onClose }) => {
-          let color = tagsSFW.includes(value) ? 'cyan' :
-            tagsNSFW.includes(value) ? 'volcano' :
-              undefined;
+          const search = value.toLowerCase();
+          let color = tagsSFW.find((it) => it.toLowerCase() === search) ? 'cyan' :
+              tagsNSFW.find((it) => it.toLowerCase() === search) ? 'volcano' :
+                undefined;
 
           const onPreventMouseDown = (evt) => {
             evt.preventDefault();
