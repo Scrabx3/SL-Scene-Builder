@@ -5,8 +5,8 @@
 mod define;
 mod furniture;
 mod racekeys;
-
 use define::{position::Position, project::Project, scene::Scene, stage::Stage, NanoID};
+use log::{error, info};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::sync::{
@@ -32,10 +32,26 @@ fn get_edited() -> bool {
     EDITED.load(Ordering::Relaxed)
 }
 
-// TODO: setup logger
+fn setup_logger() -> Result<(), fern::InitError> {
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "[{} {}] {}",
+                record.level(),
+                record.target(),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Info)
+        .chain(std::io::stdout())
+        .chain(fern::log_file("SceneBuilder.log")?)
+        .apply()?;
+    Ok(())
+}
 
 /// MAIN
 fn main() {
+    setup_logger().expect("Unable to initialize logger");
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             request_project_update,
@@ -128,7 +144,7 @@ fn main() {
                     let r = prjct
                         .save_project(event.menu_item_id() == "save_as");
                     if let Err(e) = r {
-                        println!("{}", e);
+                        error!("{}", e);
                         return;
                     }
                     set_edited(false);
@@ -138,7 +154,7 @@ fn main() {
                 "build" => {
                     let r = PROJECT.lock().unwrap().build();
                     if let Err(e) = r {
-                        println!("{}", e);
+                        error!("{}", e);
                     }
                 }
                 _ => {}
@@ -200,10 +216,11 @@ fn save_scene<R: Runtime>(window: tauri::Window<R>, scene: Scene) -> () {
 
 #[tauri::command]
 fn delete_scene<R: Runtime>(window: tauri::Window<R>, id: NanoID) -> Result<Scene, String> {
-    let ret = PROJECT.lock().unwrap().discard_scene(&id).ok_or(format!(
-        "Given id [{}] does not represent an existing scene",
-        id.to_string()
-    ));
+    let ret = PROJECT.lock().unwrap().discard_scene(&id).ok_or_else(|| {
+        let msg = format!("Invalid Scene ID: {}", id);
+        error!("{}", msg);
+        msg
+    });
 
     if ret.is_ok() {
         set_edited(true);
@@ -227,6 +244,7 @@ struct EditorPayload {
 
 fn open_stage_editor_impl<R: Runtime>(app: &tauri::AppHandle<R>, payload: EditorPayload) -> () {
     let ref stage = payload.stage;
+    info!("Opening Stage {}", stage.id);
     let window = tauri::WindowBuilder::new(
         app,
         format!("stage_editor_{}", stage.id),
@@ -283,6 +301,7 @@ async fn stage_save_and_close<R: Runtime>(
 ) -> () {
     // IDEA: make give this event some unique id to allow
     // front end distinguish the timings at which some stage editor has been opened
+    info!("Saving Stage {}", stage.id);
     app.emit_to("main_window", "on_stage_saved", stage).unwrap();
     let _ = window.close();
 }

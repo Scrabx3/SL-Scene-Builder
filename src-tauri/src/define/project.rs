@@ -1,3 +1,4 @@
+use log::info;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -47,12 +48,21 @@ impl Project {
 
     pub fn save_scene(&mut self, scene: Scene) -> &Scene {
         let id = scene.id.clone();
+        info!("Saving or inserting Scene: {} / {}", id, scene.name);
         self.scenes.insert(id.clone(), scene);
         self.scenes.get(&id).unwrap()
     }
 
     pub fn discard_scene(&mut self, id: &NanoID) -> Option<Scene> {
-        self.scenes.remove(id)
+        let ret = self.scenes.remove(id);
+        info!(
+            "Deleting Scene: {} / {}",
+            id,
+            ret.as_ref()
+                .and_then(|s| Some(s.name.as_str()))
+                .unwrap_or_default()
+        );
+        ret
     }
 
     pub fn get_scene(&self, id: &NanoID) -> Option<&Scene> {
@@ -74,7 +84,7 @@ impl Project {
             .add_filter("SL Project File", vec!["slsb.json"].as_slice())
             .pick_file();
         if path.is_none() {
-            return Err("User cancel".into());
+            return Err("No path to load project from".into());
         }
         let path = path.unwrap();
         // let file = fs::read(&path).map_err(|e| e.to_string())?;
@@ -85,6 +95,7 @@ impl Project {
         *self = value;
         self.set_project_name_from_path(&path);
         self.pack_path = path;
+        info!("Loaded project {}", self.pack_name);
 
         Ok(())
     }
@@ -96,7 +107,7 @@ impl Project {
                 .add_filter("SL Project File", vec!["slsb.json"].as_slice())
                 .save_file();
             if f.is_none() {
-                return Err("User Cancel".into());
+                return Err("No path to save project to".into());
             }
             f.unwrap()
         } else {
@@ -107,6 +118,7 @@ impl Project {
         // let bin = postcard::to_vec(self);
 
         self.set_project_name_from_path(&path);
+        info!("Saved project {}", self.pack_name);
         Ok(())
     }
 
@@ -116,6 +128,7 @@ impl Project {
             return Err(std::io::Error::from(ErrorKind::Interrupted));
         }
         let root_dir = path.unwrap();
+        info!("Compiling project {}", self.pack_name);
         // Write binary
         {
             let target_dir = root_dir.join("SKSE\\SexLab\\");
@@ -149,7 +162,7 @@ impl Project {
                         if let Some(vec) = it {
                             vec.push(line);
                         } else {
-                            println!("Inserting key: {}", position.race);
+                            info!("Adding new Race: {}", position.race);
                             events.insert(position.race.as_str(), vec![line]);
                         }
                     }
