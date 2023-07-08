@@ -17,6 +17,7 @@ pub struct Scene {
     pub root: NanoID,
     pub graph: HashMap<NanoID, Node>,
     pub furniture: FurnitureData,
+    pub private: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -117,6 +118,7 @@ impl Default for Scene {
             root: Default::default(),
             graph: Default::default(),
             furniture: Default::default(),
+            private: Default::default(),
         }
     }
 }

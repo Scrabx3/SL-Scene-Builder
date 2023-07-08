@@ -525,12 +525,12 @@ function App() {
                         } else {
                           updateActiveScene(prev => {
                             let where = prev.furniture.furni_types.indexOf("None")
-                            console.log(prev.furniture.furni_types)
                             if (where === -1)
                               prev.furniture.furni_types.push(value)
                             else
                               prev.furniture.furni_types[where] = value
                             
+                            prev.furni_types.allow_bed = false;
                             return prev;
                           });
                         }
@@ -549,9 +549,16 @@ function App() {
                     />
                     <Checkbox
                       onChange={(e) => { updateActiveScene(prev => { prev.furniture.allow_bed = e.target.checked }); setEdited(true); }}
-                      checked={activeScene ? activeScene.furniture.allow_bed : false}
+                      checked={activeScene && activeScene.furniture.allow_bed}
+                      disabled={activeScene && !activeScene.furniture.furni_types.includes("None")}
                     >
                       Allow Bed
+                    </Checkbox>
+                    <Checkbox
+                      onChange={(e) => { updateActiveScene(prev => { prev.private = e.target.checked }); setEdited(true); }}
+                      checked={activeScene && activeScene.private}
+                    >
+                      Private
                     </Checkbox>
                   </Space>
                   <Space>
