@@ -27,11 +27,11 @@ pub struct FurnitureData {
     pub offset: Offset,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Node {
-    dest: Vec<NanoID>,
-    x: f32,
-    y: f32,
+    pub dest: Vec<NanoID>,
+    pub x: f32,
+    pub y: f32,
 }
 
 impl EncodeBinary for FurnitureData {
@@ -129,6 +129,16 @@ impl Default for FurnitureData {
             furni_types: vec!["None".into()],
             allow_bed: Default::default(),
             offset: Default::default(),
+        }
+    }
+}
+
+impl Default for Node {
+    fn default() -> Self {
+        Self {
+            dest: Default::default(),
+            x: 40.0,
+            y: 40.0,
         }
     }
 }

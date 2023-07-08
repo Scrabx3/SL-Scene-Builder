@@ -19,26 +19,26 @@ pub struct Position {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Sex {
-    male: bool,
-    female: bool,
-    futa: bool,
+    pub male: bool,
+    pub female: bool,
+    pub futa: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Extra {
-    submissive: bool,
-    optional: bool,
-    vampire: bool,
-    climax: bool,
-    dead: bool,
+    pub submissive: bool,
+    pub optional: bool,
+    pub vampire: bool,
+    pub climax: bool,
+    pub dead: bool,
 
-    yoke: bool,
-    armbinder: bool,
-    legbinder: bool,
-    petsuit: bool,
+    pub yoke: bool,
+    pub armbinder: bool,
+    pub legbinder: bool,
+    pub petsuit: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Stripping {
     default: bool,
 
@@ -128,6 +128,19 @@ impl EncodeBinary for Stripping {
             buf.push(u8::MIN);
         } else {
             buf.push(self.helmet as u8 + 2 * self.gloves as u8 + 4 * self.boots as u8);
+        }
+    }
+}
+
+impl Default for Stripping {
+    fn default() -> Self {
+        Self {
+            default: true,
+            everything: Default::default(),
+            nothing: Default::default(),
+            helmet: Default::default(),
+            gloves: Default::default(),
+            boots: Default::default(),
         }
     }
 }

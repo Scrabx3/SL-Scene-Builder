@@ -11,10 +11,17 @@ use std::{
 };
 use tauri::api::dialog::blocking::FileDialogBuilder;
 
-use crate::define::serialize::{make_fnis_line, map_race_to_folder};
+use crate::{
+    define::serialize::{make_fnis_line, map_race_to_folder},
+    racekeys::map_legacy_to_racekey,
+};
 
 use super::{
-    scene::Scene, serialize::EncodeBinary, stage::Stage, NanoID, NANOID_ALPHABET, PREFIX_HASH_LEN,
+    position::Sex,
+    scene::{Node, Scene},
+    serialize::EncodeBinary,
+    stage::Stage,
+    NanoID, NANOID_ALPHABET, PREFIX_HASH_LEN,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -122,6 +129,160 @@ impl Project {
         Ok(())
     }
 
+    pub fn load_slal(&mut self) -> Result<(), String> {
+        let path = FileDialogBuilder::new()
+            .add_filter("SLAL File", vec!["json"].as_slice())
+            .pick_file();
+        if path.is_none() {
+            return Err("No path to load slal file from".into());
+        }
+        let path = path.unwrap();
+        let file = fs::File::open(&path).map_err(|e| e.to_string())?;
+        let slal: serde_json::Value =
+            serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
+
+        let mut prjct = Project::new();
+        prjct.pack_name = slal["name"]
+            .as_str()
+            .ok_or("Missing name attribute")?
+            .into();
+
+        let anims = slal["animations"]
+            .as_array()
+            .ok_or("Missing animations attribute")?;
+        for animation in anims {
+            let mut scene = Scene::default();
+            scene.name = animation["name"]
+                .as_str()
+                .ok_or("Missing name attribute")?
+                .into();
+            let crt_race = animation["creature_race"].as_str().unwrap_or_default();
+            let actors = animation["actors"]
+                .as_array()
+                .ok_or("Missing actors attribute")?;
+
+            // initialize stages and copy information for every position into the respective stage
+            for (n, position) in actors.iter().enumerate() {
+                let sex = position["type"].as_str().unwrap_or("male").to_lowercase();
+                let events = position["stages"]
+                    .as_array()
+                    .ok_or("Missing stages attribute")?;
+
+                if scene.stages.is_empty() {
+                    for _ in 0..events.len() {
+                        scene.stages.push(Default::default());
+                    }
+                    if scene.stages.is_empty() {
+                        return Err("Scene has no stages".into());
+                    }
+                    for stage in &mut scene.stages {
+                        stage.positions = vec![Default::default(); actors.len()];
+                    }
+                }
+                for (i, evt) in events.iter().enumerate() {
+                    let mut edit_position = &mut scene.stages[i].positions[n];
+                    edit_position.event = evt["id"].as_str().ok_or("Missing id attribute")?.into();
+                    match sex.as_str() {
+                        "male" => {
+                            edit_position.sex = Sex {
+                                male: true,
+                                female: false,
+                                futa: false,
+                            };
+                            edit_position.race = "Human".into();
+                        }
+                        "female" => {
+                            edit_position.sex = Sex {
+                                male: false,
+                                female: true,
+                                futa: false,
+                            };
+                            edit_position.race = "Human".into();
+                        }
+                        "creaturemale" => {
+                            edit_position.sex = Sex {
+                                male: true,
+                                female: false,
+                                futa: false,
+                            };
+                            edit_position.race = map_legacy_to_racekey(
+                                position["race"].as_str().unwrap_or(crt_race),
+                            )?;
+                        }
+                        "creaturefemale" => {
+                            edit_position.sex = Sex {
+                                male: false,
+                                female: true,
+                                futa: false,
+                            };
+                            edit_position.race = map_legacy_to_racekey(
+                                position["race"].as_str().unwrap_or(crt_race),
+                            )?;
+                        }
+                        _ => {
+                            return Err(format!("Unrecognized gender: {}", sex));
+                        }
+                    }
+                }
+            }
+            // finalize stage data, adding climax to last positions
+            let tags = animation["tags"]
+                .as_str()
+                .and_then(|tags| {
+                    let mut ret: Vec<String> = vec![];
+                    let lowercase = tags.to_lowercase();
+                    let list = lowercase.split(',');
+                    for tag in list {
+                        if tag == "rough" || tag == "aggressive" {
+                            ret.push("forced".into());
+                        } else {
+                            ret.push(tag.into());
+                        }
+                    }
+                    Some(ret)
+                })
+                .unwrap_or_default();
+            let stage_extra = animation["stage"].as_array();
+            for (i, stage) in scene.stages.iter_mut().enumerate() {
+                stage.tags = tags.clone();
+                if let Some(extra_vec) = stage_extra {
+                    for extra in extra_vec {
+                        let n = extra["number"].as_i64().unwrap_or(-1);
+                        if n == -1 || n as usize != i {
+                            continue;
+                        }
+                        stage.extra.fixed_len = extra["timer"].as_f64().unwrap_or_default() as f32;
+                    }
+                }
+            }
+            let last = scene.stages.last_mut().unwrap();
+            for position in &mut last.positions {
+                position.extra.climax = true;
+            }
+            // build graph
+            scene.root = scene.stages[0].id.clone();
+            let mut prev_id: Option<String> = None;
+            for stage in scene.stages.iter_mut().rev() {
+                let mut value = Node::default();
+                if let Some(id) = prev_id {
+                    value.dest = vec![id];
+                }
+                scene.graph.insert(stage.id.clone(), value);
+                prev_id = Some(stage.id.clone());
+            }
+            // add to prjct
+            prjct.scenes.insert(scene.id.clone(), scene);
+        }
+
+        info!(
+            "Loaded {} Animations from {}",
+            prjct.scenes.len(),
+            path.to_str().unwrap_or_default()
+        );
+        *self = prjct;
+        Ok(())
+    }
+
     pub fn build(&self) -> Result<(), std::io::Error> {
         let path = FileDialogBuilder::new().pick_folder();
         if path.is_none() {
@@ -172,7 +333,7 @@ impl Project {
                 let target_folder = map_race_to_folder(*racekey)
                     .expect(format!("Cannot find folder for RaceKey {}", racekey).as_str());
                 let path = root_dir.join(format!(
-                    "meshes\\actor\\{}\\animations\\{}",
+                    "meshes\\actors\\{}\\animations\\{}",
                     target_folder, self.pack_name
                 ));
                 let crt = &target_folder[target_folder
@@ -189,7 +350,7 @@ impl Project {
                     }
                     Ok(())
                 };
-                return match crt {
+                match crt {
                     "character" => create(path.join(format!("FNIS_{}_List.txt", self.pack_name))),
                     "canine" => {
                         create(path.join(format!("FNIS_{}_canine_List.txt", self.pack_name)))?;
@@ -197,10 +358,13 @@ impl Project {
                         create(path.join(format!("FNIS_{}_dog_List.txt", self.pack_name)))
                     }
                     _ => create(path.join(format!("FNIS_{}_{}_List.txt", self.pack_name, crt))),
-                };
+                }?;
             }
         }
-
+        info!(
+            "Successfully compiled {}",
+            root_dir.to_str().unwrap_or_default()
+        );
         Ok(())
     }
 

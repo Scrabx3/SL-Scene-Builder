@@ -58,6 +58,66 @@ pub enum RaceKey {
     Wolf,
 }
 
+pub fn map_legacy_to_racekey(legacykey: &str) -> Result<String, String> {
+    let key = legacykey.to_lowercase();
+    match key.as_str() {
+        "humans" => Ok("Human".into()),
+        "ashhoppers" => Ok("Ash Hopper".into()),
+        "bears" => Ok("Bear".into()),
+        "boarsany" => Ok("Boar".into()),
+        "boarsmounted" => Ok("Boar (Any)".into()),
+        "boars" => Ok("Boar (Mounted)".into()),
+        "canines" => Ok("Canine".into()),
+        "chaurus" => Ok("Chaurus".into()),
+        "chaurushunters" => Ok("Chaurus Hunter".into()),
+        "chaurusreapers" => Ok("Chaurus Reaper".into()),
+        "chickens" => Ok("Chicken".into()),
+        "cows" => Ok("Cow".into()),
+        "deers" => Ok("Deer".into()),
+        "dogs" => Ok("Dog".into()),
+        "dragons" => Ok("Dragon Priest".into()),
+        "dragonpriests" => Ok("Dragon".into()),
+        "draugrs" => Ok("Draugr".into()),
+        "dwarvenballistas" => Ok("Dwarven Ballista".into()),
+        "dwarvencenturions" => Ok("Dwarven Centurion".into()),
+        "dwarvenspheres" => Ok("Dwarven Sphere".into()),
+        "dwarvenspiders" => Ok("Dwarven Spider".into()),
+        "falmers" => Ok("Falmer".into()),
+        "flameatronach" => Ok("Flame Atronach".into()),
+        "foxes" => Ok("Fox".into()),
+        "frostatronach" => Ok("Frost Atronach".into()),
+        "gargoyles" => Ok("Gargoyle".into()),
+        "giants" => Ok("Giant".into()),
+        "giantspiders" => Ok("Goat".into()),
+        "goats" => Ok("Hagraven".into()),
+        "hagravens" => Ok("Horker".into()),
+        "rabbits" => Ok("Horse".into()),
+        "horkers" => Ok("Ice Wraith".into()),
+        "horses" => Ok("Lurker".into()),
+        "icewraiths" => Ok("Mammoth".into()),
+        "largespiders" => Ok("Mudcrab".into()),
+        "lurkers" => Ok("Netch".into()),
+        "mammoths" => Ok("Rabbit".into()),
+        "mudcrabs" => Ok("Riekling".into()),
+        "netches" => Ok("Sabrecat".into()),
+        "rieklings" => Ok("Seeker".into()),
+        "sabrecats" => Ok("Skeever".into()),
+        "seekers" => Ok("Slaughterfish".into()),
+        "skeevers" => Ok("Storm Atronach".into()),
+        "slaughterfishes" => Ok("Spider".into()),
+        "spiders" => Ok("Large Spider".into()),
+        "spriggans" => Ok("Giant Spider".into()),
+        "stormatronach" => Ok("Spriggan".into()),
+        "trolls" => Ok("Troll".into()),
+        "vampirelords" => Ok("Vampire Lord".into()),
+        "werewolves" => Ok("Werewolf".into()),
+        "wisps" => Ok("Wispmother".into()),
+        "wispmothers" => Ok("Wisp".into()),
+        "wolves" => Ok("Wolf".into()),
+        _ => Err(format!("Unrecognized legacy key: {}", legacykey).into()),
+    }
+}
+
 fn get_race_map() -> HashMap<String, RaceKey> {
     HashMap::from([
         ("Human".into(), RaceKey::Human),
@@ -127,6 +187,9 @@ pub fn get_race_keys_string() -> Vec<String> {
 
 pub fn get_race_key_bytes(race: &str) -> Option<u8> {
     let map = get_race_map();
+    // let mut key = race.to_lowercase();
+    // key.retain(|c| !c.is_whitespace() && c != '(' && c != ')');
+    // info!("Getting race key bytes for race: {}", key);
     if let Some(entry) = map.get(race) {
         return Some(*entry as u8);
     }

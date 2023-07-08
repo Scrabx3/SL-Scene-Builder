@@ -34,14 +34,7 @@ fn get_edited() -> bool {
 
 fn setup_logger() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
-        .format(|out, message, record| {
-            out.finish(format_args!(
-                "[{} {}] {}",
-                record.level(),
-                record.target(),
-                message
-            ))
-        })
+        .format(|out, message, record| out.finish(format_args!("[{}] {}", record.level(), message)))
         .level(log::LevelFilter::Info)
         .chain(std::io::stdout())
         .chain(fern::log_file("SceneBuilder.log")?)
@@ -83,6 +76,10 @@ fn main() {
                             CustomMenuItem::new("open_prjct", "Open Project")
                                 .accelerator("cmdOrControl+O"),
                         )
+                        .add_item(
+                            CustomMenuItem::new("open_slal", "Open SLAL File")
+                                .accelerator("cmdOrControl+Shift+O"),
+                        )
                         .add_native_item(MenuItem::Separator)
                         .add_item(
                             CustomMenuItem::new("save", "Save")
@@ -104,7 +101,7 @@ fn main() {
             .expect("Failed to create main window");
             let menu_handle = app.app_handle();
             window.on_menu_event(move |event| match event.menu_item_id() {
-                "new_prjct" | "open_prjct" => {
+                "new_prjct" | "open_prjct" | "open_slal" => {
                     let window = menu_handle.get_window("main_window").unwrap();
                     let mut prjct = PROJECT.lock().unwrap();
                     if get_edited() {
@@ -133,8 +130,11 @@ fn main() {
                     if event.menu_item_id() == "new_prjct" {
                         prjct.reset();
                         let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
-                    } else {
-                        prjct.load_project().unwrap();
+                    } else{
+                        if let Err(e) = if event.menu_item_id() == "open_slal" { prjct.load_slal() } else { prjct.load_project() } {
+                            error!("{}", e);
+                            return;
+                        }
                         let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
                     }
                     window.emit("on_project_update", &prjct.scenes).unwrap();
