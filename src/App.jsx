@@ -187,18 +187,30 @@ function App() {
           element.remove();
         }
       }
-      updateActiveScene(prev => {
-        let idx = prev.stages ? prev.stages.findIndex(it => it.id === stage.id) : -1;
-        if (idx === -1) {
-          prev.stages.push(stage)
-          if (prev.stages.length === 1) {
-            node.prop('isStart', true);
-            prev.root = stage.id;
-          }
-        } else {
-          prev.stages[idx] = stage;
+
+      let newActive = structuredClone(activeScene);
+      let idx = newActive.stages ? newActive.stages.findIndex(it => it.id === stage.id) : -1;
+      if (idx === -1) {
+        newActive.stages.push(stage)
+        if (newActive.stages.length === 1) {
+          node.prop('isStart', true);
+          newActive.root = stage.id;
         }
-      });
+      } else {
+        newActive.stages[idx] = stage;
+      }
+      for (let i = 0; i < newActive.stages.length; i++) {
+        if (i == idx) continue;
+        let node = nodes.find(node => node.id === newActive.stages[i].id);
+        console.assert(node != undefined);
+        updateNodeProps(newActive.stages[i], node, newActive);
+        for (let n = 0; n < newActive.stages[i].positions.length; n++) {
+          newActive.stages[i].positions[n].sex = { ...stage.positions[n].sex };
+          newActive.stages[i].positions[n].scale = stage.positions[n].scale;
+          newActive.stages[i].positions[n].extra = { ...stage.positions[n].extra, climax: newActive.stages[i].positions[n].extra.climax };
+        }
+      }
+      updateActiveScene(newActive);
       setEdited(true);
     });
     return () => {
