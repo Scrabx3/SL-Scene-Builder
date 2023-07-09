@@ -77,8 +77,7 @@ fn main() {
                                 .accelerator("cmdOrControl+O"),
                         )
                         .add_item(
-                            CustomMenuItem::new("open_slal", "Open SLAL File")
-                                .accelerator("cmdOrControl+Shift+O"),
+                            CustomMenuItem::new("open_slal", "Import SLAL File")
                         )
                         .add_native_item(MenuItem::Separator)
                         .add_item(
@@ -130,12 +129,19 @@ fn main() {
                     if event.menu_item_id() == "new_prjct" {
                         prjct.reset();
                         let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
-                    } else{
-                        if let Err(e) = if event.menu_item_id() == "open_slal" { prjct.load_slal() } else { prjct.load_project() } {
+                    } else if event.menu_item_id() == "open_slal" {
+                        if let Err(e) = prjct.load_slal() {
                             error!("{}", e);
-                            return;
+                        } else {
+                            set_edited(true);
+                            let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
                         }
-                        let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
+                    } else {
+                        if let Err(e) = prjct.load_project() {
+                            error!("{}", e);
+                        } else {
+                            let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
+                        }
                     }
                     window.emit("on_project_update", &prjct.scenes).unwrap();
                 }

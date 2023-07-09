@@ -89,7 +89,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
       <Checkbox
         onChange={(e) => { updateFunc(prev => { prev[attr] = e.target.checked }) }}
         checked={obj[attr] && !disabled}
-        disabled={!!_control || disabled || false}
+        disabled={disabled || false}
       >
         {label}
       </Checkbox>
@@ -260,7 +260,6 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
               precision={2} min={0.01} max={2} step={0.01}
               value={scale} onChange={(e) => { setScale(e) }}
               placeholder="1.0"
-              disabled={!!_control}
             />
           </Card>
         </Col>
