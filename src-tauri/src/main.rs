@@ -5,6 +5,7 @@
 mod define;
 mod furniture;
 mod racekeys;
+
 use define::{position::Position, project::Project, scene::Scene, stage::Stage, NanoID};
 use log::{error, info};
 use once_cell::sync::Lazy;
@@ -13,7 +14,9 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Mutex,
 };
-use tauri::{CustomMenuItem, Manager, Menu, MenuItem, Runtime, Submenu, WindowBuilder};
+use tauri::{
+    api::shell::open, CustomMenuItem, Manager, Menu, MenuItem, Runtime, Submenu, WindowBuilder,
+};
 
 const DEFAULT_MAINWINDOW_TITLE: &str = "SexLab Scene Builder";
 
@@ -94,6 +97,14 @@ fn main() {
                         )
                         .add_native_item(MenuItem::Separator)
                         .add_native_item(MenuItem::Quit),
+                ))
+                .add_submenu(Submenu::new(
+                    "Help", Menu::new()
+                        .add_item(CustomMenuItem::new("open_docs", "Open Wiki"))
+                        .add_native_item(MenuItem::Separator)
+                        .add_item(CustomMenuItem::new("discord", "Discord"))
+                        .add_item(CustomMenuItem::new("patreon", "Patreon"))
+                        .add_item(CustomMenuItem::new("kofi", "Ko-Fi"))
                 )),
             )
             .build()
@@ -163,7 +174,19 @@ fn main() {
                         error!("{}", e);
                     }
                 }
-                _ => {}
+                "open_docs" => {
+                    let _ = open(&menu_handle.shell_scope(), "https://github.com/Scrabx3/SexLab/wiki/Scene-Builder", None);
+                }
+                "discord" => {
+                    let _ = open(&menu_handle.shell_scope(), "https://discord.gg/mycaxFPSeV", None);
+                }
+                "patreon" => {
+                    let _ = open(&menu_handle.shell_scope(), "https://www.patreon.com/ScrabJoseline", None);
+                }
+                "kofi" => {
+                    let _ = open(&menu_handle.shell_scope(), "https://ko-fi.com/scrab", None);
+                }
+                _ => {error!("Unrecognized command: {}", event.menu_item_id())}
             });
             window.on_window_event(|event| match event {
                 tauri::WindowEvent::CloseRequested { api, .. } => {
