@@ -1,7 +1,45 @@
+/* Global Settings */
+:root {
+  --default-background: rgb(221, 235, 217, 1);
+  --default-border-color: rgba(33, 35, 48, 0.90);
+  --default-text-color: rgb(0, 0, 0);
+  --dark-background: rgb(0 33 64);
+  --dark-background-alt: rgb(27 61 93);
+  --dark-text: rgba(255, 255, 255, 0.65);
+}
+
+/* Default Styling */
+#root.default-style {
+  color: black;
+}
+
+.scene-box{
+  height: 100%;
+  width:98%;
+  /* margin: 5px; */
+  padding:10px;
+}
+
+/* Dark Mode */
+#root.dark-style {
+  color: white;
+}
+#root.dark-style .scene-box{
+  background-color: var(--dark-background);
+}
+
+#root.dark-style main {
+  background-color:var(--dark-background);
+}
+#root.dark-style .ant-empty-description {
+  color: var(--dark-text);
+}
+
+/* Old styling to cleanup */
 .stage-content {
   height: 100%;
   width: 100%;
-  color: black;
+  color: rgb(0, 0, 0);
   border: rgba(33, 35, 48, 0.90);
   background-color: rgb(221, 235, 217, 1);
   border-radius: 5px;
@@ -42,4 +80,8 @@
   top: 5px;
   right: 5px;
   z-index: 20;
+}
+
+.graph-data-field {
+  padding: 5px;
 }

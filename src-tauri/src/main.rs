@@ -96,7 +96,11 @@ fn main() {
                                 .accelerator("cmdOrControl+B"),
                         )
                         .add_native_item(MenuItem::Separator)
-                        .add_native_item(MenuItem::Quit),
+                        .add_item(
+                            CustomMenuItem::new("dark_mode", "Dark Mode")
+                                .accelerator("cmdOrControl+D"),
+                        )
+                        .add_native_item(MenuItem::Quit), 
                 ))
                 .add_submenu(Submenu::new(
                     "Help", Menu::new()
