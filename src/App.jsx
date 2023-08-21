@@ -16,7 +16,6 @@ import { STAGE_EDGE, STAGE_EDGE_SHAPEID } from "./scene/SceneEdge"
 import { Furnitures } from "./common/Furniture";
 import "./scene/SceneNode"
 import "./App.css";
-import { className } from "@antv/x6/lib/registry/highlighter/class";
 
 function makeMenuItem(label, key, icon, children, disabled, danger) {
   return { key, icon, children, label, disabled, danger };
@@ -647,8 +646,8 @@ function App() {
                               prev.furniture.furni_types.indexOf('None');
                             if (where === -1)
                               prev.furniture.furni_types.push(value);
-                            else prev.furniture.furni_types[where] = value;
-
+                            else 
+                              prev.furniture.furni_types[where] = value;
                             prev.furni_types.allow_bed = false;
                             return prev;
                           });
@@ -729,10 +728,8 @@ function App() {
                           precision={1}
                           step={0.1}
                           value={
-                            activeScene
+                            activeScene && activeScene.furniture.offset.y
                               ? activeScene.furniture.offset.y
-                                ? activeScene.furniture.offset.y
-                                : undefined
                               : undefined
                           }
                           onChange={(e) => {
