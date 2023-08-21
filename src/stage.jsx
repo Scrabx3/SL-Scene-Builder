@@ -175,14 +175,26 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
       <Header className="stage-header">
         <Row>
           <Col>
-            <Input id="stage-namefield-input" className="stage-namefield" size="large" maxLength={30} bordered={false}
-              value={name} onChange={(e) => setName(e.target.value)}
-              defaultValue={_name} placeholder={"Stage Name"}
+            <Input
+              id="stage-namefield-input"
+              className="stage-namefield"
+              size="large"
+              maxLength={30}
+              bordered={false}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              defaultValue={_name}
+              placeholder={'Stage Name'}
               onFocus={(e) => e.target.select()}
             />
           </Col>
-          <Col flex={"auto"}>
-            <Menu className="stage-header-menu" theme="dark" mode="horizontal" selectable={false} defaultSelectedKeys={['save']}
+          <Col flex={'auto'}>
+            <Menu
+              className="stage-header-menu"
+              theme="dark"
+              mode="horizontal"
+              selectable={false}
+              defaultSelectedKeys={['save']}
               onClick={({ key }) => {
                 switch (key) {
                   case 'save':
@@ -193,8 +205,11 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
               items={[
                 { type: 'divider' },
                 {
-                  label: 'Save', key: 'save', icon: <SaveOutlined />, className: 'stage-header-menu-entry'
-                }
+                  label: 'Save',
+                  key: 'save',
+                  icon: <SaveOutlined />,
+                  className: 'stage-header-menu-entry',
+                },
               ]}
             />
           </Col>
@@ -207,20 +222,27 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
         activeKey={activePosition}
         hideAdd={positions.length > 4 || !!_control}
         onEdit={onPositionTabEdit}
-        onChange={(e) => { setActivePosition(e) }}
-        items={
-          positions.map((p, i) => {
-            return {
-              label: `Position ${i + 1}`,
-              closable: (positions.length > 1 && !_control),
-              key: p.key,
-              children: (
-                <div className="position">
-                  <PositionField _position={p.position} _control={_control && _control.positions[i] || null} ref={(element) => { positionRefs.current[i] = element }} />
-                </div>
-              )
-            }
-          })}
+        onChange={(e) => {
+          setActivePosition(e);
+        }}
+        items={positions.map((p, i) => {
+          return {
+            label: `Position ${i + 1}`,
+            closable: positions.length > 1 && !_control,
+            key: p.key,
+            children: (
+              <div className="position">
+                <PositionField
+                  _position={p.position}
+                  _control={(_control && _control.positions[i]) || null}
+                  ref={(element) => {
+                    positionRefs.current[i] = element;
+                  }}
+                />
+              </div>
+            ),
+          };
+        })}
       />
       <Divider orientation="left">Tags</Divider>
       <TreeSelect
@@ -229,18 +251,26 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
         multiple
         allowClear
         value={tags}
-        onSelect={(e) => { updateTags(prev => { prev.push(e) }); }}
-        onClear={() => { updateTags([]) }}
+        onSelect={(e) => {
+          updateTags((prev) => {
+            prev.push(e);
+          });
+        }}
+        onClear={() => {
+          updateTags([]);
+        }}
         dropdownRender={(menu) => (
           <>
             {menu}
             <Divider style={{ margin: '8px 0' }} />
             <Space.Compact style={{ width: '100%' }}>
-              <Input value={customTag} onChange={(e) => setCustomTag(e.target.value)} placeholder="Custom Tag A, Custom Tag B" onPressEnter={addCustomTags} />
-              <Button
-                type="primary"
-                onClick={addCustomTags}
-              >
+              <Input
+                value={customTag}
+                onChange={(e) => setCustomTag(e.target.value)}
+                placeholder="Custom Tag A, Custom Tag B"
+                onPressEnter={addCustomTags}
+              />
+              <Button type="primary" onClick={addCustomTags}>
                 Add
               </Button>
             </Space.Compact>
@@ -249,16 +279,18 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
         maxTagTextLength={20}
         tagRender={({ label, value, closable, onClose }) => {
           const search = value.toLowerCase();
-          let color = tagsSFW.find((it) => it.toLowerCase() === search) ? 'cyan' :
-              tagsNSFW.find((it) => it.toLowerCase() === search) ? 'volcano' :
-                undefined;
+          let color = tagsSFW.find((it) => it.toLowerCase() === search)
+            ? 'cyan'
+            : tagsNSFW.find((it) => it.toLowerCase() === search)
+            ? 'volcano'
+            : undefined;
 
           const onPreventMouseDown = (evt) => {
             evt.preventDefault();
             evt.stopPropagation();
           };
           const onCloseEx = () => {
-            updateTags(prev => prev.filter(tag => tag !== value));
+            updateTags((prev) => prev.filter((tag) => tag !== value));
             onClose();
           };
           return (
@@ -278,22 +310,52 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
       />
 
       <Divider orientation="left">Extra</Divider>
-      <Space wrap align='start'>
-        <Card title={"Navigation"}
-          extra={<Tooltip title={'A short text for the player to read when given the option to branch into this stage.'}><Button type="link">Info</Button></Tooltip>}
+      <Space wrap align="start" style={{ padding: '16px' }}>
+        <Card
+          title={'Navigation'}
+          extra={
+            <Tooltip
+              title={
+                'A short text for the player to read when given the option to branch into this stage.'
+              }
+            >
+              <Button type="link">Info</Button>
+            </Tooltip>
+          }
         >
-          <TextArea className="extra-navinfo-textarea" maxLength={100} showCount rows={3} style={{ resize: 'none' }}
+          <TextArea
+            className="extra-navinfo-textarea"
+            maxLength={100}
+            showCount
+            rows={3}
+            style={{ resize: 'none' }}
             defaultValue={_extra.navText}
-            value={navText} onChange={(e) => setNavText(e.target.value)}
+            value={navText}
+            onChange={(e) => setNavText(e.target.value)}
           ></TextArea>
         </Card>
-        <Card title={"Fixed Duration"}
-          extra={<Tooltip title={'Duration of an animation that should only play once (does not loop).'}><Button type="link">Info</Button></Tooltip>}
+        <Card
+          title={'Fixed Duration'}
+          extra={
+            <Tooltip
+              title={
+                'Duration of an animation that should only play once (does not loop).'
+              }
+            >
+              <Button type="link">Info</Button>
+            </Tooltip>
+          }
         >
           <Space direction="vertical">
-            <InputNumber className="extra-duration-input" controls precision={0} step={10}
-              defaultValue={_extra.fixedLen} min={0}
-              value={fixedLen} onChange={(e) => setFixedLen(e)}
+            <InputNumber
+              className="extra-duration-input"
+              controls
+              precision={0}
+              step={10}
+              defaultValue={_extra.fixedLen}
+              min={0}
+              value={fixedLen}
+              onChange={(e) => setFixedLen(e)}
               placeholder="0"
               addonAfter={'ms'}
             />
@@ -301,7 +363,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
         </Card>
       </Space>
     </Layout>
-  )
+  );
 }
 
 export default Editor;
