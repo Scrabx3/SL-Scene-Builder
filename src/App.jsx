@@ -203,7 +203,6 @@ function App() {
         for (let i = 0; i < newActive.stages.length; i++) {
           // skip if the node has just been edited or newly created
           if (i == idx || node.id === stage.id) continue;
-          console.log("Looking at stage", newActive.stages[i]);
           let node2 = nodes.find(it => it.id === newActive.stages[i].id);
           console.assert(node2 != undefined);
           updateNodeProps(newActive.stages[i], node2, newActive);
@@ -327,7 +326,6 @@ function App() {
   }
 
   const saveScene = () => {
-    console.log("Saving scene", activeScene);
     let doSave = true;
     if (!activeScene.name) {
       api['error']({
