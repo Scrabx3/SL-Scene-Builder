@@ -202,13 +202,13 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                   </div>
                 </Tooltip>
               </Col>
-              <Col>
+              {/* <Col>
                 <Tooltip title={'The is wearing a petsuit.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Petsuit'} attr={'petsuit'} disabled={race !== "Human"} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
-              </Col>
+              </Col> */}
               <Col>
                 <Tooltip title={'A position that is not mandatory for the scene to play out correctly.'}>
                   <div>
