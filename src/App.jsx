@@ -648,7 +648,7 @@ function App() {
                               prev.furniture.furni_types.push(value);
                             else 
                               prev.furniture.furni_types[where] = value;
-                            prev.furni_types.allow_bed = false;
+                            prev.furniture.allow_bed = false;
                             return prev;
                           });
                         }
