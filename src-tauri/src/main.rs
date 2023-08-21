@@ -109,6 +109,10 @@ fn main() {
             )
             .build()
             .expect("Failed to create main window");
+            let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                width: 1024,
+                height: 768,
+            }));
             let menu_handle = app.app_handle();
             window.on_menu_event(move |event| match event.menu_item_id() {
                 "new_prjct" | "open_prjct" | "open_slal" => {
