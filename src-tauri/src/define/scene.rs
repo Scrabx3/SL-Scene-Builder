@@ -65,7 +65,8 @@ impl EncodeBinary for Scene {
             + 5 * size_of::<u64>()
             + 2 * NANOID_LENGTH
             + self.graph.len() * NANOID_LENGTH
-            + self.furniture.get_byte_size();
+            + self.furniture.get_byte_size()
+            + 1;
         ret += self.stages[0].positions[0].get_byte_size_meta();
         for (_, node) in &self.graph {
             ret += node.dest.len() * NANOID_LENGTH;
@@ -106,6 +107,8 @@ impl EncodeBinary for Scene {
         }
         // furniture
         self.furniture.write_byte(buf);
+        // private
+        buf.push(self.private as u8)
     }
 }
 
