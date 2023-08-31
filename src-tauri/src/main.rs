@@ -46,6 +46,11 @@ fn setup_logger() -> Result<(), fern::InitError> {
 }
 
 /// MAIN
+
+const NEW_PROJECT: &str = "new_prjct";
+const OPEN_PROJECT: &str = "open_prjct";
+const OPEN_SLAL: &str = "open_slal";
+
 fn main() {
     setup_logger().expect("Unable to initialize logger");
     tauri::Builder::default()
@@ -72,15 +77,15 @@ fn main() {
                     "File",
                     Menu::new()
                         .add_item(
-                            CustomMenuItem::new("new_prjct", "New Project")
+                            CustomMenuItem::new(NEW_PROJECT, "New Project")
                                 .accelerator("cmdOrControl+N"),
                         )
                         .add_item(
-                            CustomMenuItem::new("open_prjct", "Open Project")
+                            CustomMenuItem::new(OPEN_PROJECT, "Open Project")
                                 .accelerator("cmdOrControl+O"),
                         )
                         .add_item(
-                            CustomMenuItem::new("open_slal", "Import SLAL File")
+                            CustomMenuItem::new(OPEN_SLAL, "Import SLAL File")
                         )
                         .add_native_item(MenuItem::Separator)
                         .add_item(
@@ -119,50 +124,24 @@ fn main() {
             }));
             let menu_handle = app.app_handle();
             window.on_menu_event(move |event| match event.menu_item_id() {
-                "new_prjct" | "open_prjct" | "open_slal" => {
+                NEW_PROJECT | OPEN_PROJECT | OPEN_SLAL => {
+                    let eventid = event.menu_item_id().to_string();
                     let window = menu_handle.get_window("main_window").unwrap();
-                    let mut prjct = PROJECT.lock().unwrap();
                     if get_edited() {
                         let ask_handle = menu_handle.app_handle();
                         tauri::api::dialog::ask(
                             Some(&window),
-                            if event.menu_item_id() == "new_prjct" {"New Project"} else {"Open Project"},
+                            if eventid == "new_prjct" {"New Project"} else {"Open Project"},
                             "There are unsaved changes. Loading a new project will cause these changes to be lost.\nContinue?", {move |r| {
                                 if !r {
                                     return;
                                 }
                                 let window = ask_handle.get_window("main_window").unwrap();
-                                let mut prjct = PROJECT.lock().unwrap();
-                                if event.menu_item_id() == "new_prjct" {
-                                    prjct.reset();
-                                    let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
-                                } else {
-                                    prjct.load_project().unwrap();
-                                    let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
-                                }
-                                window.emit("on_project_update", &prjct.scenes).unwrap();
-                                set_edited(false);
+                                reload_project(event.menu_item_id(), &window);
                             }});
                         return;
                     }
-                    if event.menu_item_id() == "new_prjct" {
-                        prjct.reset();
-                        let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
-                    } else if event.menu_item_id() == "open_slal" {
-                        if let Err(e) = prjct.load_slal() {
-                            error!("{}", e);
-                        } else {
-                            set_edited(true);
-                            let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
-                        }
-                    } else {
-                        if let Err(e) = prjct.load_project() {
-                            error!("{}", e);
-                        } else {
-                            let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
-                        }
-                    }
-                    window.emit("on_project_update", &prjct.scenes).unwrap();
+                    reload_project(event.menu_item_id(), &window);
                 }
                 "save" | "save_as" => {
                     let mut prjct = PROJECT.lock().unwrap();
@@ -218,6 +197,30 @@ fn main() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn reload_project(reload_type: &str, window: &tauri::Window) {
+    let mut prjct = PROJECT.lock().unwrap();
+    let result = match reload_type {
+        NEW_PROJECT => {
+            prjct.reset();
+            Ok(())
+        }
+        OPEN_PROJECT => prjct.load_project(),
+        OPEN_SLAL => prjct.load_slal(),
+        _ => Err(format!("Invalid reload type: {}", reload_type))
+    };
+    if let Err(e) = result {
+        error!("{}", e);
+    }
+    if prjct.pack_name == String::default() {
+        let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
+    } else {
+        let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
+    }
+    
+    window.emit("on_project_update", &prjct.scenes).unwrap();
+    set_edited(reload_type == OPEN_SLAL);
 }
 
 /// COMMANDS
