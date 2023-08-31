@@ -188,35 +188,37 @@ function App() {
         }
       }
 
-      updateActiveScene(newActive => {
-        let idx = newActive.stages ? newActive.stages.findIndex(it => it.id === stage.id) : -1;
-        if (idx === -1) {
-          newActive.stages.push(stage)
-          if (newActive.stages.length === 1) {
-            node.prop('isStart', true);
-            newActive.root = stage.id;
-          }
-        } else {
-          newActive.stages[idx] = stage;
+      let newActive = structuredClone(activeScene);
+      let idx = newActive.stages ? newActive.stages.findIndex(it => it.id === stage.id) : -1;
+      if (idx === -1) {
+        newActive.stages.push(stage)
+        if (newActive.stages.length === 1) {
+          node.prop('isStart', true);
+          newActive.root = stage.id;
         }
-        console.log(newActive.stages.length);
-        for (let i = 0; i < newActive.stages.length; i++) {
-          // skip if the node has just been edited or newly created
-          if (i == idx || node.id === stage.id) continue;
-          let node2 = nodes.find(it => it.id === newActive.stages[i].id);
-          console.assert(node2 != undefined);
-          updateNodeProps(newActive.stages[i], node2, newActive);
-          for (let n = 0; n < newActive.stages[i].positions.length; n++) {
-            newActive.stages[i].positions[n].sex = { ...stage.positions[n].sex };
-            newActive.stages[i].positions[n].scale = stage.positions[n].scale;
-            newActive.stages[i].positions[n].extra = { ...stage.positions[n].extra, climax: newActive.stages[i].positions[n].extra.climax };
-          }
+      } else {
+        newActive.stages[idx] = stage;
+      }
+      for (let i = 0; i < newActive.stages.length; i++) {
+        // skip if the node has just been edited or newly created
+        if (i == idx || node.id === newActive.stages[i].id) {
+          continue;
         }
-        return newActive
-      });
+        let node2 = nodes.find(it => it.id === newActive.stages[i].id);
+        console.assert(node2 != undefined);
+        updateNodeProps(newActive.stages[i], node2, newActive);
+        for (let n = 0; n < newActive.stages[i].positions.length; n++) {
+          newActive.stages[i].positions[n].sex = { ...stage.positions[n].sex };
+          newActive.stages[i].positions[n].scale = stage.positions[n].scale;
+          newActive.stages[i].positions[n].extra = { ...stage.positions[n].extra, climax: newActive.stages[i].positions[n].extra.climax };
+        }
+      }
+
+      updateActiveScene(newActive);
       setEdited(true);
     });
     return () => {
+      console.log("Active before update:", activeScene);
       unlisten.then(res => { res() });
     }
   }, [graph, activeScene])
