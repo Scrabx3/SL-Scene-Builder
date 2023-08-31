@@ -144,19 +144,19 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
         <Col span={12}>
           {/* Data */}
           <Card className="position-attribute-card" title={'Data'}
-            extra={<Tooltip title={'Data describing this position. Hover options for more info.'}><Button type="link">Info</Button></Tooltip>}
+            extra={<Tooltip title={'Extra Data used to further specify the actor filling this position. Hover options for more info.'}><Button type="link">Info</Button></Tooltip>}
           >
             {/* div here is necessary to avoid 'findDOMNode is depreciated' error */}
             <Row gutter={[8, 16]} justify={'space-between'}>
               <Col>
-                <Tooltip title={'Taker/Bottom position of the animation.'}>
+                <Tooltip title={'Passive/Taker/Bottom position.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Submissive'} attr={'submissive'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'The position climaxes during this stage.'}>
+                <Tooltip title={'Actor climaxes during this stage.'}>
                   <div>
                     <Checkbox
                       checked={extra.climax}
@@ -168,35 +168,35 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'The position must be a vampire.'}>
+                <Tooltip title={'Actor is a vampire.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Vampire'} attr={'vampire'} disabled={race !== "Human"} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'The position is unconscious/dead.'}>
+                <Tooltip title={'Actor is unconscious/dead.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Unconscious'} attr={'dead'} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'The is wearing a yoke (not anim object).'}>
+                <Tooltip title={'Actor is locked in a yoke (not anim object).'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Yoke'} attr={'yoke'} disabled={race !== "Human"} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'The is wearing an armbinder (not anim object).'}>
+                <Tooltip title={'Actor is locked in an armbinder (not anim object).'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Armbinder'} attr={'armbinder'} disabled={race !== "Human"} updateFunc={updateExtra} />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'The is locked in a legbinder.'}>
+                <Tooltip title={'Actor is locked in a legbinder.'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Legbinder'} attr={'legbinder'} disabled={race !== "Human"} updateFunc={updateExtra} />
                   </div>
@@ -210,7 +210,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 </Tooltip>
               </Col> */}
               <Col>
-                <Tooltip title={'A position that is not mandatory for the scene to play out correctly.'}>
+                <Tooltip title={'The position is not required for the scene to player properly (Bystander).'}>
                   <div>
                     <CheckboxEx obj={extra} label={'Optional'} attr={'optional'} updateFunc={updateExtra} />
                   </div>
@@ -222,7 +222,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
         <Col span={12}>
           {/* Offset */}
           <Card className="position-attribute-card" title={'Offset'}
-            extra={<Tooltip title={'The offset of this actor relative to the center of the animation.'}><Button type="link">Info</Button></Tooltip>}
+            extra={<Tooltip title={'The position offset relative to animation center.'}><Button type="link">Info</Button></Tooltip>}
           >
             <Row gutter={[12, 12]}>
               <Col span={12}>
@@ -254,7 +254,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
         </Col>
         <Col span={8}>
           <Card className="position-attribute-card" title={'Scale'}
-            extra={<Tooltip title={'This positions scale info'}><Button type="link">Info</Button></Tooltip>}
+            extra={<Tooltip title={'The desired scale of this actor. Usually the same scale used in the creation of the behavior file.'}><Button type="link">Info</Button></Tooltip>}
           >
             <InputNumber addonBefore={'Factor'} controls decimalSeparator=","
               precision={2} min={0.01} max={2} step={0.01}
@@ -265,7 +265,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
         </Col>
         <Col span={8}>
           <Card className="position-attribute-card" title={'Stripping'}
-            extra={<Tooltip title={'The items this position should strip in this stage'}><Button type="link">Info</Button></Tooltip>}
+            extra={<Tooltip title={'The items this position should strip in this stage.'}><Button type="link">Info</Button></Tooltip>}
           >
             <Select 
               className="position-strip-tree"
@@ -322,7 +322,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
         <Col span={8}>
           {/* behavior file */}
           <Card className="position-attribute-card" title={'Anim Object'}
-            extra={<Tooltip title={'The anim object(s) associated with this position. If multiple, separate with commas (,)'}><Button type="link">Info</Button></Tooltip>}>
+            extra={<Tooltip title={'The anim object/s associated with this position. If multiple, separate with commas (,)'}><Button type="link">Info</Button></Tooltip>}>
             <Input value={anim_obj} onChange={(e) => { setAnimObj(e.target.value) }} placeholder="Editor ID"/>
           </Card>
         </Col>
