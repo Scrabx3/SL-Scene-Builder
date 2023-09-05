@@ -780,14 +780,14 @@ function App() {
                           max={359.9}
                           value={
                             activeScene
-                              ? activeScene.furniture.offset.rot
-                                ? activeScene.furniture.offset.rot
+                              ? activeScene.furniture.offset.r
+                                ? activeScene.furniture.offset.r
                                 : undefined
                               : undefined
                           }
                           onChange={(e) => {
                             updateActiveScene((prev) => {
-                              prev.furniture.offset.rot = e;
+                              prev.furniture.offset.r = e;
                             });
                             setEdited(true);
                           }}

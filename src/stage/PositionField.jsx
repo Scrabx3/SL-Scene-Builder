@@ -245,7 +245,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
               </Col>
               <Col span={12}>
                 <InputNumber addonBefore={'°'} controls decimalSeparator="," precision={1} step={0.1} min={0.0} max={359.9}
-                  value={offset.rot ? offset.rot : undefined} onChange={(e) => { updateOffset(prev => { prev.rot = e }) }}
+                  value={offset.r ? offset.r : undefined} onChange={(e) => { updateOffset(prev => { prev.r = e }) }}
                   placeholder="0.0"
                 />
               </Col>
