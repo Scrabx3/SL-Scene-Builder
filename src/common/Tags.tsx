@@ -1,6 +1,5 @@
 export const tagsNSFW: Array<String> = [
   "69",
-  "Aggressive",
   "Anal",
   "Asphyxiation",
   "Blowjob",
@@ -12,8 +11,10 @@ export const tagsNSFW: Array<String> = [
   "Dominant",
   "Double Penetration",
   "Face Sitting",
+  "Facial",
   "Feet",
   "Femdom",
+  "Fingering",
   "Footjob",
   "Forced",
   "Gay",
@@ -26,7 +27,9 @@ export const tagsNSFW: Array<String> = [
   "Oral",
   "Penetration",
   "Reverse Cowgirl",
+  "Spanking",
   "Spitroast",
+  "Teasing",
   "Triple Penetration",
   "Vaginal"
 ];
