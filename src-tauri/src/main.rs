@@ -212,6 +212,7 @@ fn reload_project(reload_type: &str, window: &tauri::Window) {
     };
     if let Err(e) = result {
         error!("{}", e);
+        return;
     }
     if prjct.pack_name == String::default() {
         let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
