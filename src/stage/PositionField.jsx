@@ -56,7 +56,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
   const [event, setEvent] = useState(_position.event);
   const [race, setRace] = useState(_control && _control.race || _position.race);
   const [sex, updateSex] = useImmer(_control && _control.sex || _position.sex);
-  const [extra, updateExtra] = useImmer(_control && _control.id !== _position.id ? { ..._control.extra, climax: false } : _position.extra);
+  const [extra, updateExtra] = useImmer(_control && _control.extra ? { ..._control.extra, climax: false } : _position.extra);
   const [offset, updateOffset] = useImmer(_control && _control.offset || _position.offset);
   const [scale, setScale] = useState(_control && _control.scale || _position.scale);
   const [anim_obj, setAnimObj] = useState(_position.anim_obj);
