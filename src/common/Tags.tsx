@@ -4,6 +4,7 @@ export const tagsNSFW: Array<String> = [
   "Asphyxiation",
   "Blowjob",
   "Boobjob",
+  "Buttjob",
   "Cowgirl",
   "Cunnilingius",
   "Deepthroat",
@@ -17,19 +18,21 @@ export const tagsNSFW: Array<String> = [
   "Fingering",
   "Footjob",
   "Forced",
-  "Gay",
+  "Grinding",
   "Handjob",
   "Lead In",
-  "Lesbian",
   "Maledom",
   "Masturbation",
   "Missionary",
   "Oral",
   "Penetration",
   "Reverse Cowgirl",
+  "Reverse Spitroast",
+  "Rimming",
   "Spanking",
   "Spitroast",
   "Teasing",
+  "Tribadism",
   "Triple Penetration",
   "Vaginal"
 ];
@@ -42,5 +45,6 @@ export const tagsSFW: Array<String> = [
   "Kneeling",
   "Loving",
   "Lying",
+  "Sitting",
   "Standing"
 ];
