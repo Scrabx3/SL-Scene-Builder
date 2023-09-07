@@ -227,25 +227,25 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             <Row gutter={[12, 12]}>
               <Col span={12}>
                 <InputNumber addonBefore={'X'} controls decimalSeparator="," precision={1} step={0.1}
-                  value={offset.x ? offset.x : undefined} onChange={(e) => { updateOffset(prev => { prev.x = e }) }}
+                  value={offset.x ? offset.x : undefined} onChange={(e) => { updateOffset(prev => { prev.x = e ? e : 0.0 }) }}
                   placeholder="0.0"
                 />
               </Col>
               <Col span={12}>
                 <InputNumber addonBefore={'Y'} controls decimalSeparator="," precision={1} step={0.1}
-                  value={offset.y ? offset.y : undefined} onChange={(e) => { updateOffset(prev => { prev.y = e }) }}
+                  value={offset.y ? offset.y : undefined} onChange={(e) => { updateOffset(prev => { prev.y = e ? e : 0.0 }) }}
                   placeholder="0.0"
                 />
               </Col>
               <Col span={12}>
                 <InputNumber addonBefore={'Z'} controls decimalSeparator="," precision={1} step={0.1}
-                  value={offset.z ? offset.z : undefined} onChange={(e) => { updateOffset(prev => { prev.z = e }) }}
+                  value={offset.z ? offset.z : undefined} onChange={(e) => { updateOffset(prev => { prev.z = e ? e : 0.0 }) }}
                   placeholder="0.0"
                 />
               </Col>
               <Col span={12}>
                 <InputNumber addonBefore={'°'} controls decimalSeparator="," precision={1} step={0.1} min={0.0} max={359.9}
-                  value={offset.r ? offset.r : undefined} onChange={(e) => { updateOffset(prev => { prev.r = e }) }}
+                  value={offset.r ? offset.r : undefined} onChange={(e) => { updateOffset(prev => { prev.r = e ? e : 0.0 }) }}
                   placeholder="0.0"
                 />
               </Col>
