@@ -26,6 +26,7 @@ export const tagsNSFW: Array<String> = [
   "Missionary",
   "Oral",
   "Penetration",
+  "Prone Bone",
   "Reverse Cowgirl",
   "Reverse Spitroast",
   "Rimming",

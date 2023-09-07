@@ -1,6 +1,6 @@
 [package]
 name = "scene_builder"
-version = "1.0.2"
+version = "1.0.7"
 description = "Tool to aid creating and maintaing SL animations"
 authors = ["Scrab Joséline, I unpause"]
 license = ""
