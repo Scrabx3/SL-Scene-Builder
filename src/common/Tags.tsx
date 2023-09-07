@@ -14,7 +14,6 @@ export const tagsNSFW: Array<String> = [
   "Face Sitting",
   "Facial",
   "Feet",
-  "Femdom",
   "Fingering",
   "Footjob",
   "Forced",
@@ -22,7 +21,6 @@ export const tagsNSFW: Array<String> = [
   "Handjob",
   "Lead In",
   "Lotus Position",
-  "Maledom",
   "Masturbation",
   "Missionary",
   "Oral",
@@ -42,6 +40,7 @@ export const tagsNSFW: Array<String> = [
 export const tagsSFW: Array<String> = [
   "Behind",
   "Facing",
+  "Holding",
   "Hugging",
   "Kissing",
   "Kneeling",
