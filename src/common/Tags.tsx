@@ -21,6 +21,7 @@ export const tagsNSFW: Array<String> = [
   "Grinding",
   "Handjob",
   "Lead In",
+  "Lotus Position",
   "Maledom",
   "Masturbation",
   "Missionary",
@@ -47,5 +48,7 @@ export const tagsSFW: Array<String> = [
   "Loving",
   "Lying",
   "Sitting",
+  "Spooning",
   "Standing"
 ];
+console.assert(tagsNSFW.length + tagsSFW.length < 64);
