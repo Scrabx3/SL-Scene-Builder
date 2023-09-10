@@ -64,6 +64,7 @@ fn main() {
             open_stage_editor_from,
             stage_save_and_close,
             make_position,
+            mark_as_edited,
         ])
         .setup(|app| {
             let window = WindowBuilder::new(
@@ -237,6 +238,16 @@ async fn get_race_keys() -> Vec<String> {
     racekeys::get_race_keys_string()
 }
 
+#[tauri::command]
+async fn mark_as_edited<R: Runtime>(window: tauri::Window<R>) -> () {
+    set_edited(true);
+    if let Ok(title) = window.title() {
+        if !title.ends_with('*') {
+            window.set_title(format!("{}*", title).as_str()).unwrap();
+        }
+    }
+}
+
 /* Scene */
 
 #[tauri::command]
@@ -245,13 +256,8 @@ fn create_blank_scene() -> Scene {
 }
 
 #[tauri::command]
-fn save_scene<R: Runtime>(window: tauri::Window<R>, scene: Scene) -> () {
-    set_edited(true);
-    if let Ok(title) = window.title() {
-        if !title.ends_with('*') {
-            window.set_title(format!("{}*", title).as_str()).unwrap();
-        }
-    }
+async fn save_scene<R: Runtime>(window: tauri::Window<R>, scene: Scene) -> () {
+    mark_as_edited(window).await;
     PROJECT.lock().unwrap().save_scene(scene);
 }
 
