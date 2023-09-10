@@ -44,7 +44,10 @@ function StageNode({ node, graph }) {
   const label = stage.name;
   const navText = stage.extra.nav_text;
   const orgasm = stage.positions.find(pos => pos.extra.climax) !== undefined;
-  const color = fixedLen ? makeColor(175, 235, 255, 1) : undefined;
+  const color = fixedLen ?
+    fixedLen < 50 ? makeColor(255, 175, 175, 1) :
+      makeColor(175, 235, 255, 1)
+    : undefined;
 
   node.prop('ports/groups/default/attrs/path/stroke', start ? START_COLOR : PORT_DEFAULTS.stroke);
   node.prop('ports/groups/default/attrs/path/fill', color ? color : PORT_DEFAULTS.fill);
