@@ -18,6 +18,9 @@ pub struct Scene {
     pub graph: HashMap<NanoID, Node>,
     pub furniture: FurnitureData,
     pub private: bool,
+
+    #[serde(default)] // addition 1.1
+    pub has_warnings: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -122,6 +125,7 @@ impl Default for Scene {
             graph: Default::default(),
             furniture: Default::default(),
             private: Default::default(),
+            has_warnings: Default::default(),
         }
     }
 }
