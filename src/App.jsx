@@ -7,7 +7,7 @@ import { History } from "@antv/x6-plugin-history";
 import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification, Divider, Switch, Checkbox, Row, Col, InputNumber, Select } from 'antd'
 import {
   ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, DiffOutlined, ZoomInOutlined, ZoomOutOutlined,
-  DeleteOutlined, DoubleLeftOutlined, DoubleRightOutlined, PicCenterOutlined, CompressOutlined, PushpinOutlined, DragOutlined
+  DeleteOutlined, DoubleLeftOutlined, DoubleRightOutlined, PicCenterOutlined, CompressOutlined, PushpinOutlined, DragOutlined, WarningOutlined
 } from '@ant-design/icons';
 const { Header, Content, Footer, Sider } = Layout;
 const { confirm } = Modal;
@@ -328,6 +328,7 @@ function App() {
   }
 
   const saveScene = () => {
+    let has_warnings = false;
     let doSave = true;
     if (!activeScene.name) {
       api['error']({
@@ -344,12 +345,12 @@ function App() {
     const nodes = graph.getNodes();
     const startNode = nodes.find(node => node.id === activeScene.root);
     if (!startNode) {
-      api['error']({
+      api['warning']({
         message: 'Missing Start Animation',
         description: 'Choose the stage which the scene is supposed to start at.',
         placement: 'bottomLeft'
       });
-      doSave = false;
+      has_warnings = true;
     } else {
       const dfsGraph = graph.getSuccessors(startNode);
       if (dfsGraph.length + 1 < nodes.length) {
@@ -358,6 +359,7 @@ function App() {
           description: 'Scene contains stages which cannot be reached from the start animation',
           placement: 'bottomLeft'
         });
+        has_warnings = true;
       }
     }
 
@@ -385,7 +387,8 @@ function App() {
           };
         });
         return ret;
-      }()
+      }(),
+      has_warnings,
     };
     invoke('save_scene', { scene }).then(() => {
       console.log("Saved scene", scene);
@@ -406,12 +409,15 @@ function App() {
   const sideBarMenu = [
     makeMenuItem('New Scene', 'add', <PlusOutlined />),
     { type: 'divider' },
-    makeMenuItem('Scenes', 'animations', <FolderOutlined />,
+    makeMenuItem(`Scenes ${scenes.length ? `(${scenes.length})` : ''}`,
+      'animations',
+      <FolderOutlined />,
       scenes.map((scene) => {
+        console.log(scene);
         return makeMenuItem(
           <Tooltip title={scene.name} mouseEnterDelay={0.5}>
             {scene.name}
-          </Tooltip>, scene.id, <ExperimentOutlined />, [
+          </Tooltip>, scene.id, scene.has_warnings ? <WarningOutlined style={{ color: 'red' }} /> : <ExperimentOutlined style={{ color: 'green' }} />, [
           makeMenuItem("Edit", "editanim_" + scene.id),
           makeMenuItem("Delete", "delanim_" + scene.id, null, null, false, true),
         ]);
@@ -778,13 +784,7 @@ function App() {
                           step={0.1}
                           min={0.0}
                           max={359.9}
-                          value={
-                            activeScene
-                              ? activeScene.furniture.offset.r
-                                ? activeScene.furniture.offset.r
-                                : undefined
-                              : undefined
-                          }
+                          value={activeScene && activeScene.furniture.offset.r || undefined}
                           onChange={(e) => {
                             updateActiveScene((prev) => {
                               prev.furniture.offset.r = e;
