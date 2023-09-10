@@ -310,7 +310,7 @@ impl Project {
         // Write FNIS files
         {
             let mut events: HashMap<&str, Vec<String>> = HashMap::new(); // map<RaceKey, Events[]>
-            let mut control: HashSet<&str> = HashSet::new();
+            let mut control: HashSet<&str> = HashSet::from(["__BLANK__", "__DEFAULT__"]);
             for (_, scene) in &self.scenes {
                 if scene.has_warnings {
                     continue;
