@@ -2,7 +2,7 @@ use log::info;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     io::{BufReader, BufWriter, ErrorKind, Write},
     mem::size_of,
@@ -310,9 +310,17 @@ impl Project {
         // Write FNIS files
         {
             let mut events: HashMap<&str, Vec<String>> = HashMap::new(); // map<RaceKey, Events[]>
+            let mut control: HashSet<&str> = HashSet::new();
             for (_, scene) in &self.scenes {
+                if scene.has_warnings {
+                    continue;
+                }
                 for stage in &scene.stages {
                     for position in &stage.positions {
+                        if control.contains(position.event.as_str()) {
+                            continue;
+                        }
+                        control.insert(&position.event);
                         let line = make_fnis_line(
                             &position.event,
                             &self.prefix_hash,
@@ -389,6 +397,9 @@ impl EncodeBinary for Project {
             + PREFIX_HASH_LEN
             + 1;
         for (_, value) in &self.scenes {
+            if value.has_warnings {
+                continue;
+            }
             ret += value.get_byte_size();
         }
 
@@ -410,6 +421,9 @@ impl EncodeBinary for Project {
         // scenes
         buf.extend_from_slice(&(self.scenes.len() as u64).to_be_bytes());
         for (_, scene) in &self.scenes {
+            if scene.has_warnings {
+                continue;
+            }
             if scene.stages.len() == 0 {
                 panic!("Empty Scene whilst building files");
             }
