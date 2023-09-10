@@ -71,17 +71,17 @@ function App() {
         createEdge() {
           return new Shape.Edge(STAGE_EDGE);
         },
-        validateEdge({ edge, type, previous }) {
-          const source = this.getCellById(edge.source.cell);
-          if (source.prop('fixedLen')) {
-            const edges = this.getOutgoingEdges(source);
-            edges.forEach(it => {
-              if (it.id !== edge.id)
-                it.remove();
-            });
-          }
-          return true;
-        }
+        // validateEdge({ edge, type, previous }) {
+        //   const source = this.getCellById(edge.source.cell);
+        //   if (source.prop('fixedLen')) {
+        //     const edges = this.getOutgoingEdges(source);
+        //     edges.forEach(it => {
+        //       if (it.id !== edge.id)
+        //         it.remove();
+        //     });
+        //   }
+        //   return true;
+        // }
       }
     })
       .zoomTo(1.0)
@@ -180,13 +180,13 @@ function App() {
       let node = nodes.find(node => node.id === stage.id);
       if (!node) node = addStageToGraph(stage);
       updateNodeProps(stage, node, activeScene);
-      if (node.prop('fixedLen')) {
-        const edges = graph.getOutgoingEdges(node);
-        for (let i = 1; i < edges.length; i++) {
-          const element = edges[i];
-          element.remove();
-        }
-      }
+      // if (node.prop('fixedLen')) {
+      //   const edges = graph.getOutgoingEdges(node);
+      //   for (let i = 1; i < edges.length; i++) {
+      //     const element = edges[i];
+      //     element.remove();
+      //   }
+      // }
 
       let newActive = structuredClone(activeScene);
       let idx = newActive.stages ? newActive.stages.findIndex(it => it.id === stage.id) : -1;
