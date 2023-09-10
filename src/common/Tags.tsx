@@ -32,6 +32,7 @@ export const tagsNSFW: Array<String> = [
   "Spanking",
   "Spitroast",
   "Teasing",
+  "Toys",
   "Tribadism",
   "Triple Penetration",
   "Vaginal"
@@ -46,6 +47,7 @@ export const tagsSFW: Array<String> = [
   "Kneeling",
   "Loving",
   "Lying",
+  "Magic",
   "Sitting",
   "Spooning",
   "Standing"
