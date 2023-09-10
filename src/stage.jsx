@@ -354,7 +354,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
               step={10}
               defaultValue={_extra.fixedLen}
               min={0}
-              value={fixedLen}
+              value={fixedLen ? fixedLen : undefined}
               onChange={(e) => setFixedLen(e)}
               placeholder="0"
               addonAfter={'ms'}
