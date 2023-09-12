@@ -21,6 +21,7 @@ export const tagsNSFW: Array<String> = [
   "Forced",
   "Grinding",
   "Handjob",
+  "Humiliation",
   "Lead In",
   "Lotus Position",
   "Masturbation",
