@@ -83,17 +83,51 @@ pub fn map_race_to_folder(race: &str) -> Result<String, ()> {
     }
 }
 
-pub fn make_fnis_line(
-    event: &str,
+pub fn make_fnis_lines(
+    events: &Vec<String>,
     hash: &str,
     fixed_len: Option<bool>,
     anim_obj: Option<&str>,
+) -> Vec<String> {
+    if events.len() == 1 {
+        return vec![make_fnis_line(
+            &events[0],
+            hash,
+            anim_obj,
+            fixed_len.is_none(),
+            "b",
+        )];
+    }
+    let mut ret = vec![];
+    let mut first = false;
+    for e in events {
+        ret.push(make_fnis_line(
+            e,
+            hash,
+            anim_obj,
+            true,
+            if first {
+                first = false;
+                "s"
+            } else {
+                "+"
+            },
+        ));
+    }
+    ret
+}
+
+fn make_fnis_line(
+    event: &str,
+    hash: &str,
+    anim_obj: Option<&str>,
+    repeat: bool,
+    prefix: &str,
 ) -> String {
     format!(
-        "b -{}{}Tn {}{} {}.hkx {}",
-        fixed_len
-            .and_then(|b| if b { Some("a,") } else { None })
-            .unwrap_or(""),
+        "{} -{}{}Tn {}{} {}.hkx {}",
+        prefix,
+        if repeat { "" } else { "a," },
         anim_obj
             .and_then(|obj| if obj.is_empty() { None } else { Some("o,") })
             .unwrap_or(""),

@@ -1,4 +1,7 @@
+use serde::de::{self};
+use serde::Deserializer;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::mem::size_of;
 
 use super::serialize::{EncodeBinary, Offset};
@@ -8,13 +11,47 @@ use crate::racekeys::get_race_key_bytes;
 pub struct Position {
     pub sex: Sex,
     pub race: String,
-    pub event: String,
+    #[serde(deserialize_with = "deserialize_vec_or_string")]
+    pub event: Vec<String>,
 
     pub scale: f32,
     pub extra: Extra,
     pub offset: Offset,
     pub anim_obj: String,
     pub strip_data: Stripping,
+}
+
+struct DeserializeVecOrString;
+impl<'de> de::Visitor<'de> for DeserializeVecOrString {
+    type Value = Vec<String>;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a vector or a string")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: de::SeqAccess<'de>,
+    {
+        let mut ret = Vec::new();
+        while let Some(data) = seq.next_element()? {
+            ret.push(data);
+        }
+        Ok(ret)
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(vec![v.to_string()])
+    }
+}
+fn deserialize_vec_or_string<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_any(DeserializeVecOrString)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -79,17 +116,18 @@ impl Position {
 
 impl EncodeBinary for Position {
     fn get_byte_size(&self) -> usize {
-        self.event.len()
-            + size_of::<u64>()
-            + self.offset.get_byte_size()
-            + self.strip_data.get_byte_size()
-            + 1 // climax
+        let mut ret =
+            size_of::<u64>() + self.offset.get_byte_size() + self.strip_data.get_byte_size() + 1; // climax
+        for e in &self.event {
+            ret += e.len();
+        }
+        ret
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
         // event
-        buf.extend_from_slice(&(self.event.len() as u64).to_be_bytes());
-        buf.extend_from_slice(self.event.as_bytes());
+        buf.extend_from_slice(&(self.event[0].len() as u64).to_be_bytes());
+        buf.extend_from_slice(self.event[0].as_bytes());
         // climax
         buf.push(self.extra.climax as u8);
         // offset

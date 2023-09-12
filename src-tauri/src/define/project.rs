@@ -12,7 +12,7 @@ use std::{
 use tauri::api::dialog::blocking::FileDialogBuilder;
 
 use crate::{
-    define::serialize::{make_fnis_line, map_race_to_folder},
+    define::serialize::{make_fnis_lines, map_race_to_folder},
     racekeys::map_legacy_to_racekey,
 };
 
@@ -181,7 +181,8 @@ impl Project {
                 }
                 for (i, evt) in events.iter().enumerate() {
                     let mut edit_position = &mut scene.stages[i].positions[n];
-                    edit_position.event = evt["id"].as_str().ok_or("Missing id attribute")?.into();
+                    edit_position.event =
+                        vec![evt["id"].as_str().ok_or("Missing id attribute")?.into()];
                     match sex.as_str() {
                         "male" => {
                             edit_position.sex = Sex {
@@ -317,11 +318,11 @@ impl Project {
                 }
                 for stage in &scene.stages {
                     for position in &stage.positions {
-                        if control.contains(position.event.as_str()) {
+                        if control.contains(position.event[0].as_str()) {
                             continue;
                         }
-                        control.insert(&position.event);
-                        let line = make_fnis_line(
+                        control.insert(&position.event[0]);
+                        let lines = make_fnis_lines(
                             &position.event,
                             &self.prefix_hash,
                             Some(stage.extra.fixed_len > 0.0),
@@ -329,10 +330,12 @@ impl Project {
                         );
                         let it = events.get_mut(position.race.as_str());
                         if let Some(vec) = it {
-                            vec.push(line);
+                            for ele in lines {
+                                vec.push(ele);
+                            }
                         } else {
                             info!("Adding new Race: {}", position.race);
-                            events.insert(position.race.as_str(), vec![line]);
+                            events.insert(position.race.as_str(), lines);
                         }
                     }
                 }
