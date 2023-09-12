@@ -1,5 +1,5 @@
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
-import { Button, Card, Checkbox, Col, Input, Row, Select, Space, Tooltip, InputNumber } from "antd";
+import { Button, Card, Checkbox, Col, Input, Row, Select, Space, Tooltip, InputNumber, Dropdown } from "antd";
 import { invoke } from "@tauri-apps/api";
 import { useImmer } from "use-immer";
 import './PositionField.css'
@@ -53,7 +53,7 @@ const makeStrips = (list) => {
 };
 
 const PositionField = forwardRef(function PositionField({ _position, _control }, ref) {
-  const [event, setEvent] = useState(_position.event);
+  const [event, updateEvent] = useImmer(_position.event);
   const [race, setRace] = useState(_control && _control.race || _position.race);
   const [sex, updateSex] = useImmer(_control && _control.sex || _position.sex);
   const [extra, updateExtra] = useImmer(_control && _control.extra ? { ..._control.extra, climax: _position.extra.climax } : _position.extra);
@@ -62,6 +62,9 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
   const [anim_obj, setAnimObj] = useState(_position.anim_obj);
   const [strips, updateStrips] = useImmer(getStrips(_control && _control.strip_data || _position.strip_data))
   const [raceKeys, setRaceKeys] = useState([]);
+  const [basicAnim, setBasicAnim] = useState(true);
+  const [workingAnim, setWorkingAnim] = useState(undefined);
+  const [sequenceOpen, setSequenceOpen] = useState(false);
 
   useEffect(() => {
     invoke('get_race_keys').then(result => setRaceKeys(result));
@@ -94,6 +97,49 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
         {label}
       </Checkbox>
     );
+  }
+
+  const makeSequenceMenu = (events) => {
+    let sequences = [];
+    for (let i = 1; i < events.length; i++) {
+      sequences.push({
+        key: i,
+        label: (
+          <Input
+            addonAfter={'.hkx'}
+            addonBefore={'+'}
+            value={event[i]}
+            onChange={(e) => {
+              updateEvent(prev => {
+                if (!e.target.value) prev.splice(i, 1)
+                else prev[i] = e.target.value
+              })
+            }}
+          />
+        )
+      });
+    }
+    sequences.push({
+      key: "new",
+      label: (
+        <Space>
+          <Input
+            addonAfter={'.hkx'}
+            addonBefore={'+'}
+            value={workingAnim}
+            onChange={(e) => { setWorkingAnim(e.target.value) }}
+            placeholder="New Behavior File"
+            onPressEnter={() => updateEvent(prev => { prev.push(workingAnim); setWorkingAnim(undefined) })}
+          />
+          <Button
+            onClick={() => updateEvent(prev => { prev.push(workingAnim); setWorkingAnim(undefined) })}
+          >
+            Add
+          </Button>
+        </Space>
+      )
+    });
+    return sequences;
   }
 
   return (
@@ -132,12 +178,39 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
         </Col>
         <Col span={8}>
           {/* behavior file */}
-          <Card className="position-attribute-card" title={'Animation'}
-            extra={<Tooltip title={'The behavior file (.hkx) describing the animation for this position. Without extension.'}><Button type="link">Info</Button></Tooltip>}>
-            <Input addonAfter={'.hkx'}
-              value={event} onChange={(e) => { setEvent(e.target.value) }}
-              placeholder="Behavior file"
-            />
+          <Card className="position-attribute-card"
+            title={
+              <Checkbox
+                checked={basicAnim}
+                onClick={(e) => setBasicAnim(e.target.checked)}
+              >
+                Animation {basicAnim ? '(Basic)' : '(Sequence)'}
+              </Checkbox>}
+            extra={<Tooltip title={'The behavior file (.hkx) describing the animation for this position. Without extension.'}><Button type="link">Info</Button></Tooltip>}
+          >
+            {
+              basicAnim ?
+                <Input addonAfter={'.hkx'}
+                  value={event[0]} onChange={(e) => { updateEvent([e.target.value]) }}
+                  placeholder="Behavior file"
+                />
+                :
+                <Dropdown
+                  menu={{ 
+                    items: makeSequenceMenu(event)
+                  }}
+                  onOpenChange={(open => setSequenceOpen(open))}
+                  open={sequenceOpen}
+                >
+                  <Input 
+                    addonAfter={'.hkx'}
+                    addonBefore={'s'}
+                    value={event[0]}
+                    onChange={(e) => { updateEvent(prev => { prev[0] = e.target.value }) }}
+                    placeholder="Behavior file"
+                  />
+                </Dropdown>
+            }
           </Card>
         </Col>
 
