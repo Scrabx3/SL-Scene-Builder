@@ -110,34 +110,46 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             addonBefore={'+'}
             value={event[i]}
             onChange={(e) => {
-              updateEvent(prev => {
-                if (!e.target.value) prev.splice(i, 1)
-                else prev[i] = e.target.value
-              })
+              updateEvent((prev) => {
+                if (!e.target.value) prev.splice(i, 1);
+                else prev[i] = e.target.value;
+              });
             }}
           />
-        )
+        ),
       });
     }
     sequences.push({
-      key: "new",
+      key: 'new',
       label: (
         <Space>
           <Input
             addonAfter={'.hkx'}
             addonBefore={'+'}
             value={workingAnim}
-            onChange={(e) => { setWorkingAnim(e.target.value) }}
+            onChange={(e) => {
+              setWorkingAnim(e.target.value);
+            }}
             placeholder="New Behavior File"
-            onPressEnter={() => updateEvent(prev => { prev.push(workingAnim); setWorkingAnim(undefined) })}
+            onPressEnter={() =>
+              updateEvent((prev) => {
+                prev.push(workingAnim);
+                setWorkingAnim(undefined);
+              })
+            }
           />
           <Button
-            onClick={() => updateEvent(prev => { prev.push(workingAnim); setWorkingAnim(undefined) })}
+            onClick={() =>
+              updateEvent((prev) => {
+                prev.push(workingAnim);
+                setWorkingAnim(undefined);
+              })
+            }
           >
             Add
           </Button>
         </Space>
-      )
+      ),
     });
     return sequences;
   }
@@ -149,82 +161,149 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
           {/* Race */}
           <Card className="position-attribute-card" title={'Race'}>
             <Select
-              className='position-race-select'
+              className="position-race-select"
               defaultValue={race}
               disabled={!!_control}
               showSearch
               placeholder="Position race"
               optionFilterProp="children"
-              filterOption={(input, option) => (option?.label ?? '').includes(input)}
-              filterSort={(optionA, optionB) =>
-                (optionA?.label ?? '').toLowerCase().localeCompare((optionB?.label ?? '').toLowerCase())
+              filterOption={(input, option) =>
+                (option?.label ?? '').includes(input)
               }
-              options={raceKeys.map((race, i) => { return { value: race, label: race } })}
-              onSelect={(e) => { setRace(e) }}
+              filterSort={(optionA, optionB) =>
+                (optionA?.label ?? '')
+                  .toLowerCase()
+                  .localeCompare((optionB?.label ?? '').toLowerCase())
+              }
+              options={raceKeys.map((race, i) => {
+                return { value: race, label: race };
+              })}
+              onSelect={(e) => {
+                setRace(e);
+              }}
             />
           </Card>
         </Col>
         <Col span={8}>
           {/* Sex */}
-          <Card className="position-attribute-card" title={"Sex"}
-            extra={<Tooltip title={'The sexes compatible with this position. Tick all that apply.'}><Button type="link">Info</Button></Tooltip>}
+          <Card
+            className="position-attribute-card"
+            title={'Sex'}
+            extra={
+              <Tooltip
+                title={
+                  'The sexes compatible with this position. Tick all that apply.'
+                }
+              >
+                <Button type="link">Info</Button>
+              </Tooltip>
+            }
           >
             <Space size={'large'}>
-              <CheckboxEx obj={sex} label={'Male'} attr={'male'} updateFunc={updateSex} />
-              <CheckboxEx obj={sex} label={'Female'} attr={'female'} updateFunc={updateSex} />
-              <CheckboxEx obj={sex} label={'Futa'} disabled={race !== 'Human'} attr={'futa'} updateFunc={updateSex} />
+              <CheckboxEx
+                obj={sex}
+                label={'Male'}
+                attr={'male'}
+                updateFunc={updateSex}
+              />
+              <CheckboxEx
+                obj={sex}
+                label={'Female'}
+                attr={'female'}
+                updateFunc={updateSex}
+              />
+              <CheckboxEx
+                obj={sex}
+                label={'Futa'}
+                disabled={race !== 'Human'}
+                attr={'futa'}
+                updateFunc={updateSex}
+              />
             </Space>
           </Card>
         </Col>
         <Col span={8}>
           {/* behavior file */}
-          <Card className="position-attribute-card"
+          <Card
+            className="position-attribute-card"
             title={
               <Checkbox
                 checked={basicAnim}
                 onClick={(e) => setBasicAnim(e.target.checked)}
               >
                 Animation {basicAnim ? '(Basic)' : '(Sequence)'}
-              </Checkbox>}
-            extra={<Tooltip title={'The behavior file (.hkx) describing the animation for this position. Without extension.'}><Button type="link">Info</Button></Tooltip>}
+              </Checkbox>
+            }
+            extra={
+              <Tooltip
+                title={
+                  'The behavior file (.hkx) describing the animation for this position. Without extension.'
+                }
+              >
+                <Button type="link">Info</Button>
+              </Tooltip>
+            }
           >
-            {
-              basicAnim ?
-                <Input addonAfter={'.hkx'}
-                  value={event[0]} onChange={(e) => { updateEvent([e.target.value]) }}
+            {basicAnim ? (
+              <Input
+                addonAfter={'.hkx'}
+                value={event[0]}
+                onChange={(e) => {
+                  updateEvent([e.target.value]);
+                }}
+                placeholder="Behavior file"
+              />
+            ) : (
+              <Dropdown
+                menu={{
+                  overlayClassName: 'test12334',
+                  items: makeSequenceMenu(event),
+                }}
+                onOpenChange={(open) => setSequenceOpen(open)}
+                open={sequenceOpen}
+              >
+                <Input
+                  addonBefore={'s'}
+                  addonAfter={'.hkx'}
+                  value={event[0]}
+                  onChange={(e) => {
+                    updateEvent((prev) => {
+                      prev[0] = e.target.value;
+                    });
+                  }}
                   placeholder="Behavior file"
                 />
-                :
-                <Dropdown
-                  menu={{ 
-                    items: makeSequenceMenu(event)
-                  }}
-                  onOpenChange={(open => setSequenceOpen(open))}
-                  open={sequenceOpen}
-                >
-                  <Input 
-                    addonAfter={'.hkx'}
-                    addonBefore={'s'}
-                    value={event[0]}
-                    onChange={(e) => { updateEvent(prev => { prev[0] = e.target.value }) }}
-                    placeholder="Behavior file"
-                  />
-                </Dropdown>
-            }
+              </Dropdown>
+            )}
           </Card>
         </Col>
 
         <Col span={12}>
           {/* Data */}
-          <Card className="position-attribute-card" title={'Data'}
-            extra={<Tooltip title={'Extra Data used to further specify the actor filling this position. Hover options for more info.'}><Button type="link">Info</Button></Tooltip>}
+          <Card
+            className="position-attribute-card"
+            title={'Data'}
+            extra={
+              <Tooltip
+                title={
+                  'Extra Data used to further specify the actor filling this position. Hover options for more info.'
+                }
+              >
+                <Button type="link">Info</Button>
+              </Tooltip>
+            }
           >
             {/* div here is necessary to avoid 'findDOMNode is depreciated' error */}
             <Row gutter={[8, 16]} justify={'space-between'}>
               <Col>
                 <Tooltip title={'Passive/Taker/Bottom position.'}>
                   <div>
-                    <CheckboxEx obj={extra} label={'Submissive'} attr={'submissive'} updateFunc={updateExtra} />
+                    <CheckboxEx
+                      obj={extra}
+                      label={'Submissive'}
+                      attr={'submissive'}
+                      updateFunc={updateExtra}
+                    />
                   </div>
                 </Tooltip>
               </Col>
@@ -233,7 +312,11 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                   <div>
                     <Checkbox
                       checked={extra.climax}
-                      onChange={(e) => { updateExtra(prev => { prev.climax = e.target.checked }) }}
+                      onChange={(e) => {
+                        updateExtra((prev) => {
+                          prev.climax = e.target.checked;
+                        });
+                      }}
                     >
                       Climax
                     </Checkbox>
@@ -243,35 +326,66 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
               <Col>
                 <Tooltip title={'Actor is a vampire.'}>
                   <div>
-                    <CheckboxEx obj={extra} label={'Vampire'} attr={'vampire'} disabled={race !== "Human"} updateFunc={updateExtra} />
+                    <CheckboxEx
+                      obj={extra}
+                      label={'Vampire'}
+                      attr={'vampire'}
+                      disabled={race !== 'Human'}
+                      updateFunc={updateExtra}
+                    />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
                 <Tooltip title={'Actor is unconscious/dead.'}>
                   <div>
-                    <CheckboxEx obj={extra} label={'Unconscious'} attr={'dead'} updateFunc={updateExtra} />
+                    <CheckboxEx
+                      obj={extra}
+                      label={'Unconscious'}
+                      attr={'dead'}
+                      updateFunc={updateExtra}
+                    />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
                 <Tooltip title={'Actor is locked in a yoke (not anim object).'}>
                   <div>
-                    <CheckboxEx obj={extra} label={'Yoke'} attr={'yoke'} disabled={race !== "Human"} updateFunc={updateExtra} />
+                    <CheckboxEx
+                      obj={extra}
+                      label={'Yoke'}
+                      attr={'yoke'}
+                      disabled={race !== 'Human'}
+                      updateFunc={updateExtra}
+                    />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'Actor is locked in an armbinder (not anim object).'}>
+                <Tooltip
+                  title={'Actor is locked in an armbinder (not anim object).'}
+                >
                   <div>
-                    <CheckboxEx obj={extra} label={'Armbinder'} attr={'armbinder'} disabled={race !== "Human"} updateFunc={updateExtra} />
+                    <CheckboxEx
+                      obj={extra}
+                      label={'Armbinder'}
+                      attr={'armbinder'}
+                      disabled={race !== 'Human'}
+                      updateFunc={updateExtra}
+                    />
                   </div>
                 </Tooltip>
               </Col>
               <Col>
                 <Tooltip title={'Actor is locked in a legbinder.'}>
                   <div>
-                    <CheckboxEx obj={extra} label={'Legbinder'} attr={'legbinder'} disabled={race !== "Human"} updateFunc={updateExtra} />
+                    <CheckboxEx
+                      obj={extra}
+                      label={'Legbinder'}
+                      attr={'legbinder'}
+                      disabled={race !== 'Human'}
+                      updateFunc={updateExtra}
+                    />
                   </div>
                 </Tooltip>
               </Col>
@@ -283,9 +397,18 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 </Tooltip>
               </Col> */}
               <Col>
-                <Tooltip title={'The position is not required for the scene to play properly (Bystander).'}>
+                <Tooltip
+                  title={
+                    'The position is not required for the scene to play properly (Bystander).'
+                  }
+                >
                   <div>
-                    <CheckboxEx obj={extra} label={'Optional'} attr={'optional'} updateFunc={updateExtra} />
+                    <CheckboxEx
+                      obj={extra}
+                      label={'Optional'}
+                      attr={'optional'}
+                      updateFunc={updateExtra}
+                    />
                   </div>
                 </Tooltip>
               </Col>
@@ -294,31 +417,81 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
         </Col>
         <Col span={12}>
           {/* Offset */}
-          <Card className="position-attribute-card" title={'Offset'}
-            extra={<Tooltip title={'The position offset relative to animation center.'}><Button type="link">Info</Button></Tooltip>}
+          <Card
+            className="position-attribute-card"
+            title={'Offset'}
+            extra={
+              <Tooltip
+                title={'The position offset relative to animation center.'}
+              >
+                <Button type="link">Info</Button>
+              </Tooltip>
+            }
           >
             <Row gutter={[12, 12]}>
               <Col span={12}>
-                <InputNumber addonBefore={'X'} controls decimalSeparator="," precision={1} step={0.1}
-                  value={offset.x ? offset.x : undefined} onChange={(e) => { updateOffset(prev => { prev.x = e ? e : 0.0 }) }}
+                <InputNumber
+                  addonBefore={'X'}
+                  controls
+                  decimalSeparator=","
+                  precision={1}
+                  step={0.1}
+                  value={offset.x ? offset.x : undefined}
+                  onChange={(e) => {
+                    updateOffset((prev) => {
+                      prev.x = e ? e : 0.0;
+                    });
+                  }}
                   placeholder="0.0"
                 />
               </Col>
               <Col span={12}>
-                <InputNumber addonBefore={'Y'} controls decimalSeparator="," precision={1} step={0.1}
-                  value={offset.y ? offset.y : undefined} onChange={(e) => { updateOffset(prev => { prev.y = e ? e : 0.0 }) }}
+                <InputNumber
+                  addonBefore={'Y'}
+                  controls
+                  decimalSeparator=","
+                  precision={1}
+                  step={0.1}
+                  value={offset.y ? offset.y : undefined}
+                  onChange={(e) => {
+                    updateOffset((prev) => {
+                      prev.y = e ? e : 0.0;
+                    });
+                  }}
                   placeholder="0.0"
                 />
               </Col>
               <Col span={12}>
-                <InputNumber addonBefore={'Z'} controls decimalSeparator="," precision={1} step={0.1}
-                  value={offset.z ? offset.z : undefined} onChange={(e) => { updateOffset(prev => { prev.z = e ? e : 0.0 }) }}
+                <InputNumber
+                  addonBefore={'Z'}
+                  controls
+                  decimalSeparator=","
+                  precision={1}
+                  step={0.1}
+                  value={offset.z ? offset.z : undefined}
+                  onChange={(e) => {
+                    updateOffset((prev) => {
+                      prev.z = e ? e : 0.0;
+                    });
+                  }}
                   placeholder="0.0"
                 />
               </Col>
               <Col span={12}>
-                <InputNumber addonBefore={'°'} controls decimalSeparator="," precision={1} step={0.1} min={0.0} max={359.9}
-                  value={offset.r ? offset.r : undefined} onChange={(e) => { updateOffset(prev => { prev.r = e ? e : 0.0 }) }}
+                <InputNumber
+                  addonBefore={'°'}
+                  controls
+                  decimalSeparator=","
+                  precision={1}
+                  step={0.1}
+                  min={0.0}
+                  max={359.9}
+                  value={offset.r ? offset.r : undefined}
+                  onChange={(e) => {
+                    updateOffset((prev) => {
+                      prev.r = e ? e : 0.0;
+                    });
+                  }}
                   placeholder="0.0"
                 />
               </Col>
@@ -326,21 +499,48 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
           </Card>
         </Col>
         <Col span={8}>
-          <Card className="position-attribute-card" title={'Scale'}
-            extra={<Tooltip title={'The desired scale of this actor. Usually the same scale used in the creation of the behavior file.'}><Button type="link">Info</Button></Tooltip>}
+          <Card
+            className="position-attribute-card"
+            title={'Scale'}
+            extra={
+              <Tooltip
+                title={
+                  'The desired scale of this actor. Usually the same scale used in the creation of the behavior file.'
+                }
+              >
+                <Button type="link">Info</Button>
+              </Tooltip>
+            }
           >
-            <InputNumber addonBefore={'Factor'} controls decimalSeparator=","
-              precision={2} min={0.01} max={2} step={0.01}
-              value={scale} onChange={(e) => { setScale(e) }}
+            <InputNumber
+              addonBefore={'Factor'}
+              controls
+              decimalSeparator=","
+              precision={2}
+              min={0.01}
+              max={2}
+              step={0.01}
+              value={scale}
+              onChange={(e) => {
+                setScale(e);
+              }}
               placeholder="1.0"
             />
           </Card>
         </Col>
         <Col span={8}>
-          <Card className="position-attribute-card" title={'Stripping'}
-            extra={<Tooltip title={'The items this position should strip in this stage.'}><Button type="link">Info</Button></Tooltip>}
+          <Card
+            className="position-attribute-card"
+            title={'Stripping'}
+            extra={
+              <Tooltip
+                title={'The items this position should strip in this stage.'}
+              >
+                <Button type="link">Info</Button>
+              </Tooltip>
+            }
           >
-            <Select 
+            <Select
               className="position-strip-tree"
               mode="multiple"
               value={strips}
@@ -368,35 +568,50 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 if (StripOptions.indexOf(value) < 3) {
                   updateStrips([value]);
                 } else {
-                  updateStrips(prev => {
-                    let where = -1
+                  updateStrips((prev) => {
+                    let where = -1;
                     for (let i = 0; i < 3 && where === -1; i++) {
-                      where = prev.indexOf(StripOptions[i])
+                      where = prev.indexOf(StripOptions[i]);
                     }
-                    if (where === -1)
-                      prev.push(value)
-                    else
-                      prev[where] = value
-                  }); 
+                    if (where === -1) prev.push(value);
+                    else prev[where] = value;
+                  });
                 }
               }}
               onDeselect={(value) => {
-                updateStrips(prev => {
-                  prev = prev.filter(it => it !== value);
+                updateStrips((prev) => {
+                  prev = prev.filter((it) => it !== value);
                   if (prev.length === 0) {
-                    prev = [StripOptions[0]]
+                    prev = [StripOptions[0]];
                   }
                   return prev;
-                })
+                });
               }}
             />
           </Card>
         </Col>
         <Col span={8}>
           {/* behavior file */}
-          <Card className="position-attribute-card" title={'Anim Object'}
-            extra={<Tooltip title={'The anim object/s associated with this position. If multiple, separate with commas (,)'}><Button type="link">Info</Button></Tooltip>}>
-            <Input value={anim_obj} onChange={(e) => { setAnimObj(e.target.value) }} placeholder="Editor ID"/>
+          <Card
+            className="position-attribute-card"
+            title={'Anim Object'}
+            extra={
+              <Tooltip
+                title={
+                  'The anim object/s associated with this position. If multiple, separate with commas (,)'
+                }
+              >
+                <Button type="link">Info</Button>
+              </Tooltip>
+            }
+          >
+            <Input
+              value={anim_obj}
+              onChange={(e) => {
+                setAnimObj(e.target.value);
+              }}
+              placeholder="Editor ID"
+            />
           </Card>
         </Col>
       </Row>
