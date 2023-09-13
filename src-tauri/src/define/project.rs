@@ -325,8 +325,8 @@ impl Project {
                         let lines = make_fnis_lines(
                             &position.event,
                             &self.prefix_hash,
-                            Some(stage.extra.fixed_len > 0.0),
-                            Some(&position.anim_obj),
+                            stage.extra.fixed_len > 0.0,
+                            &position.anim_obj,
                         );
                         let it = events.get_mut(position.race.as_str());
                         if let Some(vec) = it {

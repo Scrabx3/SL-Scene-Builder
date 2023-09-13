@@ -86,54 +86,59 @@ pub fn map_race_to_folder(race: &str) -> Result<String, ()> {
 pub fn make_fnis_lines(
     events: &Vec<String>,
     hash: &str,
-    fixed_len: Option<bool>,
-    anim_obj: Option<&str>,
+    fixed_len: bool,
+    anim_obj: &str,
 ) -> Vec<String> {
     if events.len() == 1 {
         return vec![make_fnis_line(
+            "b",
             &events[0],
             hash,
+            if fixed_len { "a" } else { "" },
             anim_obj,
-            fixed_len.is_none(),
-            "b",
         )];
     }
     let mut ret = vec![];
-    let mut first = false;
-    for e in events {
+    for (i, event) in events.iter().enumerate() {
         ret.push(make_fnis_line(
-            e,
+            if i == 0 { "s" } else { "+" },
+            event,
             hash,
-            anim_obj,
-            true,
-            if first {
-                first = false;
-                "s"
+            if i == 0 {
+                "a"
+            } else if fixed_len && i == events.len() - 1 {
+                "a,Tn"
             } else {
-                "+"
+                ""
             },
+            anim_obj,
         ));
     }
     ret
 }
 
 fn make_fnis_line(
+    anim_type: &str,
     event: &str,
     hash: &str,
-    anim_obj: Option<&str>,
-    repeat: bool,
-    prefix: &str,
+    options: &str,
+    anim_obj: &str,
 ) -> String {
     format!(
-        "{} -{}{}Tn {}{} {}.hkx {}",
-        prefix,
-        if repeat { "" } else { "a," },
-        anim_obj
-            .and_then(|obj| if obj.is_empty() { None } else { Some("o,") })
-            .unwrap_or(""),
+        "{} {} {}{} {}.hkx {}",
+        anim_type,
+        if options.is_empty() && anim_obj.is_empty() {
+            "".into()
+        } else {
+            format!(
+                "-{}{}",
+                options,
+                if anim_obj.is_empty() { "" } else { "o," }
+            )
+        },
         hash,
         event,
         event,
-        anim_obj.unwrap_or(""),
+        anim_obj,
     )
 }
