@@ -293,7 +293,7 @@ impl Project {
         info!("Compiling project {}", self.pack_name);
         // Write binary
         {
-            let target_dir = root_dir.join("SKSE\\SexLab\\");
+            let target_dir = root_dir.join("SKSE\\SexLab\\Registry\\");
             let mut buf: Vec<u8> = Vec::new();
             buf.reserve(self.get_byte_size());
             self.write_byte(&mut buf);
