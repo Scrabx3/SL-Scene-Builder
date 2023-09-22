@@ -97,7 +97,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
         positionRefs.current[i].getData() :
         p.position;
 
-      if (!arg.event) {
+      if (!arg.event.length || !arg.event[0]) {
         api['error']({
           message: 'Missing Event',
           description: `Position ${i + 1} is missing its behavior file (.hkx)`,

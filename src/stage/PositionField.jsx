@@ -349,7 +349,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'Actor is locked in a yoke (not anim object).'}>
+                <Tooltip title={'Actor is locked in a yoke.'}>
                   <div>
                     <CheckboxEx
                       obj={extra}
@@ -363,7 +363,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
               </Col>
               <Col>
                 <Tooltip
-                  title={'Actor is locked in an armbinder (not anim object).'}
+                  title={'Actor is locked in an armbinder (Hands behind).'}
                 >
                   <div>
                     <CheckboxEx
@@ -371,6 +371,22 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                       label={'Armbinder'}
                       attr={'armbinder'}
                       disabled={race !== 'Human'}
+                      updateFunc={updateExtra}
+                    />
+                  </div>
+                </Tooltip>
+              </Col>
+              <Col>
+                <Tooltip
+                  title={
+                    'Actor is locked in hand shackles (Hands forward).'
+                  }
+                >
+                  <div>
+                    <CheckboxEx
+                      obj={extra}
+                      label={'Hand Shackles'}
+                      attr={'handshackles'}
                       updateFunc={updateExtra}
                     />
                   </div>
@@ -396,22 +412,6 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                   </div>
                 </Tooltip>
               </Col> */}
-              <Col>
-                <Tooltip
-                  title={
-                    'The position is not required for the scene to play properly (Bystander).'
-                  }
-                >
-                  <div>
-                    <CheckboxEx
-                      obj={extra}
-                      label={'Optional'}
-                      attr={'optional'}
-                      updateFunc={updateExtra}
-                    />
-                  </div>
-                </Tooltip>
-              </Col>
             </Row>
           </Card>
         </Col>

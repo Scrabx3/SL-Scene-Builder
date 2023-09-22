@@ -64,15 +64,19 @@ pub struct Sex {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Extra {
     pub submissive: bool,
-    pub optional: bool,
+    #[serde(skip_serializing, default)]
+    pub optional: bool, // Unused
     pub vampire: bool,
     pub climax: bool,
     pub dead: bool,
 
+    #[serde(default)]
+    pub handshackles: bool, // replaces optional
     pub yoke: bool,
     pub armbinder: bool,
     pub legbinder: bool,
-    pub petsuit: bool,
+    #[serde(skip_serializing, default)]
+    pub petsuit: bool, // Unused
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -103,13 +107,12 @@ impl Position {
         // extra
         buf.push(
             self.extra.submissive as u8
-                + 2 * self.extra.optional as u8
+                + 2 * self.extra.handshackles as u8
                 + 4 * self.extra.vampire as u8
                 + 8 * self.extra.dead as u8
                 + 16 * self.extra.yoke as u8
                 + 32 * self.extra.armbinder as u8
-                + 64 * self.extra.legbinder as u8
-                + 128 * self.extra.petsuit as u8,
+                + 64 * self.extra.legbinder as u8, // + 128 * self.extra.petsuit as u8,
         );
     }
 }
