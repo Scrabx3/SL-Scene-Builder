@@ -7,7 +7,7 @@ export const tagsNSFW: Array<String> = [
   "Breast Sucking",
   "Buttjob",
   "Cowgirl",
-  "Cunnilingius",
+  "Cunnilingus",
   "Deepthroat",
   "Doggy",
   "Dominant",
