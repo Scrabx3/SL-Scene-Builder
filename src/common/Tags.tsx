@@ -28,6 +28,7 @@ export const tagsNSFW: Array<String> = [
   "Masturbation",
   "Missionary",
   "Oral",
+  "Oviposition",
   "Penetration",
   "Prone Bone",
   "Reverse Cowgirl",
