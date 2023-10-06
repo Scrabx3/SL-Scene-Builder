@@ -6,14 +6,14 @@ mod define;
 mod furniture;
 mod racekeys;
 
-use define::{position::Position, project::Project, scene::Scene, stage::Stage, NanoID};
+use define::{position::Position, project::{Project, self}, scene::Scene, stage::Stage, NanoID};
 use log::{error, info};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::sync::{
+use std::{sync::{
     atomic::{AtomicBool, Ordering},
     Mutex,
-};
+}, path::PathBuf};
 use tauri::{
     api::shell::open, CustomMenuItem, Manager, Menu, MenuItem, Runtime, Submenu, WindowBuilder,
 };
@@ -67,6 +67,36 @@ fn main() {
             mark_as_edited,
         ])
         .setup(|app| {
+
+
+            match app.get_cli_matches() {
+                // `matches` here is a Struct with { args, subcommand }.
+                // `args` is `HashMap<String, ArgData>` where `ArgData` is a struct with { value, occurrences }.
+                // `subcommand` is `Option<Box<SubcommandMatches>>` where `SubcommandMatches` is a struct with { name, matches }.
+                
+                Ok(matches) => {
+                    match matches.subcommand {
+                        Some(command) => {
+                            let result = match command.name.as_str() {
+                                "convert" => cli_convert(command.matches.args),
+                                "serialize" => cli_build(command.matches.args),
+                                _ => Err("Unrecognized subcommand".to_string())
+                            };
+
+                            if let Err(reason) = result {
+                                error!("{:?}", reason);
+                            }
+
+                            app.handle().exit(0);
+                        },
+                        _ => {}
+                    }
+                }
+                Err(err) => {println!("{:?}", err);}
+            }
+
+
+
             let window = WindowBuilder::new(
                 app,
                 "main_window".to_string(),
@@ -157,7 +187,7 @@ fn main() {
                     let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
                 }
                 "build" => {
-                    let r = PROJECT.lock().unwrap().build();
+                    let r = PROJECT.lock().unwrap().export();
                     if let Err(e) = r {
                         error!("{}", e);
                     }
@@ -358,4 +388,55 @@ async fn stage_save_and_close<R: Runtime>(
 #[tauri::command]
 fn make_position() -> Position {
     Position::default()
+}
+
+/* CLI functions */
+fn cli_convert(args: std::collections::HashMap<String, tauri::api::cli::ArgData>) -> Result<(), String> {
+
+    let in_path = match &args.get("in").unwrap().value {
+        serde_json::Value::String(value) => PathBuf::from(value),
+        _ => return Err("input slal file not provided".to_string())
+    };
+    if !in_path.exists() || !in_path.is_file() || in_path.extension().unwrap() != "json" {
+        return Err("input slal file is invalid".to_string())
+    }
+
+    let mut out_dir = match &args.get("out").unwrap().value {
+        serde_json::Value::String(value) => PathBuf::from(value),
+        _ => return Err("output dir not provided".to_string())
+    };
+    if !out_dir.exists() || !out_dir.is_dir() {
+        return Err("output dir is invalid".to_string())
+    } 
+
+    out_dir.push(in_path.file_stem().unwrap());
+    out_dir.set_extension("slsb.json");
+
+    let file = std::fs::File::open(&in_path).map_err(|e| e.to_string())?;
+    let mut project = Project::from_slal(file)?;
+
+    project.write(out_dir)
+}   
+
+fn cli_build(args: std::collections::HashMap<String, tauri::api::cli::ArgData>) -> Result<(), String> {
+    let in_path = match &args.get("in").unwrap().value {
+        serde_json::Value::String(value) => PathBuf::from(value),
+        _ => return Err("input slal file not provided".to_string())
+    };
+    if !in_path.exists() || !in_path.is_file() || in_path.extension().unwrap() != "slsb.json" {
+        return Err("input slal file is invalid".to_string())
+    }
+
+    let out_dir = match &args.get("out").unwrap().value {
+        serde_json::Value::String(value) => PathBuf::from(value),
+        _ => return Err("output dir not provided".to_string())
+    };
+    if !out_dir.exists() || !out_dir.is_dir() {
+        return Err("output dir is invalid".to_string())
+    }
+
+    let file = std::fs::File::open(&in_path).map_err(|e| e.to_string())?;
+    let project = Project::from_file(file)?;
+
+    project.build(out_dir).map_err(|e| e.to_string())
 }
