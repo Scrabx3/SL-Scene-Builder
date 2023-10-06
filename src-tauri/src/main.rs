@@ -6,7 +6,7 @@ mod define;
 mod furniture;
 mod racekeys;
 
-use define::{position::Position, project::{Project, self}, scene::Scene, stage::Stage, NanoID};
+use define::{position::Position, project::Project, scene::Scene, stage::Stage, NanoID};
 use log::{error, info};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -67,19 +67,13 @@ fn main() {
             mark_as_edited,
         ])
         .setup(|app| {
-
-
             match app.get_cli_matches() {
-                // `matches` here is a Struct with { args, subcommand }.
-                // `args` is `HashMap<String, ArgData>` where `ArgData` is a struct with { value, occurrences }.
-                // `subcommand` is `Option<Box<SubcommandMatches>>` where `SubcommandMatches` is a struct with { name, matches }.
-                
                 Ok(matches) => {
                     match matches.subcommand {
                         Some(command) => {
                             let result = match command.name.as_str() {
                                 "convert" => cli_convert(command.matches.args),
-                                "serialize" => cli_build(command.matches.args),
+                                "build" => cli_build(command.matches.args),
                                 _ => Err("Unrecognized subcommand".to_string())
                             };
 
@@ -92,10 +86,8 @@ fn main() {
                         _ => {}
                     }
                 }
-                Err(err) => {println!("{:?}", err);}
+               _ => {}
             }
-
-
 
             let window = WindowBuilder::new(
                 app,
@@ -390,7 +382,7 @@ fn make_position() -> Position {
     Position::default()
 }
 
-/* CLI functions */
+/* CLI */
 fn cli_convert(args: std::collections::HashMap<String, tauri::api::cli::ArgData>) -> Result<(), String> {
 
     let in_path = match &args.get("in").unwrap().value {
@@ -412,8 +404,7 @@ fn cli_convert(args: std::collections::HashMap<String, tauri::api::cli::ArgData>
     out_dir.push(in_path.file_stem().unwrap());
     out_dir.set_extension("slsb.json");
 
-    let file = std::fs::File::open(&in_path).map_err(|e| e.to_string())?;
-    let mut project = Project::from_slal(file)?;
+    let mut project = Project::from_slal(in_path)?;
 
     project.write(out_dir)
 }   
@@ -423,7 +414,8 @@ fn cli_build(args: std::collections::HashMap<String, tauri::api::cli::ArgData>) 
         serde_json::Value::String(value) => PathBuf::from(value),
         _ => return Err("input slal file not provided".to_string())
     };
-    if !in_path.exists() || !in_path.is_file() || in_path.extension().unwrap() != "slsb.json" {
+
+    if !in_path.exists() || !in_path.is_file() || in_path.extension().unwrap() != "json" {
         return Err("input slal file is invalid".to_string())
     }
 
@@ -436,6 +428,7 @@ fn cli_build(args: std::collections::HashMap<String, tauri::api::cli::ArgData>) 
     }
 
     let file = std::fs::File::open(&in_path).map_err(|e| e.to_string())?;
+
     let project = Project::from_file(file)?;
 
     project.build(out_dir).map_err(|e| e.to_string())

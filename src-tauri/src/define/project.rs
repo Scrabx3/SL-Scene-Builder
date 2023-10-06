@@ -101,13 +101,14 @@ impl Project {
         *self = value;
         self.set_project_name_from_path(&path);
         self.pack_path = path;
-        info!("Loaded project {}", self.pack_name);
 
         Ok(())
     }
 
     pub fn from_file(file: std::fs::File) -> Result<Project, String> {
-        serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?
+        let project: Project = serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
+        println!("Loaded project {}", project.pack_name);
+        Ok(project)
     }
 
     pub fn save_project(&mut self, save_as: bool) -> Result<(), String> {
@@ -125,7 +126,6 @@ impl Project {
         };
         
         self.set_project_name_from_path(&path);
-        info!("Saved project {}", self.pack_name);
 
         self.write(path)
     }
@@ -133,6 +133,7 @@ impl Project {
     pub fn write(&mut self, path: PathBuf) -> Result<(), String> {
         let file = fs::File::create(&path).map_err(|e| e.to_string())?;
         serde_json::to_writer(file, self).map_err(|e| e.to_string())?;
+        println!("Saved project {}", self.pack_name);
         Ok(())
     }
 
@@ -145,15 +146,9 @@ impl Project {
         }
 
         let path = path.unwrap();
-        let file = fs::File::open(&path).map_err(|e| e.to_string())?;
 
-        match Project::from_slal(file) {
+        match Project::from_slal(path) {
             Ok(prjct) => {
-                info!(
-                    "Loaded {} Animations from {}",
-                    prjct.scenes.len(),
-                    path.to_str().unwrap_or_default()
-                );
                 *self = prjct;
                 Ok(())
             },
@@ -161,7 +156,9 @@ impl Project {
         }
     }
 
-    pub fn from_slal(file: fs::File) -> Result<Project, String> {
+    pub fn from_slal(path: PathBuf) -> Result<Project, String> {
+        let file = fs::File::open(&path).map_err(|e| e.to_string())?;
+        
         let slal: serde_json::Value =
             serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
     
@@ -298,6 +295,12 @@ impl Project {
             // add to prjct
             prjct.scenes.insert(scene.id.clone(), scene);
         }
+
+        println!(
+            "Loaded {} Animations from {}",
+            prjct.scenes.len(),
+            path.to_str().unwrap_or_default()
+        );
     
         Ok(prjct)
     }
@@ -312,7 +315,7 @@ impl Project {
     }
 
     pub fn build(&self, root_dir: PathBuf) -> Result<(), std::io::Error> {
-        info!("Compiling project {}", self.pack_name);
+        println!("Compiling project {}", self.pack_name);
         // Write binary
         {
             let target_dir = root_dir.join("SKSE\\SexLab\\Registry\\");
