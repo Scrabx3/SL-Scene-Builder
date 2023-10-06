@@ -393,20 +393,24 @@ fn cli_convert(args: std::collections::HashMap<String, tauri::api::cli::ArgData>
         return Err("input slal file is invalid".to_string())
     }
 
-    let mut out_dir = match &args.get("out").unwrap().value {
+    let mut out_path = match &args.get("out").unwrap().value {
         serde_json::Value::String(value) => PathBuf::from(value),
         _ => return Err("output dir not provided".to_string())
     };
-    if !out_dir.exists() || !out_dir.is_dir() {
+    if !out_path.exists() || !out_path.is_dir() {
         return Err("output dir is invalid".to_string())
     } 
 
-    out_dir.push(in_path.file_stem().unwrap());
-    out_dir.set_extension("slsb.json");
+    out_path.push(in_path.file_stem().unwrap());
+    out_path.set_extension("slsb.json");
 
     let mut project = Project::from_slal(in_path)?;
+    
+    let res = project.write(out_path.clone());
 
-    project.write(out_dir)
+    println!("{:?}", out_path);
+
+    res
 }   
 
 fn cli_build(args: std::collections::HashMap<String, tauri::api::cli::ArgData>) -> Result<(), String> {
