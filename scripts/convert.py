@@ -40,12 +40,12 @@ if os.path.exists(tmp_dir):
 os.makedirs(tmp_dir + '/edited')
 os.makedirs(out_dir + '/SKSE/Sexlab/Registry/Source')
 
-# TODO: furn, futa, dead
+# TODO: furn
 
 femdom_kwds = ['lesbian', 'femdom', 'ff', 'fff', 'ffff', 'fffff']
 futa_kwds = ['futa']
 sub_kwds = ['forced', 'rape', 'aggressive', 'aggressivedefault', 'bound', 'femdom', 'maledom', 'lezdom', 'gaydom', 'defeated', 'domsub', 'bdsm']
-dead_kwds = ['dead', 'necro']
+dead_kwds = ['dead', 'necro', 'guro']
 restraints = {'armbinder': 'armbinder', 'yoke': 'yoke', 'cuffs': 'handshackles', 'restraints': 'armbinder'}
 restraint_keys = restraints.keys()
 
@@ -158,14 +158,18 @@ def process_stage(scene, stage):
         tags.append('forced')
 
     sub = False
+    dead = False
     restraint = ''
+    furn = ''
 
     maledom = False
     femdom = False
 
     maybe_femdom = False
     
-    for tag in tags:
+    for i in range(len(tags)):
+        tag = tags[i]
+
         if tag in sub_kwds:
             sub = True
             maledom = True
@@ -178,37 +182,46 @@ def process_stage(scene, stage):
         if tag in femdom_kwds:
             maybe_femdom = True
 
-    positions = stage['positions']
+        if tag in dead_kwds:
+            dead = True
 
-    for pos in positions:        
+        if tag.lower() == 'cunnilingius':
+            tags[i] = 'Cunnilingus'
+
+        if tag.lower() == 'guro':
+            tags[i] = 'Gore'
+        
+
+    positions = stage['positions']        
+
+    if sub and maybe_femdom:
+        femdom = True
+        maledom = False
+
+    seen_male = False
+    seen_female = False
+
+    for pos in positions:
+        if pos['sex']['male']:
+            seen_male = True
+        if pos['sex']['female']:
+            seen_female = True
+
+    gay = seen_male and not seen_female
+    lesbian = seen_female and not seen_male
+
+    applied_restraint = restraint == ''
+
+    for i in range(len(positions)):
+        pos = positions[i]
+
         event = pos['event'][0].lower()
         data = anim_data[event]
         pos['event'][0] = os.path.splitext(data['anim_file_name'])[0]
         os.makedirs(os.path.dirname(os.path.join(out_dir, data['out_path'])), exist_ok=True)
         shutil.copyfile(data['path'], os.path.join(out_dir, data['out_path']))
 
-    if sub and maybe_femdom:
-        femdom = True
-        maledom = False
-
-    if sub:
-
-        seen_male = False
-        seen_female = False
-        for pos in positions:
-            if pos['sex']['male']:
-                seen_male = True
-            if pos['sex']['female']:
-                seen_female = True
-
-        gay = seen_male and not seen_female
-        lesbian = seen_female and not seen_male
-
-        applied_restraint = restraint == ''
-
-        for i in range(len(positions)):
-            pos = positions[i]
-
+        if sub:
             if maledom and pos['sex']['female']:
                 pos['extra']['submissive'] = True
 
@@ -224,6 +237,12 @@ def process_stage(scene, stage):
             if pos['extra']['submissive'] and not applied_restraint:
                 applied_restraint = True
                 pos['extra'][restraint] = True
+
+        if dead and i == 0:
+            pos['extra']['dead'] = True
+            
+            
+
 
 print("==============EDITING AND BUILDING SLSB PROJECTS==============")
 for filename in os.listdir(tmp_dir):
@@ -264,6 +283,9 @@ def build_behaviour(parent_dir, list_name):
 
     if '_canine' in list_name.lower():
         return
+
+    print('generating', list_path)
+
 
     behavior_file_name = list_name.lower().replace('fnis_', '')
     behavior_file_name = behavior_file_name.lower().replace('_list.txt', '')
