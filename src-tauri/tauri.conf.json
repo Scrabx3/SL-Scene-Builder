@@ -7,7 +7,7 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "slsb",
+    "productName": "SexLab Scene Builder",
     "version": "1.2.0"
   },
   "tauri": {
