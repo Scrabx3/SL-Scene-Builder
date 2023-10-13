@@ -262,6 +262,9 @@ for filename in os.listdir(tmp_dir):
 def build_behaviour(parent_dir, list_name):
     list_path = os.path.join(parent_dir, list_name)
 
+    if '_canine' in list_name.lower():
+        return
+
     behavior_file_name = list_name.lower().replace('fnis_', '')
     behavior_file_name = behavior_file_name.lower().replace('_list.txt', '')
 
@@ -286,15 +289,17 @@ def build_behaviour(parent_dir, list_name):
         elif split == 'animations':
             end_index = i
 
-    behaviour_path = os.path.join(skyrim_path, 'data', *out_path[start_index:end_index], 'behaviors', behavior_file_name)
+    behaviour_folder = 'behaviors' if '_wolf' not in list_name.lower() else 'behaviors wolf'
+
+    behaviour_path = os.path.join(skyrim_path, 'data', *out_path[start_index:end_index], behaviour_folder, behavior_file_name)
 
     if os.path.exists(behaviour_path):
-        out_behavior_dir = os.path.join(out_dir, *out_path[start_index:end_index], 'behaviors')
+        out_behavior_dir = os.path.join(out_dir, *out_path[start_index:end_index], behaviour_folder)
         out_behaviour_path = os.path.join(out_behavior_dir, behavior_file_name)
         os.makedirs(out_behavior_dir, exist_ok=True)
         shutil.copyfile(behaviour_path, out_behaviour_path)
     else:
-        print(f'WARNING: {behavior_file_name} not found for {list_name} - please gen and copy behaviour file')
+        print(f'WARNING: {behaviour_path} not found for {list_path} - please validate behaviour file')
 
     if remove_anims:
         for filename in os.listdir(parent_dir):

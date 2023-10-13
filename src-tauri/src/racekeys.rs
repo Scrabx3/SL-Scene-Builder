@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use log::info;
+
 #[derive(Debug, Clone, Copy)]
 pub enum RaceKey {
     Human = 0,
@@ -87,14 +89,14 @@ pub fn map_legacy_to_racekey(legacykey: &str) -> Result<String, String> {
         "frostatronach" => Ok("Frost Atronach".into()),
         "gargoyles" => Ok("Gargoyle".into()),
         "giants" => Ok("Giant".into()),
-        "giantspiders" => Ok("GiantSpider".into()),
+        "giantspiders" => Ok("Giant Spider".into()),
         "goats" => Ok("Goat".into()),
         "hagravens" => Ok("Hagraven".into()),
         "rabbits" => Ok("Rabbit".into()),
         "horkers" => Ok("Horker".into()),
         "horses" => Ok("Horse".into()),
-        "icewraiths" => Ok("IceWraith".into()),
-        "largespiders" => Ok("LargeSpider".into()),
+        "icewraiths" => Ok("Ice Wraith".into()),
+        "largespiders" => Ok("Large Spider".into()),
         "lurkers" => Ok("Lurker".into()),
         "mammoths" => Ok("Mammoth".into()),
         "mudcrabs" => Ok("Mudcrab".into()),
@@ -106,7 +108,7 @@ pub fn map_legacy_to_racekey(legacykey: &str) -> Result<String, String> {
         "slaughterfishes" => Ok("Slaughterfish".into()),
         "spiders" => Ok("Spider".into()),
         "spriggans" => Ok("Spriggan".into()),
-        "stormatronach" => Ok("StormAtronach".into()),
+        "stormatronach" => Ok("Storm Atronach".into()),
         "trolls" => Ok("Troll".into()),
         "vampirelords" => Ok("Vampire Lord".into()),
         "werewolves" => Ok("Werewolf".into()),
@@ -185,6 +187,8 @@ pub fn get_race_keys_string() -> Vec<String> {
 }
 
 pub fn get_race_key_bytes(race: &str) -> Option<u8> {
+    info!("{:?}", race);
+
     let map = get_race_map();
     // let mut key = race.to_lowercase();
     // key.retain(|c| !c.is_whitespace() && c != '(' && c != ')');
