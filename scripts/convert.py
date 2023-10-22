@@ -15,13 +15,14 @@ parser.add_argument('-a', '--author', help='name of the author of the pack', def
 parser.add_argument('-c', '--clean', help='clean up temp dir after conversion', action='store_true')
 parser.add_argument('-s', '--skyrim', help='path to your skyrim directory', default=None)
 parser.add_argument('-ra', '--remove_anims', help='remove copied animations during fnis behaviour gen', action='store_true')
+parser.add_argument('-nb', '--no_build', help='do not build the slsb project', action='store_true')
 
 args = parser.parse_args()
 
 slsb_path = args.slsb
 
 skyrim_path = args.skyrim
-fnis_path = skyrim_path + '/Data/tools/GenerateFNIS_for_Modders'
+fnis_path = skyrim_path + '/Data/tools/GenerateFNIS_for_Modders' if skyrim_path is not None else None
 remove_anims = args.remove_anims
 parent_dir = args.working
 
@@ -46,7 +47,7 @@ def convert(parent_dir, dir):
     futa_kwds = ['futa']
     sub_kwds = ['forced', 'rape', 'aggressive', 'aggressivedefault', 'bound', 'femdom', 'maledom', 'lezdom', 'gaydom', 'defeated', 'domsub', 'bdsm']
     dead_kwds = ['dead', 'necro', 'guro']
-    restraints = {'armbinder': 'armbinder', 'yoke': 'yoke', 'cuffs': 'handshackles', 'restraints': 'armbinder'}
+    restraints = {'armbinder': 'armbinder', 'yoke': 'yoke', 'cuffs': 'handshackles', 'restraints': 'armbinder', 'frontcuffs': 'handshackles'}
     restraint_keys = restraints.keys()
         
     print("==============CONVERTING SLAL TO SLSB PROJECTS==============")
@@ -143,16 +144,18 @@ def convert(parent_dir, dir):
                 path = os.path.join(dir, filename)
                 iter_fnis_lists(path, func)
 
-    print("==============PARSING FNIS LISTS==============")
+    
     anim_dir = working_dir + '\\meshes\\actors'
-    for filename in os.listdir(anim_dir):
-        path = os.path.join(anim_dir, filename)
+    if os.path.exists(anim_dir):
+        print("==============PARSING FNIS LISTS==============")
+        for filename in os.listdir(anim_dir):
+            path = os.path.join(anim_dir, filename)
 
-        if os.path.isdir(path):
-            iter_fnis_lists(path, parse_fnis_list)
+            if os.path.isdir(path):
+                iter_fnis_lists(path, parse_fnis_list)
 
     def process_stage(scene, stage):
-        tags = [tag.lower() for tag in stage['tags']]
+        tags = [tag.lower().strip() for tag in stage['tags']]
 
         if ('aggressive' in tags or 'aggressivedefault' in tags) and 'forced' not in tags:
             tags.append('forced')
@@ -215,12 +218,6 @@ def convert(parent_dir, dir):
         for i in range(len(positions)):
             pos = positions[i]
 
-            event = pos['event'][0].lower()
-            data = anim_data[event]
-            pos['event'][0] = os.path.splitext(data['anim_file_name'])[0]
-            os.makedirs(os.path.dirname(os.path.join(out_dir, data['out_path'])), exist_ok=True)
-            shutil.copyfile(data['path'], os.path.join(out_dir, data['out_path']))
-
             if sub:
                 if maledom and pos['sex']['female']:
                     pos['extra']['submissive'] = True
@@ -241,8 +238,16 @@ def convert(parent_dir, dir):
             if dead and i == 0:
                 pos['extra']['dead'] = True
                 
+            if pos['event'] and len(pos['event']) > 0:
+                event = pos['event'][0].lower()
+                if event in anim_data.keys():
+                    data = anim_data[event]
+                    pos['event'][0] = os.path.splitext(data['anim_file_name'])[0]
+                    os.makedirs(os.path.dirname(os.path.join(out_dir, data['out_path'])), exist_ok=True)
+                    shutil.copyfile(data['path'], os.path.join(out_dir, data['out_path']))
                 
-
+                
+        stage['tags'] = tags
 
     print("==============EDITING AND BUILDING SLSB PROJECTS==============")
     for filename in os.listdir(tmp_dir):
@@ -274,9 +279,10 @@ def convert(parent_dir, dir):
         with open(edited_path, 'w') as f:
             json.dump(data, f, indent=2)
         
-        output = subprocess.Popen(f"{slsb_path} build --in \"{edited_path}\" --out \"{out_dir}\"", stdout=subprocess.PIPE).stdout.read()
+        if not args.no_build:
+            output = subprocess.Popen(f"{slsb_path} build --in \"{edited_path}\" --out \"{out_dir}\"", stdout=subprocess.PIPE).stdout.read()
 
-        shutil.copyfile(edited_path, out_dir + '/SKSE/Sexlab/Registry/Source/' + filename)
+            shutil.copyfile(edited_path, out_dir + '/SKSE/Sexlab/Registry/Source/' + filename)
 
     def build_behaviour(parent_dir, list_name):
         list_path = os.path.join(parent_dir, list_name)
@@ -340,6 +346,6 @@ def convert(parent_dir, dir):
 for dir in os.listdir(parent_dir):
     mesh_dir = os.path.join(parent_dir, dir, 'meshes')
     slal_dir = os.path.join(parent_dir, dir, 'SLAnims')
-    if os.path.exists(mesh_dir) and os.path.exists(slal_dir):
+    if os.path.exists(slal_dir):
         print('processing', dir)
         convert(parent_dir, dir)
