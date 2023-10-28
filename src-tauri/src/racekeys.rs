@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
+use log::info;
+
 #[derive(Debug, Clone, Copy)]
 pub enum RaceKey {
     Human = 0,
-
     AshHopper,
     Bear,
     Boar,
@@ -75,8 +76,8 @@ pub fn map_legacy_to_racekey(legacykey: &str) -> Result<String, String> {
         "cows" => Ok("Cow".into()),
         "deers" => Ok("Deer".into()),
         "dogs" => Ok("Dog".into()),
-        "dragons" => Ok("Dragon Priest".into()),
-        "dragonpriests" => Ok("Dragon".into()),
+        "dragons" => Ok("Dragon".into()),
+        "dragonpriests" => Ok("Dragon Priest".into()),
         "draugrs" => Ok("Draugr".into()),
         "dwarvenballistas" => Ok("Dwarven Ballista".into()),
         "dwarvencenturions" => Ok("Dwarven Centurion".into()),
@@ -88,31 +89,31 @@ pub fn map_legacy_to_racekey(legacykey: &str) -> Result<String, String> {
         "frostatronach" => Ok("Frost Atronach".into()),
         "gargoyles" => Ok("Gargoyle".into()),
         "giants" => Ok("Giant".into()),
-        "giantspiders" => Ok("Goat".into()),
-        "goats" => Ok("Hagraven".into()),
-        "hagravens" => Ok("Horker".into()),
-        "rabbits" => Ok("Horse".into()),
-        "horkers" => Ok("Ice Wraith".into()),
-        "horses" => Ok("Lurker".into()),
-        "icewraiths" => Ok("Mammoth".into()),
-        "largespiders" => Ok("Mudcrab".into()),
-        "lurkers" => Ok("Netch".into()),
-        "mammoths" => Ok("Rabbit".into()),
-        "mudcrabs" => Ok("Riekling".into()),
-        "netches" => Ok("Sabrecat".into()),
-        "rieklings" => Ok("Seeker".into()),
-        "sabrecats" => Ok("Skeever".into()),
-        "seekers" => Ok("Slaughterfish".into()),
-        "skeevers" => Ok("Storm Atronach".into()),
-        "slaughterfishes" => Ok("Spider".into()),
-        "spiders" => Ok("Large Spider".into()),
-        "spriggans" => Ok("Giant Spider".into()),
-        "stormatronach" => Ok("Spriggan".into()),
+        "giantspiders" => Ok("Giant Spider".into()),
+        "goats" => Ok("Goat".into()),
+        "hagravens" => Ok("Hagraven".into()),
+        "rabbits" => Ok("Rabbit".into()),
+        "horkers" => Ok("Horker".into()),
+        "horses" => Ok("Horse".into()),
+        "icewraiths" => Ok("Ice Wraith".into()),
+        "largespiders" => Ok("Large Spider".into()),
+        "lurkers" => Ok("Lurker".into()),
+        "mammoths" => Ok("Mammoth".into()),
+        "mudcrabs" => Ok("Mudcrab".into()),
+        "netches" => Ok("Netch".into()),
+        "rieklings" => Ok("Riekling".into()),
+        "sabrecats" => Ok("Sabrecat".into()),
+        "seekers" => Ok("Seeker".into()),
+        "skeevers" => Ok("Skeever".into()),
+        "slaughterfishes" => Ok("Slaughterfish".into()),
+        "spiders" => Ok("Spider".into()),
+        "spriggans" => Ok("Spriggan".into()),
+        "stormatronach" => Ok("Storm Atronach".into()),
         "trolls" => Ok("Troll".into()),
         "vampirelords" => Ok("Vampire Lord".into()),
         "werewolves" => Ok("Werewolf".into()),
-        "wisps" => Ok("Wispmother".into()),
-        "wispmothers" => Ok("Wisp".into()),
+        "wisps" => Ok("Wisp".into()),
+        "wispmothers" => Ok("Wispmother".into()),
         "wolves" => Ok("Wolf".into()),
         _ => Err(format!("Unrecognized legacy key: {}", legacykey).into()),
     }
@@ -186,6 +187,8 @@ pub fn get_race_keys_string() -> Vec<String> {
 }
 
 pub fn get_race_key_bytes(race: &str) -> Option<u8> {
+    info!("{:?}", race);
+
     let map = get_race_map();
     // let mut key = race.to_lowercase();
     // key.retain(|c| !c.is_whitespace() && c != '(' && c != ')');

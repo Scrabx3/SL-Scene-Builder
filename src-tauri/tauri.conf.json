@@ -60,6 +60,40 @@
     },
     "updater": {
       "active": false
+    },
+    "cli": {
+      "description": "CLI for SLSB",
+      "longDescription": "Can convert and serialize traditional SLAL packs to SLSB.",
+      "subcommands": {
+        "convert": {
+          "args": [
+            {
+              "name": "in",
+              "takesValue": true,
+              "short": "i"
+            },
+            {
+              "name": "out",
+              "takesValue": true,
+              "short": "d"
+            }
+          ]
+        },
+        "build": {
+          "args": [
+            {
+              "name": "in",
+              "takesValue": true,
+              "short": "i"
+            },
+            {
+              "name": "out",
+              "takesValue": true,
+              "short": "o"
+            }
+          ]
+        }
+      }
     }
   }
 }

@@ -7,7 +7,7 @@ use std::{
     io::{BufReader, BufWriter, ErrorKind, Write},
     mem::size_of,
     path::PathBuf,
-    vec,
+    vec
 };
 use tauri::api::dialog::blocking::FileDialogBuilder;
 
@@ -93,18 +93,22 @@ impl Project {
         if path.is_none() {
             return Err("No path to load project from".into());
         }
+        
         let path = path.unwrap();
-        // let file = fs::read(&path).map_err(|e| e.to_string())?;
-        // let value = postcard::from_bytes(&file).map_err(|e| e.to_string())?;
         let file = fs::File::open(&path).map_err(|e| e.to_string())?;
-        let value = serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
+        let value = Project::from_file(file)?;
 
         *self = value;
         self.set_project_name_from_path(&path);
         self.pack_path = path;
-        info!("Loaded project {}", self.pack_name);
 
         Ok(())
+    }
+
+    pub fn from_file(file: std::fs::File) -> Result<Project, String> {
+        let project: Project = serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
+        println!("Loaded project {}", project.pack_name);
+        Ok(project)
     }
 
     pub fn save_project(&mut self, save_as: bool) -> Result<(), String> {
@@ -120,12 +124,16 @@ impl Project {
         } else {
             self.pack_path.clone()
         };
+        
+        self.set_project_name_from_path(&path);
+
+        self.write(path)
+    }
+
+    pub fn write(&mut self, path: PathBuf) -> Result<(), String> {
         let file = fs::File::create(&path).map_err(|e| e.to_string())?;
         serde_json::to_writer(file, self).map_err(|e| e.to_string())?;
-        // let bin = postcard::to_vec(self);
-
-        self.set_project_name_from_path(&path);
-        info!("Saved project {}", self.pack_name);
+        println!("Saved project {}", self.pack_name);
         Ok(())
     }
 
@@ -136,17 +144,30 @@ impl Project {
         if path.is_none() {
             return Err("No path to load slal file from".into());
         }
+
         let path = path.unwrap();
+
+        match Project::from_slal(path) {
+            Ok(prjct) => {
+                *self = prjct;
+                Ok(())
+            },
+            Err(err) => Err(err)
+        }
+    }
+
+    pub fn from_slal(path: PathBuf) -> Result<Project, String> {
         let file = fs::File::open(&path).map_err(|e| e.to_string())?;
+        
         let slal: serde_json::Value =
             serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
-
+    
         let mut prjct = Project::new();
         prjct.pack_name = slal["name"]
             .as_str()
             .ok_or("Missing name attribute")?
             .into();
-
+    
         let anims = slal["animations"]
             .as_array()
             .ok_or("Missing animations attribute")?;
@@ -160,14 +181,14 @@ impl Project {
             let actors = animation["actors"]
                 .as_array()
                 .ok_or("Missing actors attribute")?;
-
+    
             // initialize stages and copy information for every position into the respective stage
             for (n, position) in actors.iter().enumerate() {
                 let sex = position["type"].as_str().unwrap_or("male").to_lowercase();
                 let events = position["stages"]
                     .as_array()
                     .ok_or("Missing stages attribute")?;
-
+    
                 if scene.stages.is_empty() {
                     for _ in 0..events.len() {
                         scene.stages.push(Default::default());
@@ -180,7 +201,7 @@ impl Project {
                     }
                 }
                 for (i, evt) in events.iter().enumerate() {
-                    let mut edit_position = &mut scene.stages[i].positions[n];
+                    let edit_position = &mut scene.stages[i].positions[n];
                     edit_position.event =
                         vec![evt["id"].as_str().ok_or("Missing id attribute")?.into()];
                     match sex.as_str() {
@@ -275,22 +296,26 @@ impl Project {
             prjct.scenes.insert(scene.id.clone(), scene);
         }
 
-        info!(
+        println!(
             "Loaded {} Animations from {}",
             prjct.scenes.len(),
             path.to_str().unwrap_or_default()
         );
-        *self = prjct;
-        Ok(())
+    
+        Ok(prjct)
     }
 
-    pub fn build(&self) -> Result<(), std::io::Error> {
+    pub fn export(&self) -> Result<(), std::io::Error> {
         let path = FileDialogBuilder::new().pick_folder();
         if path.is_none() {
             return Err(std::io::Error::from(ErrorKind::Interrupted));
         }
         let root_dir = path.unwrap();
-        info!("Compiling project {}", self.pack_name);
+        self.build(root_dir)
+    }
+
+    pub fn build(&self, root_dir: PathBuf) -> Result<(), std::io::Error> {
+        println!("Compiling project {}", self.pack_name);
         // Write binary
         {
             let target_dir = root_dir.join("SKSE\\SexLab\\Registry\\");
@@ -434,3 +459,5 @@ impl EncodeBinary for Project {
         }
     }
 }
+
+
