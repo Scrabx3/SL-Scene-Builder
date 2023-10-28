@@ -1,5 +1,7 @@
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import { Button, Card, Checkbox, Col, Input, Row, Select, Space, Tooltip, InputNumber, Dropdown } from "antd";
+import { readTextFile, readDir } from "@tauri-apps/api/fs";
+import { resourceDir } from '@tauri-apps/api/path';
 import { invoke } from "@tauri-apps/api";
 import { useImmer } from "use-immer";
 import './PositionField.css'
@@ -52,6 +54,30 @@ const makeStrips = (list) => {
   }
 };
 
+const readExtraOptions = async () => {
+  try {
+    const resourceDirPath = (await resourceDir()) + "User\\Position";
+    const entries = await readDir(resourceDirPath, { recursive: false })
+    let ret = [];
+    for (const entry of entries) {
+      const file = await readTextFile(entry.path);
+      const list = file.split(/[,\s]+/);
+      ret = list.filter((value, i) => {
+        if (!value) return false;
+        const upperV = value.toUpperCase();
+        return ret.findIndex(it => it.value.toUpperCase() === upperV) === -1 &&
+          list.findIndex(it => it.toUpperCase() === upperV) === i
+      })
+        .map(value => { return { value: value, label: value }; })
+        .concat(ret);
+    }
+    // console.log(ret);
+    return ret;
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+};
 const PositionField = forwardRef(function PositionField({ _position, _control }, ref) {
   const [event, updateEvent] = useImmer(_position.event);
   const [race, setRace] = useState(_control && _control.race || _position.race);
@@ -61,6 +87,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
   const [scale, setScale] = useState(_control && _control.scale || _position.scale);
   const [anim_obj, setAnimObj] = useState(_position.anim_obj);
   const [strips, updateStrips] = useImmer(getStrips(_control && _control.strip_data || _position.strip_data))
+  const [extraOptions, setExtraOptions] = useState([]);
   const [raceKeys, setRaceKeys] = useState([]);
   const [basicAnim, setBasicAnim] = useState(true);
   const [workingAnim, setWorkingAnim] = useState(undefined);
@@ -68,6 +95,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
 
   useEffect(() => {
     invoke('get_race_keys').then(result => setRaceKeys(result));
+    readExtraOptions().then(result => setExtraOptions(result));
   }, []);
 
   useImperativeHandle(ref, () => {
@@ -348,70 +376,29 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                   </div>
                 </Tooltip>
               </Col>
-              <Col>
-                <Tooltip title={'Actor is locked in a yoke.'}>
-                  <div>
-                    <CheckboxEx
-                      obj={extra}
-                      label={'Yoke'}
-                      attr={'yoke'}
-                      disabled={race !== 'Human'}
-                      updateFunc={updateExtra}
-                    />
-                  </div>
-                </Tooltip>
-              </Col>
-              <Col>
-                <Tooltip
-                  title={'Actor is locked in an armbinder (Hands behind).'}
-                >
-                  <div>
-                    <CheckboxEx
-                      obj={extra}
-                      label={'Armbinder'}
-                      attr={'armbinder'}
-                      disabled={race !== 'Human'}
-                      updateFunc={updateExtra}
-                    />
-                  </div>
-                </Tooltip>
-              </Col>
-              <Col>
-                <Tooltip
-                  title={
-                    'Actor is locked in hand shackles (Hands forward).'
+              <Select
+                mode="tags"
+                style={{ width: '100%' }}
+                value={extra.custom ? extra.custom : undefined}
+                placeholder="Custom Extra"
+                onSelect={(value) => {
+                  const upperV = value.toUpperCase();
+                  const idx = extra.custom.findIndex(it => it.toUpperCase() === upperV);
+                  if (idx === -1) {
+                    updateExtra(prev => { prev.custom.push(value); });
                   }
-                >
-                  <div>
-                    <CheckboxEx
-                      obj={extra}
-                      label={'Hand Shackles'}
-                      attr={'handshackles'}
-                      updateFunc={updateExtra}
-                    />
-                  </div>
-                </Tooltip>
-              </Col>
-              <Col>
-                <Tooltip title={'Actor is locked in a legbinder.'}>
-                  <div>
-                    <CheckboxEx
-                      obj={extra}
-                      label={'Legbinder'}
-                      attr={'legbinder'}
-                      disabled={race !== 'Human'}
-                      updateFunc={updateExtra}
-                    />
-                  </div>
-                </Tooltip>
-              </Col>
-              {/* <Col>
-                <Tooltip title={'The is wearing a petsuit.'}>
-                  <div>
-                    <CheckboxEx obj={extra} label={'Petsuit'} attr={'petsuit'} disabled={race !== "Human"} updateFunc={updateExtra} />
-                  </div>
-                </Tooltip>
-              </Col> */}
+                }}
+                onDeselect={(value) => {
+                  const upperV = value.toUpperCase();
+                  const idx = extra.custom.findIndex(it => it.toUpperCase() === upperV);
+                  if (idx > -1) {
+                    updateExtra(prev => { prev.custom.splice(idx, 1); });
+                  }
+                }}
+                options={extraOptions}
+                maxTagTextLength={10}
+                maxTagCount={3}
+              />
             </Row>
           </Card>
         </Col>

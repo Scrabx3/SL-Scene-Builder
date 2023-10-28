@@ -24,6 +24,18 @@
         "message": true,
         "open": true,
         "save": true
+      },
+      "fs": {
+        "all": true,
+        "scope": [
+          "$APP/*",
+          "$RESOURCE",
+          "$RESOURCE/*",
+          "$RESOURCE/**"
+        ]
+      },
+      "path": {
+        "all": true
       }
     },
     "bundle": {
