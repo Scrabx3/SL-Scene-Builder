@@ -70,13 +70,18 @@ pub struct Extra {
     pub climax: bool,
     pub dead: bool,
 
-    #[serde(default)]
-    pub handshackles: bool, // replaces optional
+    pub custom: Vec<String>,
+    // Using string vector instead for more dynamic application
+    #[serde(skip_serializing, default)]
+    pub handshackles: bool,
+    #[serde(skip_serializing, default)]
     pub yoke: bool,
+    #[serde(skip_serializing, default)]
     pub armbinder: bool,
+    #[serde(skip_serializing, default)]
     pub legbinder: bool,
     #[serde(skip_serializing, default)]
-    pub petsuit: bool, // Unused
+    pub petsuit: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -92,7 +97,12 @@ pub struct Stripping {
 
 impl Position {
     pub fn get_byte_size_meta(&self) -> usize {
-        size_of::<u64>() + size_of::<i32>() + 3
+        let mut ret =
+            size_of::<u64>() + size_of::<i32>() + self.extra.custom.len() * size_of::<u64>() + 3;
+        for tag in &self.extra.custom {
+            ret += tag.len() + 1;
+        }
+        ret
     }
 
     pub fn write_byte_meta(&self, buf: &mut Vec<u8>) -> () {
@@ -106,14 +116,15 @@ impl Position {
         buf.extend_from_slice(&s_.to_be_bytes());
         // extra
         buf.push(
-            self.extra.submissive as u8
-                + 2 * self.extra.handshackles as u8
-                + 4 * self.extra.vampire as u8
-                + 8 * self.extra.dead as u8
-                + 16 * self.extra.yoke as u8
-                + 32 * self.extra.armbinder as u8
-                + 64 * self.extra.legbinder as u8, // + 128 * self.extra.petsuit as u8,
+            self.extra.submissive as u8 + 4 * self.extra.vampire as u8 + 8 * self.extra.dead as u8,
         );
+        buf.extend_from_slice(&(self.extra.custom.len() as u64).to_be_bytes());
+        for tag in &self.extra.custom {
+            let tmp: String = tag.chars().filter(|c| !c.is_whitespace()).collect();
+            let tmp = tmp.to_lowercase();
+            buf.extend_from_slice(&(tmp.len() as u64).to_be_bytes());
+            buf.extend_from_slice(tmp.as_bytes());
+        }
     }
 }
 
