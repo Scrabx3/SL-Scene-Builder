@@ -4,6 +4,8 @@ import subprocess
 import shutil
 import json
 import argparse
+import json
+import re
 
 parser = argparse.ArgumentParser(
                     prog='Sexlab Catalytic Converter',
@@ -33,6 +35,7 @@ def convert(parent_dir, dir):
     working_dir = os.path.join(parent_dir, dir)
     
     slal_dir = working_dir + "\\SLAnims\\json"
+    anim_source_dir = working_dir + "\\SLAnims\\source"
     out_dir = parent_dir + "\\conversion\\" + dir
     tmp_dir = './tmp'
 
@@ -54,17 +57,152 @@ def convert(parent_dir, dir):
     for filename in os.listdir(slal_dir):
         path = os.path.join(slal_dir, filename)
 
-
         ext = pathlib.Path(filename).suffix
 
         if os.path.isfile(path) and ext == ".json":
             print('converting', filename)
             output = subprocess.Popen(f"{slsb_path} convert --in \"{path}\" --out \"{tmp_dir}\"", stdout=subprocess.PIPE).stdout.read()
 
+    print("==============PARSING ANIMATION SOURCE FILE==============")
+    animations = dict()
+    def reset_animation():
+        return {
+            "id": None,
+            "name": None,
+            "tags": [],
+            "sound": None,
+            "actors": {},
+        }
+
+    def parse_stage_params(stage_params):
+        stages = []
+        stage_data = None
+
+        for line in stage_params:
+            stage_match = re.search(r'Stage\((\d+)(.*?)\)', line)
+            if stage_match:
+                stage_info = stage_match.groups()
+                stage_number = int(stage_info[0])
+                stage_data = {
+                    "sos": None,
+                    "silent": False,
+                    "open_mouth": False,
+                    "object": None,
+                    "animvars": "",  # Initialize animvars
+                }
+                attributes = re.findall(r'sos=(-?\d+)|silent=True|open_mouth=True|object="([^"]*)"|object=([^,)]+)', stage_info[1])
+                for attr in attributes:
+                    if attr[0]:
+                        stage_data["sos"] = int(attr[0])
+                    if "silent" in attr[1]:
+                        stage_data["silent"] = True
+                    if "open_mouth" in attr[1]:
+                        stage_data["open_mouth"] = True
+                    if attr[2]:
+                        if stage_data["object"] is not None:
+                            stage_data["object"] += f", {attr[2]}"
+                        else:
+                            stage_data["object"] = attr[2]
+                
+                # Extract the animvars attribute correctly
+                animvars_match = re.search(r'animvars="([^"]*)"', stage_info[1])
+                if animvars_match:
+                    stage_data["animvars"] = animvars_match.group(1)
+                
+                stages.append({f"Stage {stage_number}": stage_data})
+
+        return stages
+
+    def parse_actor(line, current_animation):
+        actor_match = re.search(r'actor(\d+)=([^()]+)\(([^)]*)\)', line)
+        if actor_match:
+            actor_number = actor_match.group(1)
+            actor_type = actor_match.group(2)
+            actor_args = actor_match.group(3)
+
+            actor_info = {
+                "type": actor_type,
+                "args": {},
+                f"a{actor_number}_stage_params": [],
+            }
+
+            args = re.findall(r'(\w+)=(?:"([^"]*)"|([^,)]+))', actor_args)
+            for arg, value1, value2 in args:
+                value = value1 if value1 else value2
+                actor_info["args"][arg] = value
+
+            current_animation["actors"][f"a{actor_number}"] = actor_info
+
+    metadata = {
+        "anim_dir": None,
+        "anim_id_prefix": None,
+        "anim_name_prefix": None,
+        "common_tags": None,
+    }
+
+    def parse_file(file):
+        inside_animation = False
+        current_animation = None
+        current_actor_number = None
+        current_stage_params = []
+        for line in file:
+            line = line.strip()
+            
+            if line.startswith("anim_dir("):
+                metadata["anim_dir"] = re.search(r'anim_dir\("([^"]*)"\)', line).group(1)
+            elif line.startswith("anim_id_prefix("):
+                metadata["anim_id_prefix"] = re.search(r'anim_id_prefix\("([^"]*)"\)', line).group(1)
+            elif line.startswith("anim_name_prefix("):
+                metadata["anim_name_prefix"] = re.search(r'anim_name_prefix\("([^"]*)"\)', line).group(1)
+            elif line.startswith("common_tags("):
+                metadata["common_tags"] = re.search(r'common_tags\("([^"]*)"\)', line).group(1)
+
+            if line.startswith("Animation("):
+                if current_animation:
+                    if current_actor_number and current_stage_params:
+                        current_animation["actors"][f"a{current_actor_number}"][f"a{current_actor_number}_stage_params"] = parse_stage_params(current_stage_params)
+                    animations[metadata["anim_name_prefix"] + current_animation["name"]] = current_animation
+                current_animation = reset_animation()
+                inside_animation = True
+                current_actor_number = None
+                current_stage_params = []
+            elif inside_animation and line.startswith(")"):
+                inside_animation = False
+            elif inside_animation:
+                if line.startswith("id="):
+                    current_animation["id"] = re.search(r'id="([^"]*)"', line).group(1)
+                elif line.startswith("name="):
+                    current_animation["name"] = re.search(r'name="([^"]*)"', line).group(1)
+                elif line.startswith("tags="):
+                    current_animation["tags"] = [tag.strip() for tag in re.search(r'tags="([^"]*)"', line).group(1).split(",")]
+                elif line.startswith("sound="):
+                    sound = re.search(r'sound="([^"]*)"', line)
+                    if sound:
+                        current_animation["sound"] = sound.group(1)
+                elif actor_match := re.search(r'actor(\d+)=([^()]+)\(([^)]*)\)', line):
+                    if current_actor_number and current_stage_params:
+                        current_animation["actors"][f"a{current_actor_number}"][f"a{current_actor_number}_stage_params"] = parse_stage_params(current_stage_params)
+                    parse_actor(line, current_animation)
+                    current_actor_number = actor_match.group(1)
+                    current_stage_params = []
+                else:
+                    current_stage_params.append(line)
+
+        if current_actor_number and current_stage_params:
+            current_animation["actors"][f"a{current_actor_number}"][f"a{current_actor_number}_stage_params"] = parse_stage_params(current_stage_params)
+        
+        animations[metadata["anim_name_prefix"] + current_animation["name"]] = current_animation
+
+    for filename in os.listdir(anim_source_dir):
+        path = os.path.join(anim_source_dir, filename)
+        ext = pathlib.Path(filename).suffix
+
+        if os.path.isfile(path) and ext == ".txt":
+            with open(path, "r") as file:
+                parse_file(file)
+
     def parse_fnis_list(parent_dir, file):
         path = os.path.join(parent_dir, file)
-
-        print('parsing', path)
 
         with open(path) as topo_file:
 
@@ -155,6 +293,10 @@ def convert(parent_dir, dir):
                 iter_fnis_lists(path, parse_fnis_list)
 
     def process_stage(scene, stage):
+        name = scene['name']
+        
+        source_anim_data = animations[name]
+
         tags = [tag.lower().strip() for tag in stage['tags']]
 
         if ('aggressive' in tags or 'aggressivedefault' in tags) and 'forced' not in tags:
@@ -246,6 +388,10 @@ def convert(parent_dir, dir):
                     os.makedirs(os.path.dirname(os.path.join(out_dir, data['out_path'])), exist_ok=True)
                     shutil.copyfile(data['path'], os.path.join(out_dir, data['out_path']))
                 
+            source_actor_data = source_anim_data['actors']['a' + str(i + 1)]
+            source_actor_args = source_actor_data['args']
+            if 'object' in source_actor_args:
+                pos['anim_obj'] = source_actor_args['object'].replace(' ', ',')
                 
         stage['tags'] = tags
 
@@ -265,12 +411,9 @@ def convert(parent_dir, dir):
             scenes = data['scenes']
             data['pack_author'] = args.author
 
-
             for id in scenes:
                 scene = scenes[id]
-
                 stages = scene['stages']
-
                 for stage in stages:
                     process_stage(scene, stage)
                 
