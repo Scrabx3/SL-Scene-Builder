@@ -6,6 +6,9 @@ import json
 import argparse
 import json
 import re
+import pprint
+
+pp = pprint.PrettyPrinter(indent=4)
 
 parser = argparse.ArgumentParser(
                     prog='Sexlab Catalytic Converter',
@@ -38,6 +41,9 @@ def convert(parent_dir, dir):
     anim_source_dir = working_dir + "\\SLAnims\\source"
     out_dir = parent_dir + "\\conversion\\" + dir
     tmp_dir = './tmp'
+
+    if not os.path.exists(slal_dir):
+        return
 
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir)
@@ -72,13 +78,14 @@ def convert(parent_dir, dir):
             "tags": [],
             "sound": None,
             "actors": {},
+            "stage_params": [],
         }
 
-    def parse_stage_params(stage_params):
+    def parse_actor_stage_params(actor_stage_params):
         stages = []
         stage_data = None
 
-        for line in stage_params:
+        for line in actor_stage_params:
             stage_match = re.search(r'Stage\((\d+)(.*?)\)', line)
             if stage_match:
                 stage_info = stage_match.groups()
@@ -103,17 +110,40 @@ def convert(parent_dir, dir):
                             stage_data["object"] += f", {attr[2]}"
                         else:
                             stage_data["object"] = attr[2]
-                
+
                 # Extract the animvars attribute correctly
                 animvars_match = re.search(r'animvars="([^"]*)"', stage_info[1])
                 if animvars_match:
                     stage_data["animvars"] = animvars_match.group(1)
-                
+
                 stages.append({f"Stage {stage_number}": stage_data})
 
         return stages
 
-    def parse_actor(line, current_animation):
+    def parse_stage_params(stage_params):
+        stages = dict()
+
+        for line in stage_params:
+            stage_match = re.search(r'Stage\((\d+)(.*?)\)', line)
+            if stage_match:
+                stage_info = stage_match.groups()
+                stage_number = int(stage_info[0])
+                stage_data = {
+                    "sound": None,
+                    "timer": None,
+                }
+                attributes = re.findall(r'sound=([^"]*)|timer=(-?\d+)', stage_info[1])
+                for attr in attributes:
+                    if attr[0]:
+                        stage_data["sound"] = attr[0]
+                    if attr[1]:
+                        stage_data["timer"] = int(attr[1])
+
+                stages[f"Stage {stage_number}"] = stage_data
+
+        return stages
+
+    def parse_actor(line, current_animation, inside_actor_stage_params):
         actor_match = re.search(r'actor(\d+)=([^()]+)\(([^)]*)\)', line)
         if actor_match:
             actor_number = actor_match.group(1)
@@ -132,6 +162,7 @@ def convert(parent_dir, dir):
                 actor_info["args"][arg] = value
 
             current_animation["actors"][f"a{actor_number}"] = actor_info
+            inside_actor_stage_params[0] = False  # Set to False when a new actor is encountered
 
     metadata = {
         "anim_dir": None,
@@ -141,57 +172,75 @@ def convert(parent_dir, dir):
     }
 
     def parse_file(file):
-        inside_animation = False
+        parser_anims = []
         current_animation = None
+        inside_animation = False
         current_actor_number = None
+        current_actor_stage_params = []
         current_stage_params = []
+        inside_stage_params = False
+        inside_actor_stage_params = [False]
         for line in file:
             line = line.strip()
-            
-            if line.startswith("anim_dir("):
-                metadata["anim_dir"] = re.search(r'anim_dir\("([^"]*)"\)', line).group(1)
-            elif line.startswith("anim_id_prefix("):
-                metadata["anim_id_prefix"] = re.search(r'anim_id_prefix\("([^"]*)"\)', line).group(1)
-            elif line.startswith("anim_name_prefix("):
-                metadata["anim_name_prefix"] = re.search(r'anim_name_prefix\("([^"]*)"\)', line).group(1)
-            elif line.startswith("common_tags("):
-                metadata["common_tags"] = re.search(r'common_tags\("([^"]*)"\)', line).group(1)
 
-            if line.startswith("Animation("):
+            if re.match(r'^\s*anim_dir\("([^"]*)"\)', line):
+                metadata["anim_dir"] = re.search(r'anim_dir\("([^"]*)"\)', line).group(1)
+            elif re.match(r'^\s*anim_id_prefix\("([^"]*)"\)', line):
+                metadata["anim_id_prefix"] = re.search(r'anim_id_prefix\("([^"]*)"\)', line).group(1)
+            elif re.match(r'^\s*anim_name_prefix\("([^"]*)"\)', line):
+                metadata["anim_name_prefix"] = re.search(r'anim_name_prefix\("([^"]*)"\)', line).group(1)
+            elif re.match(r'^\s*common_tags\("([^"]*)"', line):
+                metadata["common_tags"] = re.search(r'common_tags\("([^"]*)"', line).group(1)
+
+            if re.match(r'^\s*Animation\(', line):
                 if current_animation:
-                    if current_actor_number and current_stage_params:
-                        current_animation["actors"][f"a{current_actor_number}"][f"a{current_actor_number}_stage_params"] = parse_stage_params(current_stage_params)
+                    if current_actor_number and current_actor_stage_params:
+                        current_animation["actors"][f"a{current_actor_number}"][f"a{current_actor_number}_stage_params"] = parse_actor_stage_params(current_actor_stage_params)
+                    animations[metadata["anim_name_prefix"] + current_animation["name"]] = current_animation
+                    if current_stage_params:
+                        current_animation["stage_params"] = parse_stage_params(current_stage_params)
                     animations[metadata["anim_name_prefix"] + current_animation["name"]] = current_animation
                 current_animation = reset_animation()
                 inside_animation = True
                 current_actor_number = None
+                current_actor_stage_params = []
                 current_stage_params = []
-            elif inside_animation and line.startswith(")"):
+                inside_actor_stage_params = [False]
+            elif inside_animation and re.match(r'^\s*\)', line):
                 inside_animation = False
             elif inside_animation:
-                if line.startswith("id="):
+                if re.match(r'^\s*id=', line):
                     current_animation["id"] = re.search(r'id="([^"]*)"', line).group(1)
-                elif line.startswith("name="):
+                elif re.match(r'^\s*name=', line):
                     current_animation["name"] = re.search(r'name="([^"]*)"', line).group(1)
-                elif line.startswith("tags="):
+                elif re.match(r'^\s*tags=', line):
                     current_animation["tags"] = [tag.strip() for tag in re.search(r'tags="([^"]*)"', line).group(1).split(",")]
-                elif line.startswith("sound="):
-                    sound = re.search(r'sound="([^"]*)"', line)
-                    if sound:
-                        current_animation["sound"] = sound.group(1)
-                elif actor_match := re.search(r'actor(\d+)=([^()]+)\(([^)]*)\)', line):
-                    if current_actor_number and current_stage_params:
-                        current_animation["actors"][f"a{current_actor_number}"][f"a{current_actor_number}_stage_params"] = parse_stage_params(current_stage_params)
-                    parse_actor(line, current_animation)
+                elif re.match(r'^\s*sound=', line):
+                    sound_match = re.search(r'sound="([^"]*)"', line)
+                    if sound_match:
+                        current_animation["sound"] = sound_match.group(1)
+                elif actor_match := re.search(r'actor\s*(\d+)\s*=\s*([^()]+)\(([^)]*)\)', line):
+                    if current_actor_number and current_actor_stage_params:
+                        current_animation["actors"][f"a{current_actor_number}"][f"a{current_actor_number}_stage_params"] = parse_actor_stage_params(current_actor_stage_params)
+                    parse_actor(line, current_animation, inside_actor_stage_params)
                     current_actor_number = actor_match.group(1)
-                    current_stage_params = []
-                else:
+                    current_actor_stage_params = []
+                elif line.startswith(f"a{current_actor_number}_stage_params=[" or line.startswith(f"a{current_actor_number}_stage_params=[")):
+                    inside_actor_stage_params[0] = True
+                elif line.startswith("Stage(") and inside_actor_stage_params[0]:
+                    current_actor_stage_params.append(line)
+                elif re.search(r'\bstage_params\s*=', line):
+                    inside_actor_stage_params[0] = False  # Set to False when exiting actor stage params
+                    inside_stage_params = True
+                elif line.startswith("Stage(") and inside_stage_params:
                     current_stage_params.append(line)
 
-        if current_actor_number and current_stage_params:
-            current_animation["actors"][f"a{current_actor_number}"][f"a{current_actor_number}_stage_params"] = parse_stage_params(current_stage_params)
-        
-        animations[metadata["anim_name_prefix"] + current_animation["name"]] = current_animation
+        if current_animation:
+            if current_actor_number and current_actor_stage_params:
+                current_animation["actors"][f"a{current_actor_number}"][f"a{current_actor_number}_stage_params"] = parse_actor_stage_params(current_actor_stage_params)
+            if current_stage_params:
+                current_animation["stage_params"] = parse_stage_params(current_stage_params)
+            animations[metadata["anim_name_prefix"] + current_animation["name"]] = current_animation
 
     for filename in os.listdir(anim_source_dir):
         path = os.path.join(anim_source_dir, filename)
@@ -200,6 +249,8 @@ def convert(parent_dir, dir):
         if os.path.isfile(path) and ext == ".txt":
             with open(path, "r") as file:
                 parse_file(file)
+
+    #pp.pprint(animations)
 
     def parse_fnis_list(parent_dir, file):
         path = os.path.join(parent_dir, file)
@@ -337,7 +388,7 @@ def convert(parent_dir, dir):
                 tags[i] = 'Gore'
             
 
-        positions = stage['positions']        
+        positions = stage['positions']     
 
         if sub and maybe_femdom:
             femdom = True
@@ -387,11 +438,25 @@ def convert(parent_dir, dir):
                     pos['event'][0] = os.path.splitext(data['anim_file_name'])[0]
                     os.makedirs(os.path.dirname(os.path.join(out_dir, data['out_path'])), exist_ok=True)
                     shutil.copyfile(data['path'], os.path.join(out_dir, data['out_path']))
-                
-            source_actor_data = source_anim_data['actors']['a' + str(i + 1)]
-            source_actor_args = source_actor_data['args']
-            if 'object' in source_actor_args:
-                pos['anim_obj'] = source_actor_args['object'].replace(' ', ',')
+
+            actor_map = source_anim_data['actors']     
+            actor_key = 'a' + str(i + 1)
+        
+            if actor_key in actor_map and actor_map[actor_key]:
+                source_actor_data = actor_map[actor_key]
+
+                source_actor_args = source_actor_data['args']
+                if 'object' in source_actor_args:
+                    pos['anim_obj'] = source_actor_args['object'].replace(' ', ',')
+
+            all_stage_params = source_anim_data['stage_params']
+            stage_params_key = 'Stage ' + str(i)
+
+            if stage_params_key in all_stage_params:
+                stage_params = all_stage_params[stage_params_key]
+                if 'timer' in stage_params and stage_params['timer'] is not None:
+
+                    stage['extra']['fixed_len'] = stage_params['timer']
                 
         stage['tags'] = tags
 
@@ -424,7 +489,7 @@ def convert(parent_dir, dir):
         
         if not args.no_build:
             output = subprocess.Popen(f"{slsb_path} build --in \"{edited_path}\" --out \"{out_dir}\"", stdout=subprocess.PIPE).stdout.read()
-
+            #print(output)
             shutil.copyfile(edited_path, out_dir + '/SKSE/Sexlab/Registry/Source/' + filename)
 
     def build_behaviour(parent_dir, list_name):
@@ -444,6 +509,7 @@ def convert(parent_dir, dir):
         cwd = os.getcwd()
         os.chdir(fnis_path)
         output = subprocess.Popen(f"./commandlinefnisformodders.exe \"{list_path}\"", stdout=subprocess.PIPE).stdout.read()
+        #print(output)
         os.chdir(cwd)
 
         out_path = os.path.normpath(list_path)
