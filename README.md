@@ -1,6 +1,6 @@
-# Tauri + React
+# SexLab Scene Builder
 
-This template should help get you started developing with Tauri and React in Vite.
+An UI build with Tauri to create .SLSB files which are used by [SexLab P+](https://github.com/Scrabx3/SexLabpp) to read animation data.
 
 ## Recommended IDE Setup
 
