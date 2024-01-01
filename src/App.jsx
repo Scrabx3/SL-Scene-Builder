@@ -15,11 +15,40 @@ import { STAGE_EDGE, STAGE_EDGE_SHAPEID } from "./scene/SceneEdge"
 import { Furnitures } from "./common/Furniture";
 import "./scene/SceneNode"
 import "./App.css";
+import "./Dark.css";
 function makeMenuItem(label, key, icon, children, disabled, danger) {
   return { key, icon, children, label, disabled, danger };
 }
 
 const ZOOM_OPTIONS = { minScale: 0.25, maxScale: 5 };
+
+// Dark Mode stuff
+// Function to toggle between dark and light mode and save preference to local storage
+const toggleDarkMode = () => {
+  const root = document.getElementById('root');
+  root.classList.toggle('default-style');
+  root.classList.toggle('dark-mode');
+
+  const isDarkModeEnabled = root.classList.contains('dark-mode');
+  // Save the current dark mode preference to local storage
+  window.localStorage.setItem('darkMode', isDarkModeEnabled);
+}
+// Function to initialize dark mode based on local storage
+const initializeDarkModeFromLocalStorage = () => {
+  const root = document.getElementById('root');
+  const isDarkModeEnabled = window.localStorage.getItem('darkMode') === 'true';
+
+  // Set the initial mode based on the stored preference
+  if (isDarkModeEnabled) {
+    root.classList.add('dark-mode');
+  } else {
+    root.classList.remove('dark-mode');
+  }
+}
+// Call the function to initialize dark mode based on local storage on page load
+window.addEventListener('DOMContentLoaded', () => {
+  initializeDarkModeFromLocalStorage();
+});
 
 function App() {
   const [collapsed, setCollapsed] = useState(false);  // Sider collapsed?
@@ -30,6 +59,11 @@ function App() {
   const [activeScene, updateActiveScene] = useImmer(null);
   const [edited, setEdited] = useState(0);
   const inEdit = useRef(0);
+
+  // Dark Mode
+  useEffect(() => {
+    initializeDarkModeFromLocalStorage();
+  }, []);
 
   useEffect(() => {
     const newGraph = new Graph({
@@ -435,10 +469,8 @@ function App() {
         setActiveScene(new_anim);
         break;
       case 'darkmode':
-        //add darkmode code switch here
-        const root = document.getElementById('root');
-        root.classList.toggle('default-style');
-        root.classList.toggle('dark-mode');
+        // Added darkmode code switch here
+        toggleDarkMode();
         break;
       case 'editanim':
         setActiveScene(scene);

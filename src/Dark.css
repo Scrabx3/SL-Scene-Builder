@@ -1,0 +1,62 @@
+:root {
+    --dark-background: rgb(0 33 64);
+    --dark-background-alt: rgb(27 61 93);
+    --dark-text: rgba(255, 255, 255, 0.65);
+    --bright-blue: #1677ff;
+    --input-background: rgba(255, 255, 255, 0.2);
+    --dark-toolbar: #f5f5f5;
+  }
+
+#root.dark-mode main { 
+    background-color: var(--dark-background);
+  }
+  #root.dark-mode {
+    color: var(--dark-text);
+  }
+  #root.dark-mode .ant-select-selection-item {
+    background-color: var(--bright-blue);
+  }
+  #root.dark-mode .ant-select-selector {
+    background-color: var(--input-background);
+    border-color: var(--bright-blue);
+  }
+  #root.dark-mode .ant-empty-description, #root.dark-mode span.anticon {
+    color: var(--dark-text);
+  }
+  #root.dark-mode :where(.css-dev-only-do-not-override-14wwjjs).ant-card {
+    background-color: var(--dark-background);
+    color: var(--dark-text);
+  }
+  #root.dark-mode #stageNameInputField {
+    color: var(--white); 
+  }
+  #root.dark-mode #stageNameInputField {
+    border-color: var(--bright-blue);
+    background-color: var(--input-background);
+  }
+  #root.dark-mode .graph-toolbox, #root.dark-mode #graph{
+    border-color: var(--bright-blue);
+    background-color: var(--dark-toolbar);
+  }
+  #root.dark-mode .graph-toolbox button .ant-btn-icon .anticon {
+    color: var(--black);
+  }
+  #root.dark-mode #graph {
+    background-color: var(--input-background);
+  }
+  #root.dark-mode .graph-data-field {
+    border-color: var(--bright-blue);
+    background-color: var(--dark-background);
+    color: var(--white);
+  }
+  #root.dark-mode .graph-data-field span {
+    color: var(--white);
+  }
+  #root.dark-mode .ant-input-number-group-addon {
+    color: var(--white);
+    border-color: var(--bright-blue);
+    background-color: var(--input-background);
+  }
+  .ant-input-number-group-addon,#root.dark-mode :where(.css-dev-only-do-not-override-14wwjjs).ant-input-number-group >.ant-input-number:last-child, :where(.css-dev-only-do-not-override-14wwjjs).ant-input-number-group .ant-input-number-group-addon:last-child {
+    border-color: var(--bright-blue);
+  }

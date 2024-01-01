@@ -9,10 +9,43 @@ import { Input, Button, Tag, Space, Tooltip, InputNumber, Card, Layout, Divider,
 import { tagsSFW, tagsNSFW } from "./common/Tags"
 import PositionField from "./stage/PositionField";
 import "./stage.css";
+import "./Dark.css";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { TextArea } = Input;
 
+// Dark Mode stuff
+function setRootClassFromLocalStorage(localStorageKey) {
+  const root = document.getElementById('root');
+  const storedValue = window.localStorage.getItem(localStorageKey);
+  if (storedValue !== null) {
+    root.classList.add('dark-mode');
+  }
+}
+// Function to update UI based on 'darkMode' value from localStorage
+function updateUIForDarkMode(isDarkModeEnabled) {
+  const root = document.getElementById('root');
+
+  if (isDarkModeEnabled) {
+    root.classList.add('dark-mode');
+  } else {
+    root.classList.remove('dark-mode');
+  }
+}
+// Function to handle the storage event
+function handleStorageChange(event) {
+  if (event.key === 'darkMode') {
+    const isDarkModeEnabled = event.newValue === 'true';
+    updateUIForDarkMode(isDarkModeEnabled);
+  }
+}
+// Call the function when the new page loads (DOMContentLoaded event)
+window.addEventListener('DOMContentLoaded', () => {
+  setRootClassFromLocalStorage('darkMode');
+  console.log('test')
+});
+// Add event listener to monitor changes in localStorage
+window.addEventListener('storage', handleStorageChange);
 
 document.addEventListener('DOMContentLoaded', async () => {
   const load = (payload) => {
