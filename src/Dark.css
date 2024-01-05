@@ -130,3 +130,7 @@
 #root.dark-mode .ant-btn-icon span.anticon {
     color: var(--black);
 }
+
+#root.dark-mode span.ant-tag-cyan, #root.dark-mode span.ant-tag-cyan .ant-tag-close-icon {
+    color: var(--black);
+}
