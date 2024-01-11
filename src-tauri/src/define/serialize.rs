@@ -125,20 +125,24 @@ fn make_fnis_line(
     anim_obj: &str,
 ) -> String {
     format!(
-        "{} {} {}{} {}.hkx {}",
+        "{}{} {}{} {}.hkx{}",
         anim_type,
         if options.is_empty() && anim_obj.is_empty() {
             "".into()
         } else {
             format!(
-                "-{}{}",
-                options,
-                if anim_obj.is_empty() { "" } else { "o," }
+                " -{}{}",
+                if anim_obj.is_empty() { "" } else { "o," },
+                options
             )
         },
         hash,
         event,
         event,
-        anim_obj,
+        if !anim_obj.is_empty() {
+            format!(" {}", anim_obj)
+        } else {
+            "".into()
+        },
     )
 }
