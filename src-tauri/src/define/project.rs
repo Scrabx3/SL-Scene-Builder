@@ -7,7 +7,7 @@ use std::{
     io::{BufReader, BufWriter, ErrorKind, Write},
     mem::size_of,
     path::PathBuf,
-    vec
+    vec,
 };
 use tauri::api::dialog::blocking::FileDialogBuilder;
 
@@ -93,7 +93,7 @@ impl Project {
         if path.is_none() {
             return Err("No path to load project from".into());
         }
-        
+
         let path = path.unwrap();
         let file = fs::File::open(&path).map_err(|e| e.to_string())?;
         let value = Project::from_file(file)?;
@@ -106,7 +106,8 @@ impl Project {
     }
 
     pub fn from_file(file: std::fs::File) -> Result<Project, String> {
-        let project: Project = serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
+        let project: Project =
+            serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
         println!("Loaded project {}", project.pack_name);
         Ok(project)
     }
@@ -124,7 +125,7 @@ impl Project {
         } else {
             self.pack_path.clone()
         };
-        
+
         self.set_project_name_from_path(&path);
 
         self.write(path)
@@ -151,23 +152,23 @@ impl Project {
             Ok(prjct) => {
                 *self = prjct;
                 Ok(())
-            },
-            Err(err) => Err(err)
+            }
+            Err(err) => Err(err),
         }
     }
 
     pub fn from_slal(path: PathBuf) -> Result<Project, String> {
         let file = fs::File::open(&path).map_err(|e| e.to_string())?;
-        
+
         let slal: serde_json::Value =
             serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
-    
+
         let mut prjct = Project::new();
         prjct.pack_name = slal["name"]
             .as_str()
             .ok_or("Missing name attribute")?
             .into();
-    
+
         let anims = slal["animations"]
             .as_array()
             .ok_or("Missing animations attribute")?;
@@ -181,14 +182,14 @@ impl Project {
             let actors = animation["actors"]
                 .as_array()
                 .ok_or("Missing actors attribute")?;
-    
+
             // initialize stages and copy information for every position into the respective stage
             for (n, position) in actors.iter().enumerate() {
                 let sex = position["type"].as_str().unwrap_or("male").to_lowercase();
                 let events = position["stages"]
                     .as_array()
                     .ok_or("Missing stages attribute")?;
-    
+
                 if scene.stages.is_empty() {
                     for _ in 0..events.len() {
                         scene.stages.push(Default::default());
@@ -301,7 +302,7 @@ impl Project {
             prjct.scenes.len(),
             path.to_str().unwrap_or_default()
         );
-    
+
         Ok(prjct)
     }
 
@@ -335,7 +336,7 @@ impl Project {
         }
         // Write FNIS files
         {
-            let mut events: HashMap<&str, Vec<String>> = HashMap::new(); // map<RaceKey, Events[]>
+            let mut events: HashMap<&str, Vec<String>> = HashMap::new(); // map<RaceKey, Lines[]>
             let mut control: HashSet<&str> = HashSet::from(["__BLANK__", "__DEFAULT__"]);
             for (_, scene) in &self.scenes {
                 if scene.has_warnings {
@@ -343,30 +344,47 @@ impl Project {
                 }
                 for stage in &scene.stages {
                     for position in &stage.positions {
-                        if control.contains(position.event[0].as_str()) {
+                        let event = &position.event[0];
+                        if control.contains(event.as_str()) {
                             continue;
                         }
-                        control.insert(&position.event[0]);
+                        control.insert(event);
                         let lines = make_fnis_lines(
                             &position.event,
                             &self.prefix_hash,
                             stage.extra.fixed_len > 0.0,
                             &position.anim_obj,
                         );
-                        let it = events.get_mut(position.race.as_str());
-                        if let Some(vec) = it {
-                            for ele in lines {
-                                vec.push(ele);
+                        let mut insert = |race| {
+                            events
+                                .entry(race)
+                                .and_modify(|list| list.append(&mut lines.clone()))
+                                .or_insert(lines.clone());
+                        };
+                        let race = position.race.as_str();
+                        match race {
+                            "Canine" => {
+                                insert(&position.race);
+                                insert("Dog");
+                                insert("Wolf");
                             }
-                        } else {
-                            info!("Adding new Race: {}", position.race);
-                            events.insert(position.race.as_str(), lines);
+                            "Dog" | "Wolf" => {
+                                insert(&position.race);
+                                insert("Canine");
+                            }
+                            //  => {
+                            //     insert("Boar");
+                            //     insert("Boar (Mounted)");
+                            // }
+                            "Boar" | "Boar (Mounted)" | "Boar (Any)" => insert("Boar (Any)"),
+                            _ => insert(&position.race),
                         }
                     }
                 }
             }
-            for (racekey, anim_events) in &events {
-                let target_folder = map_race_to_folder(*racekey)
+            info!("---------------------------------------------------------");
+            for (racekey, anim_events) in events {
+                let target_folder = map_race_to_folder(racekey)
                     .expect(format!("Cannot find folder for RaceKey {}", racekey).as_str());
                 let path = root_dir.join(format!(
                     "meshes\\actors\\{}\\animations\\{}",
@@ -378,9 +396,16 @@ impl Project {
                     .unwrap_or(0)..];
                 fs::create_dir_all(&path)?;
 
-                let create = |file_path| -> Result<(), std::io::Error> {
+                let create = |file_path: PathBuf| -> Result<(), std::io::Error> {
+                    let name = file_path.to_str().unwrap_or("NONE".into()).to_string();
                     let file = fs::File::create(file_path)?;
                     let mut file = BufWriter::new(file);
+                    info!(
+                        "Adding {} lines to race {} |||||| file: {}",
+                        anim_events.len(),
+                        racekey,
+                        name
+                    );
                     for anim_event in anim_events {
                         writeln!(file, "{}", anim_event)?;
                     }
@@ -388,11 +413,13 @@ impl Project {
                 };
                 match crt {
                     "character" => create(path.join(format!("FNIS_{}_List.txt", self.pack_name))),
-                    "canine" => {
-                        create(path.join(format!("FNIS_{}_canine_List.txt", self.pack_name)))?;
-                        create(path.join(format!("FNIS_{}_wolf_List.txt", self.pack_name)))?;
-                        create(path.join(format!("FNIS_{}_dog_List.txt", self.pack_name)))
-                    }
+                    "canine" => match racekey {
+                        "Canine" => {
+                            create(path.join(format!("FNIS_{}_canine_List.txt", self.pack_name)))
+                        }
+                        "Dog" => create(path.join(format!("FNIS_{}_dog_List.txt", self.pack_name))),
+                        _ => create(path.join(format!("FNIS_{}_wolf_List.txt", self.pack_name))),
+                    },
                     _ => create(path.join(format!("FNIS_{}_{}_List.txt", self.pack_name, crt))),
                 }?;
             }
@@ -459,5 +486,3 @@ impl EncodeBinary for Project {
         }
     }
 }
-
-

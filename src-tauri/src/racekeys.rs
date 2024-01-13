@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use log::info;
-
 #[derive(Debug, Clone, Copy)]
 pub enum RaceKey {
     Human = 0,
@@ -187,8 +185,6 @@ pub fn get_race_keys_string() -> Vec<String> {
 }
 
 pub fn get_race_key_bytes(race: &str) -> Option<u8> {
-    info!("{:?}", race);
-
     let map = get_race_map();
     // let mut key = race.to_lowercase();
     // key.retain(|c| !c.is_whitespace() && c != '(' && c != ')');
