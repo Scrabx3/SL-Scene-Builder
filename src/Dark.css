@@ -85,6 +85,9 @@
 #root.dark-mode span.ant-btn-icon span.anticon {
     color: var(--black);
 }
+#root.dark-mode .graph-toolbox span.ant-btn-icon span.anticon {
+    color: var(--white);
+}
 
 #root.dark-mode .graph-toolbox,
 #root.dark-mode #graph {

@@ -42,7 +42,6 @@ function handleStorageChange(event) {
 // Call the function when the new page loads (DOMContentLoaded event)
 window.addEventListener('DOMContentLoaded', () => {
   setRootClassFromLocalStorage('darkMode');
-  console.log('test')
 });
 // Add event listener to monitor changes in localStorage
 window.addEventListener('storage', handleStorageChange);

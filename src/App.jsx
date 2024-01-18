@@ -58,6 +58,7 @@ const initializeDarkModeFromLocalStorage = () => {
             // Remove background image or color from the first instance
             graphGridDivs[0].style.backgroundImage = 'none';
             graphGridDivs[0].style.backgroundColor = 'transparent';
+            console.log('removed background image or color from the first instance of the div with class x6-graph-grid');
           }
         }
       });
