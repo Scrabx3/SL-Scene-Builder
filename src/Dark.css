@@ -41,6 +41,9 @@
     background-color: var(--bright-blue);
 }
 /* Main Background */
+#root.dark-mode main {
+    background-color: var(--dark-background);
+}
 #root.dark-mode>section {
     background-color: var(--dark-background);
 }
@@ -77,10 +80,16 @@
     background-color: var(--input-background);
 }
 
+/* Graph */
+
+#root.dark-mode span.ant-btn-icon span.anticon {
+    color: var(--black);
+}
+
 #root.dark-mode .graph-toolbox,
 #root.dark-mode #graph {
     border-color: var(--bright-blue);
-    background-color: var(--dark-toolbar);
+    background-color: var(--input-background);
 }
 #root.dark-mode .tag-display-field {
     background-color: inherit;
@@ -128,9 +137,28 @@
 }
 
 #root.dark-mode .ant-btn-icon span.anticon {
-    color: var(--black);
+    color: var(--white);
 }
 
 #root.dark-mode span.ant-tag-cyan, #root.dark-mode span.ant-tag-cyan .ant-tag-close-icon {
+    color: var(--black);
+}
+
+#root.dark-mode div.graph-data-field{
+    background-color: var(--dark-background);
+}
+
+#root.dark-mode div.graph-data-field input {
+    background-color: var(--input-background);
+}
+
+/* Tab List */
+#root.dark-mode div[role="tablist"] {
+    padding-left: 16px;
+}
+
+
+/* Tags */
+#root.dark-mode span.ant-tag, #root.dark-mode .tag-display-field span.anticon {
     color: var(--black);
 }
