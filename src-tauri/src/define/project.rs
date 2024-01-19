@@ -463,7 +463,7 @@ impl EncodeBinary for Project {
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
         // version
-        let version: u8 = 1;
+        let version: u8 = 2;
         buf.push(version);
         // name
         buf.extend_from_slice(&(self.pack_name.len() as u64).to_be_bytes());
