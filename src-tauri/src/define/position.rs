@@ -110,6 +110,9 @@ impl Position {
         let racebyte = get_race_key_bytes(&self.race).unwrap();
         buf.push(racebyte);
         // sex
+        if !self.sex.male && !self.sex.female && !self.sex.futa {
+            panic!("Position missing sex option");
+        }
         buf.push(self.sex.male as u8 + 2 * self.sex.female as u8 + 4 * self.sex.futa as u8);
         // scale
         let s_ = (self.scale * 1000.0).round() as i32;
