@@ -85,6 +85,10 @@ h5 {
   font-size: 1.2em;
 }
 
+.x6-graph-grid:first-of-type {
+  display: none;
+}
+
 /* Main Window (Left side) */
 
 .main-sider {
@@ -97,6 +101,10 @@ h5 {
 }
 
 /* Main Window (Right side) */
+
+.scene-box {
+  padding: 0px;
+}
 
 .site-layout {
   height: 100vh;

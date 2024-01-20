@@ -46,34 +46,6 @@ const initializeDarkModeFromLocalStorage = () => {
   }
 }
 
-// Function to remove background image or color from the first instance of the div with class x6-graph-grid
-// This is a hacky workaround for the double grid issue that I have noticed from time to time.
-(function() {
-  function handleGraphGridChanges(mutations) {
-    mutations.forEach((mutation) => {
-      mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('x6-graph-grid')) {
-          const graphGridDivs = document.querySelectorAll('.x6-graph-grid');
-          if (graphGridDivs.length > 1) {
-            // Remove background image or color from the first instance
-            graphGridDivs[0].style.backgroundImage = 'none';
-            graphGridDivs[0].style.backgroundColor = 'transparent';
-            console.log('removed background image or color from the first instance of the div with class x6-graph-grid');
-          }
-        }
-      });
-    });
-  }
-  const observer = new MutationObserver(handleGraphGridChanges);
-  const targetNode = document.body;
-  const observerConfig = { subtree: true, childList: true };
-  observer.observe(targetNode, observerConfig);
-})();
-
-
-
-
-
 // Call the function to initialize dark mode based on local storage on page load
 window.addEventListener('DOMContentLoaded', () => {
   initializeDarkModeFromLocalStorage();
