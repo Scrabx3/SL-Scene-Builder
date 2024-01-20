@@ -82,6 +82,9 @@
 
 /* Graph */
 
+#root.dark-mode .x6-graph-grid {
+    opacity: 0.2;
+}
 
 #root.dark-mode span.ant-btn-icon span.anticon {
     color: var(--black);
