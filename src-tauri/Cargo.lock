@@ -2288,7 +2288,7 @@ dependencies = [
 
 [[package]]
 name = "scene_builder"
-version = "1.2.0"
+version = "1.4.0"
 dependencies = [
  "bitflags 2.3.3",
  "fern",
