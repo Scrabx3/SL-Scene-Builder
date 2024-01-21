@@ -104,7 +104,8 @@ h5 {
 /* Main Window (Right side) */
 
 .scene-box {
-  padding: 0px;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 
 .site-layout {
@@ -174,7 +175,7 @@ h5 {
   margin: 8px;
   margin-top: 64px;
   margin-bottom: 64px;
-  height: calc(100% - 2 * 64px);
+  height: calc(100vh - 2 * 64px);
 }
 
 .graph-furniture-selection {
