@@ -6,33 +6,65 @@ import { Graph, Shape } from '@antv/x6'
 import { History } from "@antv/x6-plugin-history";
 import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification, Divider, Switch, Checkbox, Row, Col, InputNumber, Select } from 'antd'
 import {
-  ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, DiffOutlined, ZoomInOutlined, ZoomOutOutlined,
+  ExperimentOutlined, FolderOutlined, PlusOutlined, MinusOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, DiffOutlined, ZoomInOutlined, ZoomOutOutlined,
   DeleteOutlined, DoubleLeftOutlined, DoubleRightOutlined, PicCenterOutlined, CompressOutlined, PushpinOutlined, DragOutlined, WarningOutlined
 } from '@ant-design/icons';
 const { Header, Content, Footer, Sider } = Layout;
 const { confirm } = Modal;
-
 import { STAGE_EDGE, STAGE_EDGE_SHAPEID } from "./scene/SceneEdge"
 import { Furnitures } from "./common/Furniture";
 import "./scene/SceneNode"
 import "./App.css";
-
+import "./Dark.css";
 function makeMenuItem(label, key, icon, children, disabled, danger) {
   return { key, icon, children, label, disabled, danger };
 }
 
 const ZOOM_OPTIONS = { minScale: 0.25, maxScale: 5 };
 
+// Dark Mode stuff
+// Function to toggle between dark and light mode and save preference to local storage
+const toggleDarkMode = () => {
+  const root = document.getElementById('root');
+  root.classList.toggle('default-style');
+  root.classList.toggle('dark-mode');
+
+  const isDarkModeEnabled = root.classList.contains('dark-mode');
+  // Save the current dark mode preference to local storage
+  window.localStorage.setItem('darkMode', isDarkModeEnabled);
+}
+// Function to initialize dark mode based on local storage
+const initializeDarkModeFromLocalStorage = () => {
+  const root = document.getElementById('root');
+  const isDarkModeEnabled = window.localStorage.getItem('darkMode') === 'true';
+
+  // Set the initial mode based on the stored preference
+  if (isDarkModeEnabled) {
+    root.classList.add('dark-mode');
+  } else {
+    root.classList.remove('dark-mode');
+  }
+}
+
+// Call the function to initialize dark mode based on local storage on page load
+window.addEventListener('DOMContentLoaded', () => {
+  initializeDarkModeFromLocalStorage();
+});
+
 function App() {
   const [collapsed, setCollapsed] = useState(false);  // Sider collapsed?
   const [api, contextHolder] = notification.useNotification();
   const graphcontainer_ref = useRef(null);
   const [graph, setGraph] = useState(null);
-
   const [scenes, updateScenes] = useImmer([]);
   const [activeScene, updateActiveScene] = useImmer(null);
   const [edited, setEdited] = useState(0);
   const inEdit = useRef(0);
+
+  // Dark Mode
+  useEffect(() => {
+    initializeDarkModeFromLocalStorage();
+  }, []);
 
   useEffect(() => {
     const newGraph = new Graph({
@@ -407,7 +439,9 @@ function App() {
   }
 
   const sideBarMenu = [
-    makeMenuItem('New Scene', 'add', <PlusOutlined />),
+    makeMenuItem('Dark Mode', 'darkmode', <MinusOutlined />),
+    { type: 'divider' },
+    makeMenuItem('New Scene', 'add', < PlusOutlined />),
     { type: 'divider' },
     makeMenuItem(`Scenes ${scenes.length ? `(${scenes.length})` : ''}`,
       'animations',
@@ -434,6 +468,10 @@ function App() {
       case 'add':
         const new_anim = await invoke('create_blank_scene');
         setActiveScene(new_anim);
+        break;
+      case 'darkmode':
+        // Added darkmode code switch here
+        toggleDarkMode();
         break;
       case 'editanim':
         setActiveScene(scene);
@@ -490,7 +528,7 @@ function App() {
           onClick={onSiderSelect}
         />
       </Sider>
-      <Layout className="site-layout ">
+      <Layout className=" ">
         <Content>
           {/* hacky workaround because graph doesnt render nodes if I put the graph interface into a child component zzz */}
           {/* if (activeScene) ... */}
@@ -499,7 +537,7 @@ function App() {
             style={{ display: !activeScene ? 'none' : undefined }}
           >
             <Card
-              className="graph-editor-field"
+              className="graph-editor-field a"
               title={
                 activeScene ? (
                   <Space.Compact style={{ width: '98%' }}>
@@ -822,3 +860,4 @@ function App() {
 }
 
 export default App;
+

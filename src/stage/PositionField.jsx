@@ -218,7 +218,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             className="position-attribute-card"
             title={'Sex'}
             extra={
-              <Tooltip
+              <Tooltip className="tool-tip"
                 title={
                   'The sexes compatible with this position. Tick all that apply.'
                 }
@@ -263,7 +263,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
               </Checkbox>
             }
             extra={
-              <Tooltip
+              <Tooltip className="tool-tip"
                 title={
                   'The behavior file (.hkx) describing the animation for this position. Without extension.'
                 }
@@ -312,7 +312,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             className="position-attribute-card"
             title={'Data'}
             extra={
-              <Tooltip
+              <Tooltip className="tool-tip"
                 title={
                   'Extra Data used to further specify the actor filling this position. Hover options for more info.'
                 }
@@ -324,7 +324,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             {/* div here is necessary to avoid 'findDOMNode is depreciated' error */}
             <Row gutter={[8, 16]} justify={'space-between'}>
               <Col>
-                <Tooltip title={'Passive/Taker/Bottom position.'}>
+                <Tooltip  title={'Passive/Taker/Bottom position.'}>
                   <div>
                     <CheckboxEx
                       obj={extra}
@@ -336,7 +336,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'Actor climaxes during this stage.'}>
+                <Tooltip className="tool-tip" title={'Actor climaxes during this stage.'}>
                   <div>
                     <Checkbox
                       checked={extra.climax}
@@ -352,7 +352,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'Actor is a vampire.'}>
+                <Tooltip className="tool-tip" title={'Actor is a vampire.'}>
                   <div>
                     <CheckboxEx
                       obj={extra}
@@ -365,7 +365,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 </Tooltip>
               </Col>
               <Col>
-                <Tooltip title={'Actor is unconscious/dead.'}>
+                <Tooltip className="tool-tip" title={'Actor is unconscious/dead.'}>
                   <div>
                     <CheckboxEx
                       obj={extra}
@@ -408,7 +408,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             className="position-attribute-card"
             title={'Offset'}
             extra={
-              <Tooltip
+              <Tooltip className="tool-tip"
                 title={'The position offset relative to animation center.'}
               >
                 <Button type="link">Info</Button>
@@ -490,7 +490,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             className="position-attribute-card"
             title={'Scale'}
             extra={
-              <Tooltip
+              <Tooltip className="tool-tip"
                 title={
                   'The desired scale of this actor. Usually the same scale used in the creation of the behavior file.'
                 }
@@ -520,7 +520,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             className="position-attribute-card"
             title={'Stripping'}
             extra={
-              <Tooltip
+              <Tooltip className="tool-tip"
                 title={'The items this position should strip in this stage.'}
               >
                 <Button type="link">Info</Button>
@@ -583,7 +583,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             className="position-attribute-card"
             title={'Anim Object'}
             extra={
-              <Tooltip
+              <Tooltip className="tool-tip"
                 title={
                   'The anim object/s associated with this position. If multiple, separate with commas (,)'
                 }

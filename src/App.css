@@ -1,3 +1,15 @@
+:root {
+  --default-background: rgb(221, 235, 217, 1);
+  --default-border-color: rgba(33, 35, 48, 0.90);
+  --default-text-color: rgb(0, 0, 0);
+  --dark-text: rgba(255, 255, 255, 0.65);
+  --white: rgb(255, 255, 255);
+  --black: rgb(0, 0, 0);
+  --bright-blue: #1677ff;
+  --input-background: rgba(255, 255, 255, 0.2);
+  --dark-toolbar: #f5f5f5;
+}
+
 body {
   background-color: #222431;
   color: white;
@@ -73,6 +85,11 @@ h5 {
   font-size: 1.2em;
 }
 
+.x6-graph-grid:first-of-type {
+  display: none;
+}
+
+
 /* Main Window (Left side) */
 
 .main-sider {
@@ -85,6 +102,10 @@ h5 {
 }
 
 /* Main Window (Right side) */
+
+.scene-box {
+  padding: 0px;
+}
 
 .site-layout {
   height: 100vh;
