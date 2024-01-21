@@ -45,6 +45,7 @@ fn setup_logger() -> Result<(), fern::InitError> {
     Ok(())
 }
 
+
 /// MAIN
 
 const NEW_PROJECT: &str = "new_prjct";
@@ -122,11 +123,6 @@ fn main() {
                         .add_item(
                             CustomMenuItem::new("build", "Export")
                                 .accelerator("cmdOrControl+B"),
-                        )
-                        .add_native_item(MenuItem::Separator)
-                        .add_item(
-                            CustomMenuItem::new("dark_mode", "Dark Mode")
-                                .accelerator("cmdOrControl+D"),
                         )
                         .add_native_item(MenuItem::Quit), 
                 ))
