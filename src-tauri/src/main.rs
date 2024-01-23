@@ -113,6 +113,10 @@ fn main() {
                         )
                         .add_native_item(MenuItem::Separator)
                         .add_item(
+                            CustomMenuItem::new("import_offset", "Import Offset.yaml")
+                        )
+                        .add_native_item(MenuItem::Separator)
+                        .add_item(
                             CustomMenuItem::new("save", "Save")
                                 .accelerator("cmdOrControl+S"),
                         )
@@ -191,6 +195,12 @@ fn main() {
                 }
                 "kofi" => {
                     let _ = open(&menu_handle.shell_scope(), "https://ko-fi.com/scrab", None);
+                }
+                "import_offset" => {
+                    let mut prjct = PROJECT.lock().unwrap();
+                    if let Err(err) = prjct.import_offset() {
+                        error!("{}", err);
+                    }
                 }
                 _ => {error!("Unrecognized command: {}", event.menu_item_id())}
             });

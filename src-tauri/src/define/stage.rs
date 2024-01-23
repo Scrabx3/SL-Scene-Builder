@@ -28,6 +28,31 @@ impl Stage {
 
         ret
     }
+
+    pub fn import_offset(&mut self, yaml_obj: &serde_yaml::Sequence) -> Result<(), String> {
+        let list: Vec<_> = yaml_obj
+            .iter()
+            .map_while(|obj| {
+                obj.as_mapping().and_then(|mapping| {
+                    mapping
+                        .get(&"transform".into())
+                        .and_then(|obj| obj.as_mapping())
+                })
+            })
+            .collect();
+        if list.len() != self.positions.len() {
+            return Err(format!(
+                "Invalid position length, got {} but exepcted {}",
+                list.len(),
+                self.positions.len(),
+            ));
+        }
+        for (i, pos_obj) in list.iter().enumerate() {
+            self.positions[i].import_offset(*pos_obj)?;
+        }
+
+        Ok(())
+    }
 }
 
 impl EncodeBinary for Stage {

@@ -1,8 +1,8 @@
 use serde::de::{self};
 use serde::Deserializer;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 use std::mem::size_of;
+use std::{fmt, vec};
 
 use super::serialize::{EncodeBinary, Offset};
 use crate::racekeys::get_race_key_bytes;
@@ -70,6 +70,7 @@ pub struct Extra {
     pub climax: bool,
     pub dead: bool,
 
+    #[serde(default)]
     pub custom: Vec<String>,
     // Using string vector instead for more dynamic application
     #[serde(skip_serializing, default)]
@@ -128,6 +129,35 @@ impl Position {
             buf.extend_from_slice(&(tmp.len() as u64).to_be_bytes());
             buf.extend_from_slice(tmp.as_bytes());
         }
+    }
+
+    pub fn import_offset(&mut self, yaml_obj: &serde_yaml::Mapping) -> Result<(), String> {
+        let loc = yaml_obj[&"Location".into()]
+            .as_sequence()
+            .ok_or("Location is not a sequence")?
+            .iter()
+            .fold(vec![], |mut acc, it| {
+                if let Some(float) = it.as_f64() {
+                    acc.push(float);
+                }
+                acc
+            });
+        if loc.len() != 3 {
+            return Err(format!(
+                "Invalid location vector, expected length 3 but got {}",
+                loc.len()
+            ));
+        }
+        let rot = yaml_obj[&"Rotation".into()]
+            .as_f64()
+            .ok_or("Rotation is not a float")?;
+
+        self.offset.x = loc[0] as f32;
+        self.offset.y = loc[1] as f32;
+        self.offset.z = loc[2] as f32;
+        self.offset.r = rot as f32;
+
+        Ok(())
     }
 }
 

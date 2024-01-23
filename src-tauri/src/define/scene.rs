@@ -60,6 +60,37 @@ impl Scene {
 
         None
     }
+
+    pub fn get_stage_mut(&mut self, id: &NanoID) -> Option<&mut Stage> {
+        for it in &mut self.stages {
+            if &it.id == id {
+                return Some(it);
+            }
+        }
+
+        None
+    }
+
+    pub fn import_offset(&mut self, yaml_obj: &serde_yaml::Mapping) -> Result<(), String> {
+        for (scene_id_v, scene_obj) in yaml_obj {
+            let scene_id = scene_id_v
+                .as_str()
+                .ok_or(format!("Expected Stage id for Scene {}", self.id))?;
+            if scene_id == "enabled" {
+                continue;
+            }
+            let id = self.id.clone();
+            if let Some(stage) = self.get_stage_mut(&scene_id.to_string()) {
+                let arg = scene_obj.as_sequence().ok_or(format!(
+                    "Expecting sequence in scene {} for stage {}",
+                    id, stage.id
+                ))?;
+                stage.import_offset(arg)?;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl EncodeBinary for Scene {

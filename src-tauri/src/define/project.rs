@@ -76,6 +76,10 @@ impl Project {
         self.scenes.get(id)
     }
 
+    pub fn get_scene_mut(&mut self, id: &NanoID) -> Option<&mut Scene> {
+        self.scenes.get_mut(id)
+    }
+
     pub fn get_stage(&self, id: &NanoID) -> Option<&Stage> {
         for (_, scene) in &self.scenes {
             let stage = scene.get_stage(id);
@@ -89,12 +93,8 @@ impl Project {
     pub fn load_project(&mut self) -> Result<(), String> {
         let path = FileDialogBuilder::new()
             .add_filter("SL Project File", vec!["slsb.json"].as_slice())
-            .pick_file();
-        if path.is_none() {
-            return Err("No path to load project from".into());
-        }
-
-        let path = path.unwrap();
+            .pick_file()
+            .ok_or("No path to load project from".to_string())?;
         let file = fs::File::open(&path).map_err(|e| e.to_string())?;
         let value = Project::from_file(file)?;
 
@@ -428,6 +428,35 @@ impl Project {
             "Successfully compiled {}",
             root_dir.to_str().unwrap_or_default()
         );
+        Ok(())
+    }
+
+    pub fn import_offset(&mut self) -> Result<(), String> {
+        let path = FileDialogBuilder::new()
+            .add_filter("Offset File", vec!["yaml"].as_slice())
+            .pick_file()
+            .ok_or("No path to load offsets from".to_string())?;
+        let file = fs::File::open(&path).map_err(|e| e.to_string())?;
+        let offsetfile: serde_yaml::Mapping =
+            serde_yaml::from_reader(BufReader::new(file)).map_err(|e| e.to_string())?;
+
+        for (scene_id_v, stages_v) in offsetfile {
+            if !stages_v.is_mapping() {
+                continue;
+            }
+            let scene_id = scene_id_v
+                .as_str()
+                .ok_or("Not a valid offset file, expected string for scene id".to_string())?
+                .to_string();
+            if let Some(scene) = self.get_scene_mut(&scene_id) {
+                scene.import_offset(
+                    stages_v
+                        .as_mapping()
+                        .ok_or(format!("Expected mapping in scene {}", scene_id))?,
+                )?;
+            }
+        }
+
         Ok(())
     }
 

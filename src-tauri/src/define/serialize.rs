@@ -9,10 +9,10 @@ pub trait EncodeBinary {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Offset {
-    x: f32,
-    y: f32,
-    z: f32,
-    r: f32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub r: f32,
 }
 
 impl EncodeBinary for Offset {
