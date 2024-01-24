@@ -6,6 +6,7 @@
     --input-background: rgba(255, 255, 255, 0.2);
     --dark-toolbar: #f5f5f5;
     --black: rgb(0, 0, 0);
+    --white: rgb(255, 255, 255);
     --placeholder: rgb(233, 184, 184);
 }
 
@@ -69,6 +70,9 @@
 #root.dark-mode :where(.css-dev-only-do-not-override-14wwjjs).ant-card {
     background-color: var(--dark-background);
     color: var(--dark-text);
+    /* Fix for the border color on the Stage Page */
+    border-color: var(--bright-blue);
+    border-width: 3px;
 }
 
 #root.dark-mode #stageNameInputField {
@@ -168,4 +172,26 @@
 /* Tags */
 #root.dark-mode span.ant-tag, #root.dark-mode .tag-display-field span.anticon {
     color: var(--black);
+}
+
+
+/* Background fix? */
+#root.dark-mode .ant-card-head, #root.dark-mode .ant-card-body, #root.dark-mode .scene-box > div.graph-editor-field  {
+    background-color: var(--dark-background);
+}
+
+
+#root.dark-mode .position .position-attribute-card {
+    background-color: var(--dark-background);
+    border-color: var(--bright-blue);
+    border-width: 3px;
+}
+
+#root.dark-mode .bottom-footer .ant-card-bordered {
+    color: var(--white);
+    border-color: var(--bright-blue);
+    border-width: 3px;
+}
+#root.dark-mode .bottom-footer .ant-card-extra .ant-btn span {
+    color: var(--white);
 }
