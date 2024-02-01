@@ -1,6 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { emit, once } from '@tauri-apps/api/event'
 import { invoke } from "@tauri-apps/api/tauri";
+import { listen } from "@tauri-apps/api/event";
 import ReactDOM from "react-dom/client";
 import { useImmer } from "use-immer";
 import { SaveOutlined } from '@ant-design/icons';
@@ -13,38 +14,6 @@ import "./Dark.css";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { TextArea } = Input;
-
-// Dark Mode stuff
-function setRootClassFromLocalStorage(localStorageKey) {
-  const root = document.getElementById('root');
-  const storedValue = window.localStorage.getItem(localStorageKey);
-  if (storedValue !== null) {
-    root.classList.add('dark-mode');
-  }
-}
-// Function to update UI based on 'darkMode' value from localStorage
-function updateUIForDarkMode(isDarkModeEnabled) {
-  const root = document.getElementById('root');
-
-  if (isDarkModeEnabled) {
-    root.classList.add('dark-mode');
-  } else {
-    root.classList.remove('dark-mode');
-  }
-}
-// Function to handle the storage event
-function handleStorageChange(event) {
-  if (event.key === 'darkMode') {
-    const isDarkModeEnabled = event.newValue === 'true';
-    updateUIForDarkMode(isDarkModeEnabled);
-  }
-}
-// Call the function when the new page loads (DOMContentLoaded event)
-window.addEventListener('DOMContentLoaded', () => {
-  setRootClassFromLocalStorage('darkMode');
-});
-// Add event listener to monitor changes in localStorage
-window.addEventListener('storage', handleStorageChange);
 
 document.addEventListener('DOMContentLoaded', async () => {
   const load = (payload) => {
@@ -120,6 +89,26 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
   // Extra
   const [fixedLen, setFixedLen] = useState(_extra.fixed_len);
   const [navText, setNavText] = useState(_extra.nav_text);
+
+  useEffect(() => {
+    const toggleDarkMode = (toEnabled) => {
+      const root = document.getElementById('root');
+
+      if (toEnabled) {
+        root.classList.add('dark-mode');
+      } else {
+        root.classList.remove('dark-mode');
+      }
+    }
+
+    invoke('get_in_darkmode').then(ret => toggleDarkMode(ret));
+    const unlisten = listen('toggle_darkmode', (event) => {
+      toggleDarkMode(event.payload);
+    });
+    return () => {
+      unlisten.then(res => { res() });
+    }
+  }, []);
 
   function saveAndReturn() {
     let errors = false;

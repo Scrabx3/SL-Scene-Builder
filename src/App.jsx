@@ -6,7 +6,7 @@ import { Graph, Shape } from '@antv/x6'
 import { History } from "@antv/x6-plugin-history";
 import { Menu, Layout, Card, Input, Space, Button, Empty, Modal, Tooltip, notification, Divider, Switch, Checkbox, Row, Col, InputNumber, Select } from 'antd'
 import {
-  ExperimentOutlined, FolderOutlined, PlusOutlined, MinusOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, DiffOutlined, ZoomInOutlined, ZoomOutOutlined,
+  ExperimentOutlined, FolderOutlined, PlusOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, DiffOutlined, ZoomInOutlined, ZoomOutOutlined,
   DeleteOutlined, DoubleLeftOutlined, DoubleRightOutlined, PicCenterOutlined, CompressOutlined, PushpinOutlined, DragOutlined, WarningOutlined
 } from '@ant-design/icons';
 const { Header, Content, Footer, Sider } = Layout;
@@ -22,35 +22,6 @@ function makeMenuItem(label, key, icon, children, disabled, danger) {
 
 const ZOOM_OPTIONS = { minScale: 0.25, maxScale: 5 };
 
-// Dark Mode stuff
-// Function to toggle between dark and light mode and save preference to local storage
-const toggleDarkMode = () => {
-  const root = document.getElementById('root');
-  root.classList.toggle('default-style');
-  root.classList.toggle('dark-mode');
-
-  const isDarkModeEnabled = root.classList.contains('dark-mode');
-  // Save the current dark mode preference to local storage
-  window.localStorage.setItem('darkMode', isDarkModeEnabled);
-}
-// Function to initialize dark mode based on local storage
-const initializeDarkModeFromLocalStorage = () => {
-  const root = document.getElementById('root');
-  const isDarkModeEnabled = window.localStorage.getItem('darkMode') === 'true';
-
-  // Set the initial mode based on the stored preference
-  if (isDarkModeEnabled) {
-    root.classList.add('dark-mode');
-  } else {
-    root.classList.remove('dark-mode');
-  }
-}
-
-// Call the function to initialize dark mode based on local storage on page load
-window.addEventListener('DOMContentLoaded', () => {
-  initializeDarkModeFromLocalStorage();
-});
-
 function App() {
   const [collapsed, setCollapsed] = useState(false);  // Sider collapsed?
   const [api, contextHolder] = notification.useNotification();
@@ -63,9 +34,27 @@ function App() {
 
   // Dark Mode
   useEffect(() => {
-    initializeDarkModeFromLocalStorage();
+    const toggleDarkMode = (toEnabled) => {
+      const root = document.getElementById('root');
+      if (toEnabled) {
+        root.classList.remove('default-style');
+        root.classList.add('dark-mode');
+      } else {
+        root.classList.remove('dark-mode');
+        root.classList.add('default-style');
+      }
+    }
+
+    invoke('get_in_darkmode').then(ret => toggleDarkMode(ret));
+    const unlisten = listen('toggle_darkmode', (event) => {
+      toggleDarkMode(event.payload);
+    });
+    return () => {
+      unlisten.then(res => { res() });
+    }
   }, []);
 
+  // Graph
   useEffect(() => {
     const newGraph = new Graph({
       container: graphcontainer_ref.current,
@@ -203,6 +192,7 @@ function App() {
     }
   }, [graph, activeScene])
 
+  // Stage & Scene update
   useEffect(() => {
     // Callback after stage has been saved in other window
     const unlisten = listen('on_stage_saved', (event) => {
@@ -212,13 +202,6 @@ function App() {
       let node = nodes.find(node => node.id === stage.id);
       if (!node) node = addStageToGraph(stage);
       updateNodeProps(stage, node, activeScene);
-      // if (node.prop('fixedLen')) {
-      //   const edges = graph.getOutgoingEdges(node);
-      //   for (let i = 1; i < edges.length; i++) {
-      //     const element = edges[i];
-      //     element.remove();
-      //   }
-      // }
 
       let newActive = structuredClone(activeScene);
       let idx = newActive.stages ? newActive.stages.findIndex(it => it.id === stage.id) : -1;
@@ -439,8 +422,6 @@ function App() {
   }
 
   const sideBarMenu = [
-    makeMenuItem('Dark Mode', 'darkmode', <MinusOutlined />),
-    { type: 'divider' },
     makeMenuItem('New Scene', 'add', < PlusOutlined />),
     { type: 'divider' },
     makeMenuItem(`Scenes ${scenes.length ? `(${scenes.length})` : ''}`,
@@ -468,10 +449,6 @@ function App() {
       case 'add':
         const new_anim = await invoke('create_blank_scene');
         setActiveScene(new_anim);
-        break;
-      case 'darkmode':
-        // Added darkmode code switch here
-        toggleDarkMode();
         break;
       case 'editanim':
         setActiveScene(scene);

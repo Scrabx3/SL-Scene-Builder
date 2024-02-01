@@ -10,10 +10,13 @@ use define::{position::Position, project::Project, scene::Scene, stage::Stage, N
 use log::{error, info};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::{sync::{
-    atomic::{AtomicBool, Ordering},
-    Mutex,
-}, path::PathBuf};
+use std::{
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Mutex,
+    },
+};
 use tauri::{
     api::shell::open, CustomMenuItem, Manager, Menu, MenuItem, Runtime, Submenu, WindowBuilder,
 };
@@ -35,6 +38,16 @@ fn get_edited() -> bool {
     EDITED.load(Ordering::Relaxed)
 }
 
+static IS_DARKMODE: AtomicBool = AtomicBool::new(false);
+#[inline]
+fn set_darkmode(val: bool) -> () {
+    IS_DARKMODE.store(val, Ordering::Relaxed)
+}
+#[inline]
+fn get_darkmode() -> bool {
+    IS_DARKMODE.load(Ordering::Relaxed)
+}
+
 fn setup_logger() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| out.finish(format_args!("[{}] {}", record.level(), message)))
@@ -45,12 +58,14 @@ fn setup_logger() -> Result<(), fern::InitError> {
     Ok(())
 }
 
-
 /// MAIN
+
+const MAIN_WINDOW: &str = "main_window";
 
 const NEW_PROJECT: &str = "new_prjct";
 const OPEN_PROJECT: &str = "open_prjct";
 const OPEN_SLAL: &str = "open_slal";
+const DARKMODE: &str = "darkmode";
 
 fn main() {
     setup_logger().expect("Unable to initialize logger");
@@ -66,6 +81,7 @@ fn main() {
             stage_save_and_close,
             make_position,
             mark_as_edited,
+            get_in_darkmode
         ])
         .setup(|app| {
             match app.get_cli_matches() {
@@ -92,7 +108,7 @@ fn main() {
 
             let window = WindowBuilder::new(
                 app,
-                "main_window".to_string(),
+                MAIN_WINDOW.to_string(),
                 tauri::WindowUrl::App("./index.html".into()),
             )
             .title(DEFAULT_MAINWINDOW_TITLE)
@@ -128,7 +144,11 @@ fn main() {
                             CustomMenuItem::new("build", "Export")
                                 .accelerator("cmdOrControl+B"),
                         )
-                        .add_native_item(MenuItem::Quit), 
+                        .add_native_item(MenuItem::Quit)
+                ))
+                .add_submenu(Submenu::new(
+                    "View", Menu::new()
+                        .add_item(CustomMenuItem::new(DARKMODE, "Dark Mode"))
                 ))
                 .add_submenu(Submenu::new(
                     "Help", Menu::new()
@@ -149,7 +169,7 @@ fn main() {
             window.on_menu_event(move |event| match event.menu_item_id() {
                 NEW_PROJECT | OPEN_PROJECT | OPEN_SLAL => {
                     let eventid = event.menu_item_id().to_string();
-                    let window = menu_handle.get_window("main_window").unwrap();
+                    let window = menu_handle.get_window(MAIN_WINDOW).unwrap();
                     if get_edited() {
                         let ask_handle = menu_handle.app_handle();
                         tauri::api::dialog::ask(
@@ -159,7 +179,7 @@ fn main() {
                                 if !r {
                                     return;
                                 }
-                                let window = ask_handle.get_window("main_window").unwrap();
+                                let window = ask_handle.get_window(MAIN_WINDOW).unwrap();
                                 reload_project(event.menu_item_id(), &window);
                             }});
                         return;
@@ -175,13 +195,26 @@ fn main() {
                         return;
                     }
                     set_edited(false);
-                    let window = menu_handle.get_window("main_window").unwrap();
+                    let window = menu_handle.get_window(MAIN_WINDOW).unwrap();
                     let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
                 }
                 "build" => {
                     let r = PROJECT.lock().unwrap().export();
                     if let Err(e) = r {
                         error!("{}", e);
+                    }
+                }
+                DARKMODE => {
+                    let window = menu_handle.get_window(MAIN_WINDOW).unwrap();
+                    let menu = window.menu_handle().get_item(DARKMODE);
+                    let in_darkmode = get_darkmode();
+                    info!("Togglinh Darkmode, currently: {}", in_darkmode);
+                    if let Err(err) = menu.set_selected(!in_darkmode) {
+                        error!("Unable to toggle darkmode, menu failure: {}", err);
+                    } else if let Err(err) = menu_handle.emit_all("toggle_darkmode", !in_darkmode) {
+                        error!("Unable to toggle darkmode, event failure: {}", err);
+                    } else {
+                        set_darkmode(!in_darkmode);
                     }
                 }
                 "open_docs" => {
@@ -237,7 +270,7 @@ fn reload_project(reload_type: &str, window: &tauri::Window) {
         }
         OPEN_PROJECT => prjct.load_project(),
         OPEN_SLAL => prjct.load_slal(),
-        _ => Err(format!("Invalid reload type: {}", reload_type))
+        _ => Err(format!("Invalid reload type: {}", reload_type)),
     };
     if let Err(e) = result {
         error!("{}", e);
@@ -246,9 +279,10 @@ fn reload_project(reload_type: &str, window: &tauri::Window) {
     if prjct.pack_name == String::default() {
         let _ = window.set_title(DEFAULT_MAINWINDOW_TITLE);
     } else {
-        let _ = window.set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
+        let _ = window
+            .set_title(format!("{} - {}", DEFAULT_MAINWINDOW_TITLE, prjct.pack_name).as_str());
     }
-    
+
     window.emit("on_project_update", &prjct.scenes).unwrap();
     set_edited(reload_type == OPEN_SLAL);
 }
@@ -274,6 +308,11 @@ async fn mark_as_edited<R: Runtime>(window: tauri::Window<R>) -> () {
             window.set_title(format!("{}*", title).as_str()).unwrap();
         }
     }
+}
+
+#[tauri::command]
+fn get_in_darkmode() -> bool {
+    get_darkmode()
 }
 
 /* Scene */
@@ -377,7 +416,7 @@ async fn stage_save_and_close<R: Runtime>(
     // IDEA: make give this event some unique id to allow
     // front end distinguish the timings at which some stage editor has been opened
     info!("Saving Stage {}", stage.id);
-    app.emit_to("main_window", "on_stage_saved", stage).unwrap();
+    app.emit_to(MAIN_WINDOW, "on_stage_saved", stage).unwrap();
     let _ = window.close();
 }
 
@@ -389,52 +428,55 @@ fn make_position() -> Position {
 }
 
 /* CLI */
-fn cli_convert(args: std::collections::HashMap<String, tauri::api::cli::ArgData>) -> Result<(), String> {
-
+fn cli_convert(
+    args: std::collections::HashMap<String, tauri::api::cli::ArgData>,
+) -> Result<(), String> {
     let in_path = match &args.get("in").unwrap().value {
         serde_json::Value::String(value) => PathBuf::from(value),
-        _ => return Err("input slal file not provided".to_string())
+        _ => return Err("input slal file not provided".to_string()),
     };
     if !in_path.exists() || !in_path.is_file() || in_path.extension().unwrap() != "json" {
-        return Err("input slal file is invalid".to_string())
+        return Err("input slal file is invalid".to_string());
     }
 
     let mut out_path = match &args.get("out").unwrap().value {
         serde_json::Value::String(value) => PathBuf::from(value),
-        _ => return Err("output dir not provided".to_string())
+        _ => return Err("output dir not provided".to_string()),
     };
     if !out_path.exists() || !out_path.is_dir() {
-        return Err("output dir is invalid".to_string())
-    } 
+        return Err("output dir is invalid".to_string());
+    }
 
     out_path.push(in_path.file_stem().unwrap());
     out_path.set_extension("slsb.json");
 
     let mut project = Project::from_slal(in_path)?;
-    
+
     let res = project.write(out_path.clone());
 
     println!("{:?}", out_path);
 
     res
-}   
+}
 
-fn cli_build(args: std::collections::HashMap<String, tauri::api::cli::ArgData>) -> Result<(), String> {
+fn cli_build(
+    args: std::collections::HashMap<String, tauri::api::cli::ArgData>,
+) -> Result<(), String> {
     let in_path = match &args.get("in").unwrap().value {
         serde_json::Value::String(value) => PathBuf::from(value),
-        _ => return Err("input slal file not provided".to_string())
+        _ => return Err("input slal file not provided".to_string()),
     };
 
     if !in_path.exists() || !in_path.is_file() || in_path.extension().unwrap() != "json" {
-        return Err("input slal file is invalid".to_string())
+        return Err("input slal file is invalid".to_string());
     }
 
     let out_dir = match &args.get("out").unwrap().value {
         serde_json::Value::String(value) => PathBuf::from(value),
-        _ => return Err("output dir not provided".to_string())
+        _ => return Err("output dir not provided".to_string()),
     };
     if !out_dir.exists() || !out_dir.is_dir() {
-        return Err("output dir is invalid".to_string())
+        return Err("output dir is invalid".to_string());
     }
 
     let file = std::fs::File::open(&in_path).map_err(|e| e.to_string())?;
