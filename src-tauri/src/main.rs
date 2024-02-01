@@ -208,7 +208,6 @@ fn main() {
                     let window = menu_handle.get_window(MAIN_WINDOW).unwrap();
                     let menu = window.menu_handle().get_item(DARKMODE);
                     let in_darkmode = get_darkmode();
-                    info!("Togglinh Darkmode, currently: {}", in_darkmode);
                     if let Err(err) = menu.set_selected(!in_darkmode) {
                         error!("Unable to toggle darkmode, menu failure: {}", err);
                     } else if let Err(err) = menu_handle.emit_all("toggle_darkmode", !in_darkmode) {

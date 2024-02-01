@@ -252,17 +252,12 @@ impl Project {
             let tags = animation["tags"]
                 .as_str()
                 .and_then(|tags| {
-                    let mut ret: Vec<String> = vec![];
-                    let lowercase = tags.to_lowercase();
-                    let list = lowercase.split(',');
-                    for tag in list {
-                        if tag == "rough" || tag == "aggressive" {
-                            ret.push("forced".into());
-                        } else {
-                            ret.push(tag.into());
-                        }
-                    }
-                    Some(ret)
+                    let list = tags
+                        .to_lowercase()
+                        .split(',')
+                        .map(|str| str.trim().to_string())
+                        .collect::<Vec<_>>();
+                    Some(list)
                 })
                 .unwrap_or_default();
             let stage_extra = animation["stage"].as_array();
