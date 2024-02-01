@@ -206,6 +206,14 @@ impl Project {
                     edit_position.event =
                         vec![evt["id"].as_str().ok_or("Missing id attribute")?.into()];
                     match sex.as_str() {
+                        "type" => {
+                            edit_position.sex = Sex {
+                                male: true,
+                                female: false,
+                                futa: false,
+                            };
+                            edit_position.race = "Human".into();
+                        },
                         "male" => {
                             edit_position.sex = Sex {
                                 male: true,
