@@ -98,6 +98,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
     readExtraOptions().then(result => setExtraOptions(result));
   }, []);
 
+  
   useImperativeHandle(ref, () => {
     return {
       getData() {

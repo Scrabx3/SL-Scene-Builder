@@ -331,7 +331,7 @@ function Editor({ _id, _name, _positions, _tags, _extra, _control }) {
       />
 
       <Divider orientation="left">Extra</Divider>
-      <Space wrap align="start" style={{ padding: '16px' }}>
+      <Space wrap align="start" className="extra" style={{ padding: '16px' }}>
         <Card
           title={'Navigation'}
           extra={

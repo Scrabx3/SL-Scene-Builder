@@ -9,6 +9,7 @@
     --placeholder: rgb(233, 184, 184);
 }
 
+
 /* Set sane font defaults */
 #root.dark-mode, #root.dark-mode div, #root.dark-mode span {
     color: var(--dark-text);
@@ -168,4 +169,14 @@
 /* Tags */
 #root.dark-mode span.ant-tag, #root.dark-mode .tag-display-field span.anticon {
     color: var(--black);
+}
+
+/* Fixes for Prod */
+#root.dark-mode .graph-editor-field, #root.dark-mode .position-attribute-card, #root.dark-mode .extra .ant-card-bordered {
+    background-color: var(--dark-background);
+}
+
+#root.dark-mode .position-attribute-card, #root.dark-mode .extra .ant-card-bordered {
+    border-color: var(--bright-blue);
+    border-width: 2px;
 }
