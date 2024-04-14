@@ -87,7 +87,7 @@ pub fn make_fnis_lines(
     events: &Vec<String>,
     hash: &str,
     fixed_len: bool,
-    anim_obj: &str,
+    anim_obj: &Vec<String>,
 ) -> Vec<String> {
     if events.len() == 1 {
         return vec![make_fnis_line(
@@ -120,7 +120,7 @@ fn make_fnis_line(
     event: &str,
     hash: &str,
     options: &str,
-    anim_obj: &str,
+    anim_obj: &Vec<String>,
 ) -> String {
     format!(
         "{}{} {}{} {}.hkx{}",
@@ -137,10 +137,8 @@ fn make_fnis_line(
         hash,
         event,
         event,
-        if !anim_obj.is_empty() {
-            format!(" {}", anim_obj)
-        } else {
-            "".into()
-        },
+        anim_obj
+            .iter()
+            .fold(String::from(""), |acc, x| format!("{} {}", acc, x))
     )
 }

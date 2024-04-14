@@ -348,7 +348,11 @@ impl Project {
                             &position.event,
                             &self.prefix_hash,
                             stage.extra.fixed_len > 0.0,
-                            &position.anim_obj,
+                            &position
+                                .anim_obj
+                                .split(',')
+                                .map(|x| x.trim().to_string())
+                                .collect::<Vec<_>>(),
                         );
                         let mut insert = |race| {
                             events
