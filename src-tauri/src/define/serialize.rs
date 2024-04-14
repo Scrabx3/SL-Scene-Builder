@@ -17,7 +17,7 @@ pub struct Offset {
 
 impl EncodeBinary for Offset {
     fn get_byte_size(&self) -> usize {
-        4 * size_of::<f32>()
+        size_of::<Offset>()
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
@@ -94,7 +94,7 @@ pub fn make_fnis_lines(
             "b",
             &events[0],
             hash,
-            if fixed_len { "a" } else { "" },
+            if fixed_len { "a,Tn" } else { "" },
             anim_obj,
         )];
     }
@@ -104,9 +104,7 @@ pub fn make_fnis_lines(
             if i == 0 { "s" } else { "+" },
             event,
             hash,
-            if i == 0 {
-                "a"
-            } else if fixed_len && i == events.len() - 1 {
+            if fixed_len && i == events.len() - 1 {
                 "a,Tn"
             } else {
                 ""
@@ -129,12 +127,12 @@ fn make_fnis_line(
         anim_type,
         if options.is_empty() && anim_obj.is_empty() {
             "".into()
+        } else if anim_obj.is_empty() {
+            format!(" -{}", options)
+        } else if options.is_empty() {
+            " -o".into()
         } else {
-            format!(
-                " -{}{}",
-                if anim_obj.is_empty() { "" } else { "o," },
-                options
-            )
+            format!(" -o,{}", options)
         },
         hash,
         event,
