@@ -348,11 +348,12 @@ impl Project {
                             &position.event,
                             &self.prefix_hash,
                             stage.extra.fixed_len > 0.0,
-                            &position
-                                .anim_obj
-                                .split(',')
-                                .map(|x| x.trim().to_string())
-                                .collect::<Vec<_>>(),
+                            &position.anim_obj.split(',').fold(vec![], |mut acc, x| {
+                                if !x.is_empty() {
+                                    acc.push(x.to_string());
+                                }
+                                acc
+                            }),
                         );
                         let mut insert = |race| {
                             events
