@@ -92,6 +92,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
   const [basicAnim, setBasicAnim] = useState(true);
   const [workingAnim, setWorkingAnim] = useState(undefined);
   const [sequenceOpen, setSequenceOpen] = useState(false);
+  const [schlong, setSchlong] = useState(_position.schlong);
 
   useEffect(() => {
     invoke('get_race_keys').then(result => setRaceKeys(result));
@@ -109,6 +110,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
           extra,
           offset,
           anim_obj,
+          schlong,
           strip_data: makeStrips(strips),
         };
       }
@@ -305,7 +307,6 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             )}
           </Card>
         </Col>
-
         <Col span={12}>
           {/* Data */}
           <Card
@@ -324,7 +325,7 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
             {/* div here is necessary to avoid 'findDOMNode is depreciated' error */}
             <Row gutter={[8, 16]} justify={'space-between'}>
               <Col>
-                <Tooltip  title={'Passive/Taker/Bottom position.'}>
+                <Tooltip title={'Passive/Taker/Bottom position.'}>
                   <div>
                     <CheckboxEx
                       obj={extra}
@@ -598,6 +599,35 @@ const PositionField = forwardRef(function PositionField({ _position, _control },
                 setAnimObj(e.target.value);
               }}
               placeholder="Editor ID"
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card
+            className="position-attribute-card"
+            title={'Schlong'}
+            extra={
+              <Tooltip
+                className="tool-tip"
+                title={'The angle of this actors schlong. Only used for Male and Futa actors.'}
+              >
+                <Button type="link">Info</Button>
+              </Tooltip>
+            }
+          >
+            <InputNumber
+              addonBefore={'S'}
+              controls
+              decimalSeparator=","
+              precision={0}
+              min={-9}
+              max={9}
+              step={1}
+              value={schlong}
+              onChange={(e) => {
+                setSchlong(e);
+              }}
+              placeholder="0"
             />
           </Card>
         </Col>

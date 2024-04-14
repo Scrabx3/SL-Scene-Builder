@@ -1,7 +1,7 @@
 use serde::de::{self};
 use serde::Deserializer;
 use serde::{Deserialize, Serialize};
-use std::mem::size_of;
+use std::mem::{size_of, size_of_val};
 use std::{fmt, vec};
 
 use super::serialize::{EncodeBinary, Offset};
@@ -19,6 +19,8 @@ pub struct Position {
     pub offset: Offset,
     pub anim_obj: String,
     pub strip_data: Stripping,
+    #[serde(default)]
+    pub schlong: i8,
 }
 
 struct DeserializeVecOrString;
@@ -98,34 +100,32 @@ pub struct Stripping {
 
 impl Position {
     pub fn get_byte_size_meta(&self) -> usize {
-        let mut ret =
-            size_of::<u64>() + size_of::<i32>() + self.extra.custom.len() * size_of::<u64>() + 3;
-        for tag in &self.extra.custom {
-            ret += tag.len() + 1;
-        }
-        ret
+        size_of::<Option<u8>>() //  get_race_key_bytes()
+            + size_of::<u8>()   // size_of sex byte
+            + size_of_val(&self.scale)
+            + size_of::<u8>()   // sizeof extra byte
+            + size_of_val(&self.extra.custom.len())
+            + size_of_val(&self.extra.custom)
+            + self.extra.custom.iter().fold(0, |acc, x| acc + &x.len())
     }
 
     pub fn write_byte_meta(&self, buf: &mut Vec<u8>) -> () {
-        // race
-        let racebyte = get_race_key_bytes(&self.race).unwrap();
-        buf.push(racebyte);
-        // sex
+        buf.push(get_race_key_bytes(&self.race).unwrap());
         if !self.sex.male && !self.sex.female && !self.sex.futa {
             panic!("Position missing sex option");
         }
         buf.push(self.sex.male as u8 + 2 * self.sex.female as u8 + 4 * self.sex.futa as u8);
-        // scale
-        let s_ = (self.scale * 1000.0).round() as i32;
-        buf.extend_from_slice(&s_.to_be_bytes());
-        // extra
+        buf.extend_from_slice(&((self.scale * 1000.0).round() as i32).to_be_bytes());
         buf.push(
             self.extra.submissive as u8 + 4 * self.extra.vampire as u8 + 8 * self.extra.dead as u8,
         );
         buf.extend_from_slice(&(self.extra.custom.len() as u64).to_be_bytes());
         for tag in &self.extra.custom {
-            let tmp: String = tag.chars().filter(|c| !c.is_whitespace()).collect();
-            let tmp = tmp.to_lowercase();
+            let tmp = tag
+                .chars()
+                .filter(|c| !c.is_whitespace())
+                .collect::<String>()
+                .to_lowercase();
             buf.extend_from_slice(&(tmp.len() as u64).to_be_bytes());
             buf.extend_from_slice(tmp.as_bytes());
         }
@@ -163,24 +163,22 @@ impl Position {
 
 impl EncodeBinary for Position {
     fn get_byte_size(&self) -> usize {
-        let mut ret =
-            size_of::<u64>() + self.offset.get_byte_size() + self.strip_data.get_byte_size() + 1; // climax
-        for e in &self.event {
-            ret += e.len();
-        }
-        ret
+        size_of_val(&self.event[0].len())
+            + size_of_val(&self.event[0])
+            + self.offset.get_byte_size()
+            + self.strip_data.get_byte_size()
+            + size_of_val(&self.extra.climax)
+            + size_of_val(&self.schlong)
     }
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
-        // event
+        // Only save initial event, all others are called by Havok
         buf.extend_from_slice(&(self.event[0].len() as u64).to_be_bytes());
         buf.extend_from_slice(self.event[0].as_bytes());
-        // climax
         buf.push(self.extra.climax as u8);
-        // offset
         self.offset.write_byte(buf);
-        // stripping
         self.strip_data.write_byte(buf);
+        buf.push(self.schlong as u8);
     }
 }
 
@@ -195,6 +193,7 @@ impl Default for Position {
             offset: Default::default(),
             anim_obj: Default::default(),
             strip_data: Default::default(),
+            schlong: Default::default(),
         }
     }
 }

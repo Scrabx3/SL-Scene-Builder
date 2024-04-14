@@ -487,17 +487,14 @@ impl EncodeBinary for Project {
 
     fn write_byte(&self, buf: &mut Vec<u8>) -> () {
         // version
-        let version: u8 = 2;
+        let version: u8 = 3;
         buf.push(version);
-        // name
+        // project
         buf.extend_from_slice(&(self.pack_name.len() as u64).to_be_bytes());
         buf.extend_from_slice(self.pack_name.as_bytes());
-        // author
         buf.extend_from_slice(&(self.pack_author.len() as u64).to_be_bytes());
         buf.extend_from_slice(self.pack_author.as_bytes());
-        // hash
         buf.extend_from_slice(self.prefix_hash.as_bytes());
-        // scenes
         buf.extend_from_slice(&(self.scenes.len() as u64).to_be_bytes());
         for (_, scene) in &self.scenes {
             if scene.has_warnings {
